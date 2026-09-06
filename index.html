@@ -1,653 +1,261 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Wave</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
 
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta
+        name="theme-color"
+        content="#12051f"
+    >
 
-    html, body {
-      height: 100%;
-      overflow: hidden;
-      font-family: 'Montserrat', sans-serif;
-    }
+    <title>Wave</title>
 
-    body {
-      background: linear-gradient(135deg, #6B21A8 0%, #7C3AED 25%, #000000 70%);
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      align-items: center;
-      justify-items: center;
-      min-height: 100vh;
-      padding: 60px 24px 40px;
-      color: #fff;
-      gap: 40px;
-    }
 
-    /* =========================
-       ЛОГО
-    ========================= */
+    <!-- Montserrat -->
 
-    .logo-area {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      animation: fadeInDown 0.8s ease-out;
-      z-index: 20;
-    }
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
 
-    h1 {
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-      color: #B5C680;
-    }
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
 
-    /* =========================
-       СЕТКА WAVE
-    ========================= */
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap"
+        rel="stylesheet"
+    >
 
-    .wave-network {
-      position: absolute;
 
-      width: 310px;
-      height: 290px;
+    <!-- Telegram WebApp -->
 
-      top: 43%;
-      left: 50%;
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-      transform: translate(-50%, -50%);
 
-      z-index: 1;
+    <!-- CSS -->
 
-      animation: networkAppear 1s ease-out 0.15s both;
-    }
+    <link
+        rel="stylesheet"
+        href="css/base.css"
+    >
 
-    /* Пунктирная внутренняя орбита */
+    <link
+        rel="stylesheet"
+        href="css/landing.css"
+    >
 
-    .network-orbit {
-      position: absolute;
+    <link
+        rel="stylesheet"
+        href="css/network.css"
+    >
 
-      left: 50%;
-      top: 50%;
-
-      transform: translate(-50%, -50%);
-
-      border: 1px dashed rgba(255, 255, 255, 0.20);
-
-      pointer-events: none;
-    }
-
-    .network-orbit.inner {
-      width: 185px;
-      height: 150px;
-
-      border-radius: 48% 52% 45% 55% / 48% 42% 58% 52%;
-
-      transform:
-        translate(-50%, -50%)
-        rotate(-8deg);
-    }
-
-    /* Пунктирная внешняя орбита */
-
-    .network-orbit.outer {
-      width: 275px;
-      height: 220px;
-
-      border-radius: 50%;
-
-      transform:
-        translate(-50%, -50%)
-        rotate(8deg);
-    }
-
-    /* Центральная фотография */
-
-    .network-center {
-      position: absolute;
-
-      width: 90px;
-      height: 90px;
-
-      left: 50%;
-      top: 50%;
-
-      transform: translate(-50%, -50%);
-
-      border-radius: 24px;
-
-      overflow: hidden;
-
-      background:
-        linear-gradient(
-          135deg,
-          #7C3AED,
-          #4C1D95
-        );
-
-      border: 2px solid rgba(255,255,255,0.08);
-
-      box-shadow:
-        0 8px 30px rgba(0,0,0,0.4),
-        0 0 30px rgba(124,58,237,0.25);
-
-      z-index: 5;
-    }
-
-    .network-center img {
-      width: 100%;
-      height: 100%;
-
-      object-fit: cover;
-    }
-
-    /* =========================
-       МАЛЕНЬКИЕ ФОТО
-    ========================= */
-
-    .network-item {
-      position: absolute;
-
-      width: 29px;
-      height: 29px;
-
-      overflow: hidden;
-
-      border-radius: 8px;
-
-      background: #171025;
-
-      border: 1px solid rgba(255,255,255,0.18);
-
-      box-shadow:
-        0 4px 14px rgba(0,0,0,0.35);
-
-      z-index: 6;
-
-      animation: floating 4s ease-in-out infinite;
-    }
-
-    .network-item img {
-      width: 100%;
-      height: 100%;
-
-      object-fit: cover;
-    }
-
-    /* =========================
-       ПОЗИЦИИ ЭЛЕМЕНТОВ
-       Как на референсе
-    ========================= */
-
-    .item-1 {
-      left: 42px;
-      top: 47px;
-
-      animation-delay: -1.2s;
-    }
-
-    .item-2 {
-      left: 93px;
-      top: 24px;
-
-      animation-delay: -2s;
-    }
-
-    .item-3 {
-      left: 144px;
-      top: 48px;
-
-      animation-delay: -0.5s;
-    }
-
-    .item-4 {
-      right: 51px;
-      top: 43px;
-
-      animation-delay: -2.8s;
-    }
-
-    .item-5 {
-      right: 25px;
-      top: 101px;
-
-      animation-delay: -1.7s;
-    }
-
-    .item-6 {
-      right: 51px;
-      bottom: 52px;
-
-      animation-delay: -3.2s;
-    }
-
-    .item-7 {
-      left: 112px;
-      bottom: 28px;
-
-      animation-delay: -1.5s;
-    }
-
-    .item-8 {
-      left: 55px;
-      bottom: 48px;
-
-      animation-delay: -2.4s;
-    }
-
-    .item-9 {
-      left: 19px;
-      top: 118px;
-
-      animation-delay: -0.8s;
-    }
-
-    .item-10 {
-      right: 85px;
-      top: 137px;
-
-      animation-delay: -3.5s;
-    }
-
-    /* =========================
-       ФИОЛЕТОВЫЕ ТОЧКИ
-    ========================= */
-
-    .network-dot {
-      position: absolute;
-
-      width: 8px;
-      height: 8px;
-
-      border-radius: 50%;
-
-      background: #7C3AED;
-
-      box-shadow:
-        0 0 12px rgba(124,58,237,0.9);
-
-      z-index: 3;
-
-      animation: dotPulse 2.5s ease-in-out infinite;
-    }
-
-    .dot-1 {
-      top: 4px;
-      left: 148px;
-    }
-
-    .dot-2 {
-      top: 58px;
-      right: 85px;
-
-      width: 6px;
-      height: 6px;
-    }
-
-    .dot-3 {
-      right: 3px;
-      top: 103px;
-
-      width: 7px;
-      height: 7px;
-    }
-
-    .dot-4 {
-      left: 91px;
-      bottom: 7px;
-
-      width: 6px;
-      height: 6px;
-    }
-
-    .dot-5 {
-      left: 184px;
-      bottom: 37px;
-
-      width: 7px;
-      height: 7px;
-    }
-
-    .dot-6 {
-      left: 47px;
-      top: 105px;
-
-      width: 5px;
-      height: 5px;
-    }
-
-    /* =========================
-       ОСНОВНОЙ КОНТЕНТ
-    ========================= */
-
-    .content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 24px;
-
-      animation: fadeInUp 0.8s ease-out 0.2s both;
-
-      z-index: 20;
-    }
-
-    .subtitle {
-      font-size: 16px;
-      opacity: 0.85;
-      text-align: center;
-      line-height: 1.5;
-      max-width: 280px;
-    }
-
-    .cta-button {
-      width: 100%;
-      max-width: 300px;
-
-      padding: 16px 24px;
-
-      border-radius: 16px;
-      border: none;
-
-      background: #B5C680;
-
-      color: #1a1a1a;
-
-      font-family: 'Montserrat', sans-serif;
-
-      font-size: 16px;
-      font-weight: 700;
-
-      cursor: pointer;
-
-      transition:
-        transform 0.2s,
-        box-shadow 0.2s;
-
-      box-shadow:
-        0 4px 15px rgba(0, 0, 0, 0.3);
-    }
-
-    .cta-button:active {
-      transform: scale(0.98);
-    }
-
-    /* =========================
-       FOOTER
-    ========================= */
-
-    .footer {
-      font-size: 12px;
-      opacity: 0.5;
-
-      animation:
-        fadeInUp 0.8s ease-out 0.4s both;
-
-      z-index: 20;
-    }
-
-    /* =========================
-       АНИМАЦИИ
-    ========================= */
-
-    @keyframes fadeInDown {
-      from {
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes networkAppear {
-      from {
-        opacity: 0;
-        transform:
-          translate(-50%, -50%)
-          scale(0.8);
-      }
-
-      to {
-        opacity: 1;
-        transform:
-          translate(-50%, -50%)
-          scale(1);
-      }
-    }
-
-    @keyframes floating {
-      0%,
-      100% {
-        margin-top: 0;
-      }
-
-      50% {
-        margin-top: -5px;
-      }
-    }
-
-    @keyframes dotPulse {
-      0%,
-      100% {
-        opacity: 0.35;
-        transform: scale(0.8);
-      }
-
-      50% {
-        opacity: 1;
-        transform: scale(1.15);
-      }
-    }
-
-    /* =========================
-       МАЛЕНЬКИЕ ЭКРАНЫ
-    ========================= */
-
-    @media (max-height: 700px) {
-
-      body {
-        padding: 40px 20px 30px;
-        gap: 24px;
-      }
-
-      h1 {
-        font-size: 28px;
-      }
-
-      .wave-network {
-        transform:
-          translate(-50%, -50%)
-          scale(0.82);
-
-        top: 42%;
-      }
-
-      .content {
-        gap: 18px;
-      }
-
-      .subtitle {
-        font-size: 14px;
-      }
-    }
-
-    @media (max-height: 600px) {
-
-      body {
-        padding: 30px 20px 25px;
-        gap: 20px;
-      }
-
-      h1 {
-        font-size: 26px;
-      }
-
-      .wave-network {
-        transform:
-          translate(-50%, -50%)
-          scale(0.68);
-
-        top: 41%;
-      }
-
-      .subtitle {
-        font-size: 14px;
-        max-width: 240px;
-      }
-    }
-  </style>
 </head>
+
 
 <body>
 
-  <!-- LOGO -->
 
-  <div class="logo-area">
-    <h1>WAVE</h1>
-  </div>
+    <!-- =================================
+         ЛОГОТИП
+    ================================== -->
 
+    <header class="logo-area">
 
-  <!-- =========================
-       СЕТКА ИЗ РЕФЕРЕНСА
-  ========================== -->
+        <h1>WAVE</h1>
 
-  <div class="wave-network">
-
-    <!-- Пунктирные орбиты -->
-
-    <div class="network-orbit inner"></div>
-    <div class="network-orbit outer"></div>
+    </header>
 
 
-    <!-- Фиолетовые точки -->
 
-    <div class="network-dot dot-1"></div>
-    <div class="network-dot dot-2"></div>
-    <div class="network-dot dot-3"></div>
-    <div class="network-dot dot-4"></div>
-    <div class="network-dot dot-5"></div>
-    <div class="network-dot dot-6"></div>
+    <!-- =================================
+         СЕТКА ЗНАКОМСТВ
+    ================================== -->
+
+    <section class="wave-network">
 
 
-    <!-- Маленькие фотографии -->
+        <!-- Орбиты -->
 
-    <div class="network-item item-1">
-      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80">
-    </div>
+        <div class="network-orbit inner"></div>
 
-    <div class="network-item item-2">
-      <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80">
-    </div>
-
-    <div class="network-item item-3">
-      <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80">
-    </div>
-
-    <div class="network-item item-4">
-      <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&q=80">
-    </div>
-
-    <div class="network-item item-5">
-      <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&q=80">
-    </div>
-
-    <div class="network-item item-6">
-      <img src="https://images.unsplash.com/photo-1504593811423-6dd665756598?w=100&q=80">
-    </div>
-
-    <div class="network-item item-7">
-      <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&q=80">
-    </div>
-
-    <div class="network-item item-8">
-      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80">
-    </div>
-
-    <div class="network-item item-9">
-      <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&q=80">
-    </div>
-
-    <div class="network-item item-10">
-      <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80">
-    </div>
+        <div class="network-orbit outer"></div>
 
 
-    <!-- Центральное изображение -->
 
-    <div class="network-center">
-      <img src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=300&q=85">
-    </div>
+        <!-- Фиолетовые точки -->
 
-  </div>
+        <div class="network-dot dot-1"></div>
 
+        <div class="network-dot dot-2"></div>
 
-  <!-- КОНТЕНТ -->
+        <div class="network-dot dot-3"></div>
 
-  <div class="content">
+        <div class="network-dot dot-4"></div>
 
-    <p class="subtitle">
-      Лови свою волну прямо сейчас
-    </p>
+        <div class="network-dot dot-5"></div>
 
-    <button
-      class="cta-button"
-      onclick="startApp()">
-      Начать
-    </button>
-
-  </div>
+        <div class="network-dot dot-6"></div>
 
 
-  <!-- FOOTER -->
 
-  <div class="footer">
-    Wave · 2026
-  </div>
+        <!-- =================================
+             ФОТОГРАФИИ ВОКРУГ
+        ================================== -->
+
+        <div class="network-item item-1">
+            <img
+                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80"
+                alt=""
+            >
+        </div>
 
 
-  <script>
+        <div class="network-item item-2">
+            <img
+                src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"
+                alt=""
+            >
+        </div>
 
-    if (window.Telegram && window.Telegram.WebApp) {
-      window.Telegram.WebApp.ready();
-      window.Telegram.WebApp.expand();
-    }
 
-    function startApp() {
-      alert(
-        'Добро пожаловать в Wave! Здесь скоро появится главный экран.'
-      );
-    }
+        <div class="network-item item-3">
+            <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80"
+                alt=""
+            >
+        </div>
 
-  </script>
+
+        <div class="network-item item-4">
+            <img
+                src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&q=80"
+                alt=""
+            >
+        </div>
+
+
+        <div class="network-item item-5">
+            <img
+                src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&q=80"
+                alt=""
+            >
+        </div>
+
+
+        <div class="network-item item-6">
+            <img
+                src="https://images.unsplash.com/photo-1504593811423-6dd665756598?w=100&q=80"
+                alt=""
+            >
+        </div>
+
+
+        <div class="network-item item-7">
+            <img
+                src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&q=80"
+                alt=""
+            >
+        </div>
+
+
+        <div class="network-item item-8">
+            <img
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80"
+                alt=""
+            >
+        </div>
+
+
+        <div class="network-item item-9">
+            <img
+                src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&q=80"
+                alt=""
+            >
+        </div>
+
+
+        <div class="network-item item-10">
+            <img
+                src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80"
+                alt=""
+            >
+        </div>
+
+
+
+        <!-- =================================
+             ЦЕНТРАЛЬНАЯ ФОТОГРАФИЯ
+        ================================== -->
+
+        <div class="network-center">
+
+            <img
+                src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=300&q=85"
+                alt=""
+            >
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- =================================
+         НИЖНИЙ КОНТЕНТ
+    ================================== -->
+
+    <main class="content">
+
+
+        <p class="subtitle">
+            Лови свою волну прямо сейчас
+        </p>
+
+
+        <button
+            class="cta-button"
+            id="startButton"
+        >
+            Начать
+        </button>
+
+
+    </main>
+
+
+
+    <!-- =================================
+         FOOTER
+    ================================== -->
+
+    <footer class="footer">
+
+        Wave · 2026
+
+    </footer>
+
+
+
+    <!-- =================================
+         JAVASCRIPT
+    ================================== -->
+
+    <script src="js/telegram.js"></script>
+
+    <script src="js/landing.js"></script>
+
 
 </body>
+
 </html>
