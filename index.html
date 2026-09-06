@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Wave</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #6B21A8 0%, #7C3AED 25%, #000000 70%);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      align-items: center;
+      justify-items: center;
+      min-height: 100vh;
+      padding: 60px 24px 40px;
+      color: #fff;
+      gap: 40px;
+    }
+
+    .logo-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      animation: fadeInDown 0.8s ease-out;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      color: #B5C680;
+    }
+
+    .content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      opacity: 0.85;
+      text-align: center;
+      line-height: 1.5;
+      max-width: 280px;
+    }
+
+    .cta-button {
+      width: 100%;
+      max-width: 300px;
+      padding: 16px 24px;
+      border-radius: 16px;
+      border: none;
+      background: #B5C680;
+      color: #1a1a1a;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .cta-button:active {
+      transform: scale(0.98);
+    }
+
+    .footer {
+      font-size: 12px;
+      opacity: 0.5;
+      animation: fadeInUp 0.8s ease-out 0.4s both;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-height: 600px) {
+      body {
+        padding: 40px 24px 30px;
+      }
+      h1 {
+        font-size: 26px;
+      }
+      .subtitle {
+        font-size: 14px;
+        max-width: 240px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="logo-area">
+    <h1>WAVE</h1>
+  </div>
+
+  <div class="content">
+    <p class="subtitle">Лови свою волну прямо сейчас</p>
+    <button class="cta-button" onclick="startApp()">Начать</button>
+  </div>
+
+  <div class="footer">Wave · 2026</div>
+
+  <script>
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+    }
+
+    function startApp() {
+      alert('Добро пожаловать в Wave! Здесь скоро появится главный экран.');
+    }
+  </script>
+</body>
+</html>
