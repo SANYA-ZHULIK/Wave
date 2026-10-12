@@ -46,22 +46,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=6"
+        href="css/base.css?v=7"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=6"
+        href="css/landing.css?v=7"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=6"
+        href="css/network.css?v=7"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=6"
+        href="css/auth.css?v=7"
     >
 
 </head>
@@ -138,7 +138,7 @@
 
     <!-- ===== РЕГИСТРАЦИЯ ===== -->
     <section class="auth-screen" id="screen-name">
-        <div class="auth-progress"><span class="auth-dot active"></span><span class="auth-dot"></span><span class="auth-dot"></span></div>
+        <div class="auth-progress"></div>
         <div class="auth-header"><h2>Как вас зовут?</h2><p>Так вас увидят другие</p></div>
         <div class="auth-form">
             <input class="auth-input" id="nameInput" type="text" placeholder="Ваше имя" maxlength="20" autocomplete="given-name">
@@ -148,7 +148,7 @@
     </section>
 
     <section class="auth-screen" id="screen-age">
-        <div class="auth-progress"><span class="auth-dot done"></span><span class="auth-dot active"></span><span class="auth-dot"></span></div>
+        <div class="auth-progress"></div>
         <div class="auth-header"><h2>Сколько вам лет?</h2><p>Wave — только для совершеннолетних</p></div>
         <div class="auth-form">
             <div class="age-picker">
@@ -161,7 +161,7 @@
     </section>
 
     <section class="auth-screen" id="screen-gender">
-        <div class="auth-progress"><span class="auth-dot done"></span><span class="auth-dot done"></span><span class="auth-dot active"></span></div>
+        <div class="auth-progress"></div>
         <div class="auth-header"><h2>Расскажите о себе</h2><p>Подберём подходящие знакомства</p></div>
         <div class="auth-form">
             <div class="auth-label">Я</div>
@@ -176,13 +176,61 @@
                 <button class="chip" data-value="any">Всех</button>
             </div>
             <div class="auth-error" id="genderError" role="alert"></div>
-            <button class="auth-button" id="genderNext">Создать профиль</button>
+            <button class="auth-button" id="genderNext">Далее</button>
+        </div>
+    </section>
+
+    <section class="auth-screen" id="screen-city">
+        <div class="auth-progress"></div>
+        <div class="auth-header"><h2>Из какого вы города?</h2><p>Выберите из списка или введите свой</p></div>
+        <div class="auth-form">
+            <input class="auth-input" id="cityInput" type="text" placeholder="Начните вводить" maxlength="40" autocomplete="off">
+            <div class="city-list" id="cityList"></div>
+            <div class="auth-error" id="cityError" role="alert"></div>
+            <button class="auth-button" id="cityNext">Далее</button>
+        </div>
+    </section>
+
+    <section class="auth-screen" id="screen-intents">
+        <div class="auth-progress"></div>
+        <div class="auth-header"><h2>Что вы ищете?</h2><p>Выберите до 5 вариантов</p></div>
+        <div class="auth-form">
+            <div class="chip-group wrap" id="intentChips"></div>
+            <div class="auth-error" id="intentError" role="alert"></div>
+            <button class="auth-button" id="intentsNext">Далее</button>
+        </div>
+    </section>
+
+    <section class="auth-screen" id="screen-photo">
+        <div class="auth-progress"></div>
+        <div class="auth-header"><h2>Добавьте фото</h2><p>Так вас проще узнать</p></div>
+        <div class="auth-form">
+            <button class="avatar-pick" id="avatarPick" type="button" aria-label="Выбрать фото">
+                <span id="avatarPlus">＋</span><img id="avatarImg" alt="" hidden>
+            </button>
+            <input type="file" id="photoFile" accept="image/*" hidden>
+            <div class="auth-error" id="photoError" role="alert"></div>
+            <button class="auth-button" id="photoNext">Пропустить</button>
+        </div>
+    </section>
+
+    <section class="auth-screen" id="screen-bio">
+        <div class="auth-progress"></div>
+        <div class="auth-header"><h2>О себе</h2><p>Необязательно — можно пропустить</p></div>
+        <div class="auth-form">
+            <textarea class="auth-input" id="bioInput" maxlength="300" placeholder="Например: ищу напарника для катки в Dota или компанию на прогулку"></textarea>
+            <div class="char-count"><span id="bioCount">0</span>/300</div>
+            <div class="auth-error" id="bioError" role="alert"></div>
+            <button class="auth-button" id="bioNext">Пропустить</button>
         </div>
     </section>
 
     <section class="auth-screen" id="screen-done">
-        <div class="done-emoji">🌊</div>
-        <div class="auth-header"><h2 id="doneTitle">Привет!</h2><p>Профиль создан. Скоро здесь появятся люди рядом.</p></div>
+        <div class="done-emoji" id="doneEmoji">🌊</div>
+        <img class="done-avatar" id="doneAvatar" alt="" hidden>
+        <div class="auth-header"><h2 id="doneTitle">Привет!</h2><p id="doneMeta"></p></div>
+        <div class="tags" id="doneIntents"></div>
+        <p class="done-bio" id="doneBio"></p>
         <div class="auth-form">
             <p id="syncStatus" style="font-size:12px;opacity:.5;text-align:center"></p>
             <button class="auth-link" id="resetBtn">Изменить анкету</button>
@@ -193,11 +241,11 @@
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=6"></script>
+    <script src="js/telegram.js?v=7"></script>
 
-    <script src="js/supabase.js?v=6"></script>
+    <script src="js/supabase.js?v=7"></script>
 
-    <script src="js/landing.js?v=6"></script>
+    <script src="js/landing.js?v=7"></script>
 
 
 </body>

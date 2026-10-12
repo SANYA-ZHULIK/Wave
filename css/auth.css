@@ -229,3 +229,37 @@
     opacity: 0.4; font-size: 13px; cursor: pointer; margin-top: 6px;
 }
 .done-emoji { font-size: 56px; margin-bottom: 16px; }
+
+/* =========================================
+   v7: прокрутка, город, темы, фото, описание
+========================================= */
+[hidden] { display: none !important; }
+
+.auth-screen { justify-content: flex-start; overflow-y: auto; }
+.auth-screen > :first-child { margin-top: auto; }
+.auth-screen > :last-child  { margin-bottom: auto; }
+
+.chip-group.wrap { flex-wrap: wrap; justify-content: center; }
+.chip.sm { flex: 0 0 auto; padding: 10px 14px; font-size: 14px; }
+
+.city-list { display: flex; flex-direction: column; max-height: 168px; overflow-y: auto; margin-top: -8px; }
+.city-item {
+    text-align: left; padding: 12px 16px; background: none; border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.06); color: #fff; font-size: 15px; cursor: pointer;
+}
+.city-item:active { background: rgba(181,198,128,0.15); }
+
+.avatar-pick {
+    width: 140px; height: 140px; border-radius: 50%; margin: 0 auto;
+    border: 2px dashed rgba(255,255,255,0.25); background: rgba(255,255,255,0.05);
+    color: #B5C680; font-size: 40px; cursor: pointer; overflow: hidden; position: relative;
+}
+.avatar-pick img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+
+textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
+.char-count { font-size: 12px; opacity: 0.4; text-align: right; margin-top: -14px; }
+
+.done-avatar { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; margin-bottom: 16px; border: 2px solid #B5C680; }
+.done-bio { font-size: 14px; opacity: 0.75; text-align: center; max-width: 280px; margin: 12px 0; line-height: 1.5; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 300px; }
+.tag { padding: 6px 12px; border-radius: 20px; font-size: 13px; background: rgba(181,198,128,0.15); color: #B5C680; }

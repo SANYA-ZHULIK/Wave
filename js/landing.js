@@ -1,40 +1,73 @@
 /* =========================================
    WAVE — лендинг + регистрация
 ========================================= */
-const STORAGE_KEY = 'wave_profile';
-const STEPS = ['landing', 'screen-name', 'screen-age', 'screen-gender', 'screen-done'];
+// true — показывать на экране технический статус облака и тексты ошибок (для разработки)
+const DEBUG = false;
 
-const profile = { name: '', age: 22, gender: '', looking: '' };
+const STORAGE_KEY = 'wave_profile';
+const STEPS = ['landing', 'screen-name', 'screen-age', 'screen-gender', 'screen-city',
+               'screen-intents', 'screen-photo', 'screen-bio', 'screen-done'];
+const FORM_STEPS = 7, DONE = 8, MAX_INTENTS = 5;
+
+const INTENTS = {
+    relationship: 'Отношения', friendship: 'Дружба', chat: 'Общение',
+    gaming: 'Напарник для игр', walks: 'Прогулки', sport: 'Спорт',
+    travel: 'Путешествия', events: 'Мероприятия', hobby: 'Хобби'
+};
+const CITIES = ['Минск', 'Гомель', 'Могилёв', 'Витебск', 'Гродно', 'Брест', 'Бобруйск', 'Барановичи',
+    'Борисов', 'Пинск', 'Орша', 'Мозырь', 'Солигорск', 'Новополоцк', 'Лида', 'Молодечно', 'Полоцк',
+    'Жлобин', 'Светлогорск', 'Речица', 'Слуцк', 'Жодино', 'Слоним', 'Кобрин', 'Волковыск',
+    'Калинковичи', 'Сморгонь', 'Осиповичи', 'Новогрудок', 'Вилейка', 'Дзержинск', 'Заславль'];
+
+const profile = { name: '', age: 22, gender: '', looking: '', city: '', intents: [], photo_url: '', bio: '' };
 let step = 0;
 
 const $ = (id) => document.getElementById(id);
-function setSync(ok, err) {
-    const el = document.getElementById('syncStatus');
-    if (!el) return;
-    const len = (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData || '').length;
-    const text = ok ? '☁ Профиль сохранён в облаке'
-        : err ? 'Ошибка облака: ' + err
-        : (typeof Supa === 'undefined' ? 'Файл js/supabase.js не загружен'
-            : dbOn() ? 'Связь с облаком…' : 'Нет данных Telegram — открыто не как Mini App');
-    el.textContent = text + ' · v6 · initData ' + len;
-}
 const dbOn = () => typeof Supa !== 'undefined' && Supa.enabled();
 
-/* ---------- storage (с try/catch: в приватном режиме может падать) ---------- */
-function saveProfile() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(profile)); } catch (e) {}
-}
-function loadProfile() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { return null; }
+/* ---------- отладочный статус (виден только при DEBUG = true) ---------- */
+function setSync(ok, err) {
+    const el = $('syncStatus');
+    if (!el) return;
+    if (!DEBUG) { el.textContent = ''; return; }
+    const len = (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData || '').length;
+    el.textContent = (ok ? '☁ Профиль сохранён в облаке'
+        : err ? 'Ошибка облака: ' + err
+        : (typeof Supa === 'undefined' ? 'Файл js/supabase.js не загружен'
+        : dbOn() ? 'Связь с облаком…' : 'Нет данных Telegram — открыто не как Mini App')) + ' · v7 · initData ' + len;
 }
 
+/* ---------- локальное хранилище ---------- */
+function saveProfile() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(profile)); } catch (e) {} }
+function loadProfile() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { return null; } }
+const isComplete = () => !!(profile.name && profile.gender && profile.looking && profile.city && profile.intents.length);
+
 /* ---------- навигация ---------- */
+function buildDots() {
+    document.querySelectorAll('.auth-screen').forEach((el) => {
+        const box = el.querySelector('.auth-progress');
+        if (!box) return;
+        const i = STEPS.indexOf(el.id);
+        box.innerHTML = '';
+        for (let k = 1; k <= FORM_STEPS; k++) {
+            const d = document.createElement('span');
+            d.className = 'auth-dot' + (k === i ? ' active' : k < i ? ' done' : '');
+            box.appendChild(d);
+        }
+    });
+}
+
 function show(n) {
     step = n;
     STEPS.slice(1).forEach((id, i) => $(id).classList.toggle('active', i + 1 === n));
-    // Кнопка «Назад» Telegram: на экранах регистрации (кроме финала)
-    TG.back(n > 0 && n < STEPS.length - 1 ? () => show(n - 1) : null);
+    TG.back(n > 0 && n < DONE ? () => show(n - 1) : null);
     if (n === 1) setTimeout(() => $('nameInput').focus(), 450);
+}
+
+// Куда вести человека с уже сохранённым профилем
+function route() {
+    if (isComplete()) { renderDone(); show(DONE); }
+    else show(profile.city ? 5 : 4);
 }
 
 function fail(input, errEl, msg) {
@@ -45,27 +78,26 @@ function fail(input, errEl, msg) {
     errEl.textContent = msg;
     TG.fail();
 }
+const clearErr = (id) => { $(id).textContent = ''; };
 
-/* ---------- шаг 1: имя ---------- */
+/* ---------- 1. имя ---------- */
 function submitName() {
     const input = $('nameInput');
     const name = input.value.trim().replace(/\s+/g, ' ');
-    $('nameError').textContent = '';
+    clearErr('nameError');
     if (name.length < 2)  return fail(input, $('nameError'), 'Введите имя — минимум 2 символа');
     if (name.length > 20) return fail(input, $('nameError'), 'Имя слишком длинное — максимум 20 символов');
-    profile.name = name;
-    TG.tap();
-    show(2);
+    profile.name = name; TG.tap(); show(2);
 }
 
-/* ---------- шаг 2: возраст ---------- */
+/* ---------- 2. возраст ---------- */
 function setAge(delta) {
     profile.age = Math.min(99, Math.max(18, profile.age + delta));
     $('ageDisplay').textContent = profile.age;
     TG.pick();
 }
 
-/* ---------- шаг 3: пол и кого ищу ---------- */
+/* ---------- 3. пол ---------- */
 function bindChips(groupId, key) {
     $(groupId).addEventListener('click', (e) => {
         const chip = e.target.closest('.chip');
@@ -75,97 +107,201 @@ function bindChips(groupId, key) {
         TG.pick();
     });
 }
+function submitGender() {
+    if (!profile.gender || !profile.looking) return fail(null, $('genderError'), 'Выберите оба варианта, чтобы продолжить');
+    clearErr('genderError'); TG.tap(); show(4);
+}
+
+/* ---------- 4. город ---------- */
+function renderCities() {
+    const q = $('cityInput').value.trim().toLowerCase();
+    $('cityList').innerHTML = CITIES.filter((c) => c.toLowerCase().includes(q)).slice(0, 6)
+        .map((c) => `<button type="button" class="city-item" data-city="${c}">${c}</button>`).join('');
+}
+function submitCity() {
+    const input = $('cityInput');
+    const v = input.value.trim().replace(/\s+/g, ' ');
+    clearErr('cityError');
+    if (v.length < 2) return fail(input, $('cityError'), 'Укажите город — минимум 2 символа');
+    profile.city = v; TG.tap(); show(5);
+}
+
+/* ---------- 5. что ищете ---------- */
+function paintIntents() {
+    $('intentChips').querySelectorAll('.chip').forEach((c) =>
+        c.classList.toggle('selected', profile.intents.includes(c.dataset.value)));
+}
+function toggleIntent(key) {
+    const i = profile.intents.indexOf(key);
+    clearErr('intentError');
+    if (i >= 0) profile.intents.splice(i, 1);
+    else if (profile.intents.length >= MAX_INTENTS) return fail(null, $('intentError'), 'Можно выбрать не больше ' + MAX_INTENTS);
+    else profile.intents.push(key);
+    paintIntents(); TG.pick();
+}
+function submitIntents() {
+    if (!profile.intents.length) return fail(null, $('intentError'), 'Выберите хотя бы один вариант');
+    TG.tap(); show(6);
+}
+
+/* ---------- 6. фото ---------- */
+async function toSquareJpeg(file, size = 512) {
+    let img;
+    try { img = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+    catch (e) {
+        img = await new Promise((res, rej) => {
+            const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file);
+        });
+    }
+    const w = img.width, h = img.height, s = Math.min(w, h);
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    c.getContext('2d').drawImage(img, (w - s) / 2, (h - s) / 2, s, s, 0, 0, size, size);
+    return c.toDataURL('image/jpeg', 0.85);
+}
+function paintPhoto() {
+    const has = !!profile.photo_url;
+    $('avatarImg').hidden = !has;
+    $('avatarPlus').hidden = has;
+    if (has) $('avatarImg').src = profile.photo_url;
+    $('photoNext').textContent = has ? 'Далее' : 'Пропустить';
+}
+async function onPhotoChosen(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    clearErr('photoError');
+    try { profile.photo_url = await toSquareJpeg(file); paintPhoto(); TG.pick(); }
+    catch (err) { fail(null, $('photoError'), 'Не удалось открыть фото. Попробуйте другое'); }
+}
+
+/* ---------- 7. описание ---------- */
+function onBioInput() {
+    const v = $('bioInput').value;
+    $('bioCount').textContent = v.length;
+    $('bioNext').textContent = v.trim() ? 'Создать профиль' : 'Пропустить';
+}
+
+/* ---------- сохранение ---------- */
+async function pushRemote() {
+    if (profile.photo_url.startsWith('data:')) {
+        const blob = await (await fetch(profile.photo_url)).blob();
+        profile.photo_url = await Supa.uploadAvatar(blob);
+    }
+    await Supa.saveProfile(profile);
+}
 
 async function finish() {
-    if (!profile.gender || !profile.looking) {
-        return fail(null, $('genderError'), 'Выберите оба варианта, чтобы продолжить');
-    }
-    $('genderError').textContent = '';
-    const btn = $('genderNext');
+    profile.bio = $('bioInput').value.trim();
+    const btn = $('bioNext');
+    clearErr('bioError');
     btn.disabled = true;
     try {
-        if (dbOn()) await Supa.saveProfile(profile);
-        setSync(dbOn());
-        saveProfile(); // локальная копия — для быстрого старта
+        if (dbOn()) await pushRemote();
+        saveProfile();
         renderDone();
+        setSync(dbOn());
         TG.ok();
-        show(4);
+        show(DONE);
     } catch (e) {
-        console.error('Supabase save error:', e);
-        fail(null, $('genderError'), 'Не удалось сохранить профиль (' + (e.message || 'ошибка') + ')');
-    } finally {
-        btn.disabled = false;
-    }
+        console.error('Save error:', e);
+        fail(null, $('bioError'), 'Не удалось сохранить профиль. Проверьте интернет и попробуйте ещё раз' + (DEBUG ? ' (' + e.message + ')' : ''));
+    } finally { btn.disabled = false; }
 }
 
+/* ---------- финальный экран ---------- */
 function renderDone() {
     $('doneTitle').textContent = `Привет, ${profile.name}!`;
-}
-
-/* Подставляет данные профиля в поля форм */
-function applyProfile(p) {
-    Object.assign(profile, p);
-    $('nameInput').value = profile.name || '';
-    $('ageDisplay').textContent = profile.age;
-    [['genderChips', 'gender'], ['lookingChips', 'looking']].forEach(([id, key]) => {
-        $(id).querySelectorAll('.chip').forEach((c) =>
-            c.classList.toggle('selected', c.dataset.value === profile[key]));
+    $('doneMeta').textContent = [profile.city, profile.age].filter(Boolean).join(' · ');
+    const has = !!profile.photo_url;
+    $('doneAvatar').hidden = !has;
+    $('doneEmoji').hidden = has;
+    if (has) $('doneAvatar').src = profile.photo_url;
+    $('doneIntents').innerHTML = '';
+    profile.intents.forEach((k) => {
+        const t = document.createElement('span');
+        t.className = 'tag'; t.textContent = INTENTS[k] || k;
+        $('doneIntents').appendChild(t);
     });
+    $('doneBio').textContent = profile.bio || '';
 }
 
-function editProfile() {
-    applyProfile(profile);
-    show(1);
+/* ---------- профиль <-> форма ---------- */
+function applyProfile(p) {
+    Object.assign(profile, {
+        name: p.name || '', age: p.age || 22, gender: p.gender || '', looking: p.looking || '',
+        city: p.city || '', intents: Array.isArray(p.intents) ? p.intents : [],
+        photo_url: p.photo_url || '', bio: p.bio || ''
+    });
+    $('nameInput').value = profile.name;
+    $('ageDisplay').textContent = profile.age;
+    [['genderChips', 'gender'], ['lookingChips', 'looking']].forEach(([id, key]) =>
+        $(id).querySelectorAll('.chip').forEach((c) => c.classList.toggle('selected', c.dataset.value === profile[key])));
+    $('cityInput').value = profile.city;
+    $('bioInput').value = profile.bio;
+    onBioInput(); paintIntents(); paintPhoto();
 }
+function editProfile() { applyProfile(profile); show(1); }
 
 /* ---------- init ---------- */
 function init() {
-    // Подставляем имя из Telegram
+    buildDots();
+    $('intentChips').innerHTML = Object.entries(INTENTS)
+        .map(([k, v]) => `<button type="button" class="chip sm" data-value="${k}">${v}</button>`).join('');
+    renderCities();
+
     const u = TG.user();
     if (u && u.first_name) $('nameInput').value = u.first_name.slice(0, 20);
 
-    // Если профиль уже есть — сразу на финальный экран
-    const saved = loadProfile();
-    if (saved && saved.name) {
-        applyProfile(saved);
-        renderDone();
-        setSync(false);
-        show(4);
-    }
-    $('ageDisplay').textContent = profile.age;
-
-    // Источник правды — БД: подтягиваем профиль оттуда
-    if (dbOn()) {
-        setSync(false);
-        Supa.loadProfile().then(async (remote) => {
-            if (remote) {
-                applyProfile(remote);
-                saveProfile();
-                renderDone();
-                setSync(true);
-                if (step === 0) show(4);
-            } else if (saved && saved.name) {
-                // локальный профиль есть, а в облаке его нет — отправляем
-                await Supa.saveProfile(profile);
-                setSync(true);
-            }
-        }).catch((e) => {
-            console.error('Supabase sync error:', e);
-            setSync(false, e.message || 'ошибка');
-        });
-    }
-
+    // Кнопки подключаем первыми — работают, даже если что-то дальше не загрузится
     $('startButton').addEventListener('click', () => { TG.tap(); show(1); });
     $('nameNext').addEventListener('click', submitName);
     $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitName(); });
     $('ageMinus').addEventListener('click', () => setAge(-1));
-    $('agePlus').addEventListener('click',  () => setAge(+1));
-    $('ageNext').addEventListener('click',  () => { TG.tap(); show(3); });
-    $('genderNext').addEventListener('click', finish);
-    $('resetBtn').addEventListener('click', editProfile);
-
+    $('agePlus').addEventListener('click', () => setAge(+1));
+    $('ageNext').addEventListener('click', () => { TG.tap(); show(3); });
     bindChips('genderChips', 'gender');
     bindChips('lookingChips', 'looking');
+    $('genderNext').addEventListener('click', submitGender);
+
+    $('cityInput').addEventListener('input', renderCities);
+    $('cityInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitCity(); });
+    $('cityList').addEventListener('click', (e) => {
+        const b = e.target.closest('.city-item');
+        if (!b) return;
+        $('cityInput').value = b.dataset.city; clearErr('cityError'); TG.pick(); renderCities();
+    });
+    $('cityNext').addEventListener('click', submitCity);
+
+    $('intentChips').addEventListener('click', (e) => {
+        const c = e.target.closest('.chip');
+        if (c) toggleIntent(c.dataset.value);
+    });
+    $('intentsNext').addEventListener('click', submitIntents);
+
+    $('avatarPick').addEventListener('click', () => $('photoFile').click());
+    $('photoFile').addEventListener('change', onPhotoChosen);
+    $('photoNext').addEventListener('click', () => { TG.tap(); show(7); });
+
+    $('bioInput').addEventListener('input', onBioInput);
+    $('bioNext').addEventListener('click', finish);
+    $('resetBtn').addEventListener('click', editProfile);
+
+    // Сохранённый локально профиль
+    const saved = loadProfile();
+    if (saved && saved.name) { applyProfile(saved); route(); setSync(false); }
+
+    // Источник правды — БД
+    if (dbOn()) {
+        Supa.loadProfile().then(async (remote) => {
+            if (remote) {
+                applyProfile(remote); saveProfile();
+                if (step === 0) route();
+                setSync(true);
+            } else if (saved && isComplete()) {
+                await pushRemote(); saveProfile(); setSync(true);
+            }
+        }).catch((e) => { console.error('Sync error:', e); setSync(false, e.message); });
+    }
 }
 
 init();
