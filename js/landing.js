@@ -8,9 +8,14 @@ const profile = { name: '', age: 22, gender: '', looking: '' };
 let step = 0;
 
 const $ = (id) => document.getElementById(id);
-function setSync(ok) {
+function setSync(ok, err) {
     const el = document.getElementById('syncStatus');
-    if (el) el.textContent = ok ? '☁ Профиль сохранён в облаке' : 'Профиль сохранён только на этом устройстве';
+    if (!el) return;
+    const len = (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData || '').length;
+    const text = ok ? '☁ Профиль сохранён в облаке'
+        : err ? 'Ошибка облака: ' + err
+        : (dbOn() ? 'Связь с облаком…' : 'Нет данных Telegram — открыто не как Mini App');
+    el.textContent = text + ' · v4 · initData ' + len;
 }
 const dbOn = () => typeof Supa !== 'undefined' && Supa.enabled();
 
@@ -130,14 +135,23 @@ function init() {
 
     // Источник правды — БД: подтягиваем профиль оттуда
     if (dbOn()) {
-        Supa.loadProfile().then((remote) => {
-            if (!remote) return;
-            applyProfile(remote);
-            saveProfile();
-            renderDone();
-            setSync(true);
-            if (step === 0) show(4);
-        }).catch((e) => console.error('Supabase load error:', e));
+        setSync(false);
+        Supa.loadProfile().then(async (remote) => {
+            if (remote) {
+                applyProfile(remote);
+                saveProfile();
+                renderDone();
+                setSync(true);
+                if (step === 0) show(4);
+            } else if (saved && saved.name) {
+                // локальный профиль есть, а в облаке его нет — отправляем
+                await Supa.saveProfile(profile);
+                setSync(true);
+            }
+        }).catch((e) => {
+            console.error('Supabase sync error:', e);
+            setSync(false, e.message || 'ошибка');
+        });
     }
 
     $('startButton').addEventListener('click', () => { TG.tap(); show(1); });
