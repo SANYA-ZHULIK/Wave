@@ -7,7 +7,7 @@
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     >
 
     <meta
@@ -59,6 +59,11 @@
         href="css/network.css"
     >
 
+    <link
+        rel="stylesheet"
+        href="css/auth.css"
+    >
+
 </head>
 
 
@@ -97,20 +102,20 @@
         <div class="network-dot dot-6"></div>
 
         <!-- Surrounding photos -->
-        <div class="network-item item-1"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" alt=""></div>
-        <div class="network-item item-2"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80" alt=""></div>
-        <div class="network-item item-3"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80" alt=""></div>
-        <div class="network-item item-4"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&q=80" alt=""></div>
-        <div class="network-item item-5"><img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&q=80" alt=""></div>
-        <div class="network-item item-6"><img src="https://images.unsplash.com/photo-1504593811423-6dd665756598?w=100&q=80" alt=""></div>
-        <div class="network-item item-7"><img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&q=80" alt=""></div>
-        <div class="network-item item-8"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80" alt=""></div>
-        <div class="network-item item-9"><img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&q=80" alt=""></div>
-        <div class="network-item item-10"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80" alt=""></div>
+        <div class="network-item item-1"><img loading="lazy" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" alt=""></div>
+        <div class="network-item item-2"><img loading="lazy" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80" alt=""></div>
+        <div class="network-item item-3"><img loading="lazy" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80" alt=""></div>
+        <div class="network-item item-4"><img loading="lazy" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&q=80" alt=""></div>
+        <div class="network-item item-5"><img loading="lazy" src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&q=80" alt=""></div>
+        <div class="network-item item-6"><img loading="lazy" src="https://images.unsplash.com/photo-1504593811423-6dd665756598?w=100&q=80" alt=""></div>
+        <div class="network-item item-7"><img loading="lazy" src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&q=80" alt=""></div>
+        <div class="network-item item-8"><img loading="lazy" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80" alt=""></div>
+        <div class="network-item item-9"><img loading="lazy" src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&q=80" alt=""></div>
+        <div class="network-item item-10"><img loading="lazy" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80" alt=""></div>
 
         <!-- Center photo -->
         <div class="network-center">
-            <img src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=300&q=85" alt="">
+            <img loading="lazy" src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=300&q=85" alt="">
         </div>
 
     </section>
@@ -121,29 +126,75 @@
     <!-- ===== CONTENT (кнопка и футер внизу) ===== -->
     <main class="content">
         <button class="cta-button" id="startButton">Начать</button>
-        
     </main>
-
-
-
-    
     <!-- =================================
          FOOTER
     ================================== -->
 
-    <footer class="footer">
-
-      
-
-    </footer>
+    
 
 
+
+
+    <!-- ===== РЕГИСТРАЦИЯ ===== -->
+    <section class="auth-screen" id="screen-name">
+        <div class="auth-progress"><span class="auth-dot active"></span><span class="auth-dot"></span><span class="auth-dot"></span></div>
+        <div class="auth-header"><h2>Как вас зовут?</h2><p>Так вас увидят другие</p></div>
+        <div class="auth-form">
+            <input class="auth-input" id="nameInput" type="text" placeholder="Ваше имя" maxlength="20" autocomplete="given-name">
+            <div class="auth-error" id="nameError" role="alert"></div>
+            <button class="auth-button" id="nameNext">Далее</button>
+        </div>
+    </section>
+
+    <section class="auth-screen" id="screen-age">
+        <div class="auth-progress"><span class="auth-dot done"></span><span class="auth-dot active"></span><span class="auth-dot"></span></div>
+        <div class="auth-header"><h2>Сколько вам лет?</h2><p>Wave — только для совершеннолетних</p></div>
+        <div class="auth-form">
+            <div class="age-picker">
+                <button id="ageMinus" aria-label="Уменьшить возраст">−</button>
+                <div class="age-display" id="ageDisplay">22</div>
+                <button id="agePlus" aria-label="Увеличить возраст">+</button>
+            </div>
+            <button class="auth-button" id="ageNext">Далее</button>
+        </div>
+    </section>
+
+    <section class="auth-screen" id="screen-gender">
+        <div class="auth-progress"><span class="auth-dot done"></span><span class="auth-dot done"></span><span class="auth-dot active"></span></div>
+        <div class="auth-header"><h2>Расскажите о себе</h2><p>Подберём подходящие знакомства</p></div>
+        <div class="auth-form">
+            <div class="auth-label">Я</div>
+            <div class="chip-group" id="genderChips">
+                <button class="chip" data-value="male">Парень</button>
+                <button class="chip" data-value="female">Девушка</button>
+            </div>
+            <div class="auth-label">Ищу</div>
+            <div class="chip-group" id="lookingChips">
+                <button class="chip" data-value="male">Парней</button>
+                <button class="chip" data-value="female">Девушек</button>
+                <button class="chip" data-value="any">Всех</button>
+            </div>
+            <div class="auth-error" id="genderError" role="alert"></div>
+            <button class="auth-button" id="genderNext">Создать профиль</button>
+        </div>
+    </section>
+
+    <section class="auth-screen" id="screen-done">
+        <div class="done-emoji">🌊</div>
+        <div class="auth-header"><h2 id="doneTitle">Привет!</h2><p>Профиль создан. Скоро здесь появятся люди рядом.</p></div>
+        <div class="auth-form">
+            <button class="auth-link" id="resetBtn">Изменить анкету</button>
+        </div>
+    </section>
 
     <!-- =================================
          JAVASCRIPT
     ================================== -->
 
     <script src="js/telegram.js"></script>
+
+    <script src="js/supabase.js"></script>
 
     <script src="js/landing.js"></script>
 
