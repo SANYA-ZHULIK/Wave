@@ -8,6 +8,10 @@ const profile = { name: '', age: 22, gender: '', looking: '' };
 let step = 0;
 
 const $ = (id) => document.getElementById(id);
+function setSync(ok) {
+    const el = document.getElementById('syncStatus');
+    if (el) el.textContent = ok ? '☁ Профиль сохранён в облаке' : 'Профиль сохранён только на этом устройстве';
+}
 const dbOn = () => typeof Supa !== 'undefined' && Supa.enabled();
 
 /* ---------- storage (с try/catch: в приватном режиме может падать) ---------- */
@@ -75,12 +79,14 @@ async function finish() {
     btn.disabled = true;
     try {
         if (dbOn()) await Supa.saveProfile(profile);
+        setSync(dbOn());
         saveProfile(); // локальная копия — для быстрого старта
         renderDone();
         TG.ok();
         show(4);
     } catch (e) {
-        fail(null, $('genderError'), 'Не удалось сохранить профиль. Проверьте интернет и попробуйте ещё раз');
+        console.error('Supabase save error:', e);
+        fail(null, $('genderError'), 'Не удалось сохранить профиль (' + (e.message || 'ошибка') + ')');
     } finally {
         btn.disabled = false;
     }
@@ -117,6 +123,7 @@ function init() {
     if (saved && saved.name) {
         applyProfile(saved);
         renderDone();
+        setSync(false);
         show(4);
     }
     $('ageDisplay').textContent = profile.age;
@@ -128,8 +135,9 @@ function init() {
             applyProfile(remote);
             saveProfile();
             renderDone();
+            setSync(true);
             if (step === 0) show(4);
-        }).catch(() => {});
+        }).catch((e) => console.error('Supabase load error:', e));
     }
 
     $('startButton').addEventListener('click', () => { TG.tap(); show(1); });
