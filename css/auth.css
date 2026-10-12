@@ -263,3 +263,32 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .done-bio { font-size: 14px; opacity: 0.75; text-align: center; max-width: 280px; margin: 12px 0; line-height: 1.5; }
 .tags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 300px; }
 .tag { padding: 6px 12px; border-radius: 20px; font-size: 13px; background: rgba(181,198,128,0.15); color: #B5C680; }
+
+/* =========================================
+   v8: колесо выбора возраста (как будильник в iPhone)
+========================================= */
+.wheel { position: relative; height: 220px; width: 140px; margin: 0 auto; }
+
+.wheel-list {
+    height: 100%; overflow-y: scroll; padding: 88px 0;
+    scroll-snap-type: y mandatory; overscroll-behavior: contain;
+    scrollbar-width: none; touch-action: pan-y;
+    -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+            mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+}
+.wheel-list::-webkit-scrollbar { display: none; }
+
+.wheel-item {
+    height: 44px; display: flex; align-items: center; justify-content: center;
+    scroll-snap-align: center; /* Оставляем прилипание по центру */
+    font-size: 24px; font-weight: 600; color: rgba(255,255,255,0.35);
+    cursor: pointer; transition: color 0.15s, font-size 0.15s;
+}
+
+.wheel-item.selected { color: #B5C680; font-size: 34px; font-weight: 800; }
+
+.wheel-band {
+    position: absolute; left: 0; right: 0; top: 88px; height: 44px;
+    border-radius: 12px; background: rgba(255,255,255,0.08);
+    pointer-events: none; z-index: -1;
+}

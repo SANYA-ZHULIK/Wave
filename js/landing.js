@@ -90,11 +90,33 @@ function submitName() {
     profile.name = name; TG.tap(); show(2);
 }
 
-/* ---------- 2. возраст ---------- */
-function setAge(delta) {
-    profile.age = Math.min(99, Math.max(18, profile.age + delta));
-    $('ageDisplay').textContent = profile.age;
-    TG.pick();
+/* ---------- 2. возраст (колесо как в iPhone) ---------- */
+const AGE_MIN = 18, AGE_MAX = 99, ITEM_H = 44;
+
+function paintWheel(age) {
+    const items = $('ageList').children;
+    for (let i = 0; i < items.length; i++) items[i].classList.toggle('selected', AGE_MIN + i === age);
+}
+function setWheel(age) {
+    profile.age = age;
+    $('ageList').scrollTop = (age - AGE_MIN) * ITEM_H;
+    paintWheel(age);
+}
+function buildAgeWheel() {
+    const list = $('ageList');
+    let html = '';
+    for (let a = AGE_MIN; a <= AGE_MAX; a++) html += `<div class="wheel-item">${a}</div>`;
+    list.innerHTML = html;
+    list.addEventListener('scroll', () => {
+        const idx = Math.min(AGE_MAX - AGE_MIN, Math.max(0, Math.round(list.scrollTop / ITEM_H)));
+        const age = AGE_MIN + idx;
+        if (age !== profile.age) { profile.age = age; paintWheel(age); TG.pick(); }
+    }, { passive: true });
+    list.addEventListener('click', (e) => {
+        const i = Array.prototype.indexOf.call(list.children, e.target.closest('.wheel-item'));
+        if (i >= 0) list.scrollTo({ top: i * ITEM_H, behavior: 'smooth' });
+    });
+    setWheel(profile.age);
 }
 
 /* ---------- 3. пол ---------- */
@@ -233,7 +255,7 @@ function applyProfile(p) {
         photo_url: p.photo_url || '', bio: p.bio || ''
     });
     $('nameInput').value = profile.name;
-    $('ageDisplay').textContent = profile.age;
+    setWheel(profile.age);
     [['genderChips', 'gender'], ['lookingChips', 'looking']].forEach(([id, key]) =>
         $(id).querySelectorAll('.chip').forEach((c) => c.classList.toggle('selected', c.dataset.value === profile[key])));
     $('cityInput').value = profile.city;
@@ -245,6 +267,7 @@ function editProfile() { applyProfile(profile); show(1); }
 /* ---------- init ---------- */
 function init() {
     buildDots();
+    buildAgeWheel();
     $('intentChips').innerHTML = Object.entries(INTENTS)
         .map(([k, v]) => `<button type="button" class="chip sm" data-value="${k}">${v}</button>`).join('');
     renderCities();
@@ -256,8 +279,6 @@ function init() {
     $('startButton').addEventListener('click', () => { TG.tap(); show(1); });
     $('nameNext').addEventListener('click', submitName);
     $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitName(); });
-    $('ageMinus').addEventListener('click', () => setAge(-1));
-    $('agePlus').addEventListener('click', () => setAge(+1));
     $('ageNext').addEventListener('click', () => { TG.tap(); show(3); });
     bindChips('genderChips', 'gender');
     bindChips('lookingChips', 'looking');
