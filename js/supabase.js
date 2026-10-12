@@ -9,25 +9,49 @@ const Supa = (() => {
     const initData = () => (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '';
     const enabled = () => !!initData();
 
+    // Достаёт текст ошибки из ответа сервера
+    async function errText(res) {
+        try {
+            const j = await res.json();
+            return j.error || j.message || j.msg || '';
+        } catch (e) { return ''; }
+    }
+
     async function auth() {
         if (session) return session;
-        const res = await fetch(`${SUPA_URL}/functions/v1/telegram-auth`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', apikey: SUPA_ANON, Authorization: `Bearer ${SUPA_ANON}` },
-            body: JSON.stringify({ initData: initData() })
-        });
-        if (!res.ok) throw new Error('auth failed');
+        let res;
+        try {
+            res = await fetch(`${SUPA_URL}/functions/v1/telegram-auth`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', apikey: SUPA_ANON, Authorization: `Bearer ${SUPA_ANON}` },
+                body: JSON.stringify({ initData: initData() })
+            });
+        } catch (e) {
+            throw new Error('функция входа недоступна (' + e.message + ')');
+        }
+        if (!res.ok) {
+            const t = await errText(res);
+            throw new Error('auth ' + res.status + (t ? ': ' + t : ''));
+        }
         session = await res.json();
         return session;
     }
 
     async function rest(path, opts = {}) {
         const s = await auth();
-        const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
-            ...opts,
-            headers: { apikey: SUPA_ANON, Authorization: `Bearer ${s.token}`, 'Content-Type': 'application/json', ...(opts.headers || {}) }
-        });
-        if (!res.ok) throw new Error('db error ' + res.status);
+        let res;
+        try {
+            res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+                ...opts,
+                headers: { apikey: SUPA_ANON, Authorization: `Bearer ${s.token}`, 'Content-Type': 'application/json', ...(opts.headers || {}) }
+            });
+        } catch (e) {
+            throw new Error('база недоступна (' + e.message + ')');
+        }
+        if (!res.ok) {
+            const t = await errText(res);
+            throw new Error('db ' + res.status + (t ? ': ' + t : ''));
+        }
         return res;
     }
 

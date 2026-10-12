@@ -14,8 +14,9 @@ function setSync(ok, err) {
     const len = (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData || '').length;
     const text = ok ? '☁ Профиль сохранён в облаке'
         : err ? 'Ошибка облака: ' + err
-        : (dbOn() ? 'Связь с облаком…' : 'Нет данных Telegram — открыто не как Mini App');
-    el.textContent = text + ' · v4 · initData ' + len;
+        : (typeof Supa === 'undefined' ? 'Файл js/supabase.js не загружен'
+            : dbOn() ? 'Связь с облаком…' : 'Нет данных Telegram — открыто не как Mini App');
+    el.textContent = text + ' · v6 · initData ' + len;
 }
 const dbOn = () => typeof Supa !== 'undefined' && Supa.enabled();
 
