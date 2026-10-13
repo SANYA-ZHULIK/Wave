@@ -281,8 +281,20 @@ function applyProfile(p) {
     $('cityInput').value = profile.city;
     $('bioInput').value = profile.bio;
     onBioInput(); paintIntents(); paintPhoto();
+
+    // 💡 ЕСЛИ ЕСТЬ ПУТЬ К ФОТО, НО НЕТ ССЫЛКИ — СРАЗУ ЗАПРАШИВАЕМ ИЗ SUPABASE
+    if (profile.photo_path && !profile.photo_url && dbOn()) {
+        refreshPhoto();
+    }
 }
-function editProfile() { applyProfile(profile); show(1); }
+function editProfile() { 
+    applyProfile(profile); 
+    show(1); 
+    // Если картинка была, но ссылка протухла/очистилась — обновляем
+    if (profile.photo_path && !profile.photo_url) {
+        refreshPhoto();
+    }
+}
 
 /* ---------- init ---------- */
 function bindDebugToggle() {
