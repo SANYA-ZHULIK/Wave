@@ -1,8 +1,11 @@
 /* =========================================
    WAVE — лендинг + регистрация
 ========================================= */
-// true — показывать на экране технический статус облака и тексты ошибок (для разработки)
-const DEBUG = false;
+// Отладка (технический статус облака и тексты ошибок на экране).
+// Скрыта от пользователей. Включить/выключить: 5 быстрых нажатий на логотип WAVE
+// (или на приветствие «Привет, …» на финальном экране). Настройка запоминается.
+let DEBUG = false;
+try { DEBUG = localStorage.getItem('wave_debug') === '1'; } catch (e) {}
 
 const STORAGE_KEY = 'wave_profile';
 const STEPS = ['landing', 'screen-name', 'screen-age', 'screen-gender', 'screen-city',
@@ -19,7 +22,7 @@ const CITIES = ['Минск', 'Гомель', 'Могилёв', 'Витебск'
     'Жлобин', 'Светлогорск', 'Речица', 'Слуцк', 'Жодино', 'Слоним', 'Кобрин', 'Волковыск',
     'Калинковичи', 'Сморгонь', 'Осиповичи', 'Новогрудок', 'Вилейка', 'Дзержинск', 'Заславль'];
 
-const profile = { name: '', age: 22, gender: '', looking: '', city: '', intents: [], photo_url: '', bio: '' };
+const profile = { name: '', age: 22, gender: '', looking: '', city: '', intents: [], photo_url: '', photo_path: '', bio: '' };
 let step = 0;
 
 const $ = (id) => document.getElementById(id);
@@ -38,7 +41,12 @@ function setSync(ok, err) {
 }
 
 /* ---------- локальное хранилище ---------- */
-function saveProfile() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(profile)); } catch (e) {} }
+function saveProfile() {
+    // Временную (подписанную) ссылку локально не храним — она протухает; храним только путь
+    const copy = { ...profile };
+    if (copy.photo_url && !copy.photo_url.startsWith('data:')) copy.photo_url = '';
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(copy)); } catch (e) {}
+}
 function loadProfile() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { return null; } }
 const isComplete = () => !!(profile.name && profile.gender && profile.looking && profile.city && profile.intents.length);
 
@@ -207,9 +215,20 @@ function onBioInput() {
 async function pushRemote() {
     if (profile.photo_url.startsWith('data:')) {
         const blob = await (await fetch(profile.photo_url)).blob();
-        profile.photo_url = await Supa.uploadAvatar(blob);
+        profile.photo_path = await Supa.uploadAvatar(blob);
+        profile.photo_url = '';
     }
     await Supa.saveProfile(profile);
+    await refreshPhoto();
+}
+
+// Фото лежит в приватном bucket: получаем временную ссылку по сохранённому пути
+async function refreshPhoto() {
+    if (!profile.photo_path || profile.photo_url || !dbOn()) return;
+    try {
+        profile.photo_url = await Supa.signedUrl(profile.photo_path);
+        paintPhoto(); renderDone();
+    } catch (e) { console.error('Photo error:', e); }
 }
 
 async function finish() {
@@ -252,7 +271,8 @@ function applyProfile(p) {
     Object.assign(profile, {
         name: p.name || '', age: p.age || 22, gender: p.gender || '', looking: p.looking || '',
         city: p.city || '', intents: Array.isArray(p.intents) ? p.intents : [],
-        photo_url: p.photo_url || '', bio: p.bio || ''
+        photo_path: p.photo_path || '',
+        photo_url: (p.photo_url || '').startsWith('data:') ? p.photo_url : '', bio: p.bio || ''
     });
     $('nameInput').value = profile.name;
     setWheel(profile.age);
@@ -265,8 +285,24 @@ function applyProfile(p) {
 function editProfile() { applyProfile(profile); show(1); }
 
 /* ---------- init ---------- */
+function bindDebugToggle() {
+    const logo = document.querySelector('.logo-area h1');
+    const paint = () => { if (logo) logo.textContent = DEBUG ? 'WAVE·dev' : 'WAVE'; };
+    let taps = 0, timer;
+    const onTap = () => {
+        taps++; clearTimeout(timer); timer = setTimeout(() => { taps = 0; }, 1500);
+        if (taps < 5) return;
+        taps = 0; DEBUG = !DEBUG;
+        try { localStorage.setItem('wave_debug', DEBUG ? '1' : '0'); } catch (e) {}
+        paint(); setSync(false); TG.ok();
+    };
+    [logo, $('doneTitle')].forEach((el) => el && el.addEventListener('click', onTap));
+    paint();
+}
+
 function init() {
     buildDots();
+    bindDebugToggle();
     buildAgeWheel();
     $('intentChips').innerHTML = Object.entries(INTENTS)
         .map(([k, v]) => `<button type="button" class="chip sm" data-value="${k}">${v}</button>`).join('');
@@ -309,7 +345,7 @@ function init() {
 
     // Сохранённый локально профиль
     const saved = loadProfile();
-    if (saved && saved.name) { applyProfile(saved); route(); setSync(false); }
+    if (saved && saved.name) { applyProfile(saved); route(); setSync(false); refreshPhoto(); }
 
     // Источник правды — БД
     if (dbOn()) {
@@ -318,6 +354,7 @@ function init() {
                 applyProfile(remote); saveProfile();
                 if (step === 0) route();
                 setSync(true);
+                refreshPhoto();
             } else if (saved && isComplete()) {
                 await pushRemote(); saveProfile(); setSync(true);
             }

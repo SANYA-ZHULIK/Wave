@@ -59,11 +59,11 @@ const Supa = (() => {
         enabled,
         async loadProfile() {
             const s = await auth();
-            const res = await rest(`profiles?tg_id=eq.${s.tg_id}&select=name,age,gender,looking,city,intents,bio,photo_url`);
+            const res = await rest(`profiles?tg_id=eq.${s.tg_id}&select=name,age,gender,looking,city,intents,bio,photo_path`);
             const rows = await res.json();
             return rows[0] || null;
         },
-        // Загружает JPEG-аватарку в bucket avatars/{tg_id}/avatar.jpg, возвращает публичный URL
+        // Загружает JPEG-аватарку в приватный bucket avatars/{tg_id}/avatar.jpg, возвращает путь
         async uploadAvatar(blob) {
             const s = await auth();
             const path = `${s.tg_id}/avatar.jpg`;
@@ -76,7 +76,22 @@ const Supa = (() => {
                 });
             } catch (e) { throw new Error('хранилище недоступно (' + e.message + ')'); }
             if (!res.ok) { const t = await errText(res); throw new Error('storage ' + res.status + (t ? ': ' + t : '')); }
-            return `${SUPA_URL}/storage/v1/object/public/avatars/${path}?v=${Date.now()}`;
+            return path;
+        },
+        // Временная ссылка на фото из приватного bucket (по умолчанию на 1 час)
+        async signedUrl(path, expiresIn = 3600) {
+            const s = await auth();
+            let res;
+            try {
+                res = await fetch(`${SUPA_URL}/storage/v1/object/sign/avatars/${path}`, {
+                    method: 'POST',
+                    headers: { apikey: SUPA_ANON, Authorization: `Bearer ${s.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ expiresIn })
+                });
+            } catch (e) { throw new Error('хранилище недоступно (' + e.message + ')'); }
+            if (!res.ok) { const t = await errText(res); throw new Error('storage ' + res.status + (t ? ': ' + t : '')); }
+            const j = await res.json();
+            return `${SUPA_URL}/storage/v1${j.signedURL}`;
         },
         async saveProfile(p) {
             const s = await auth();
@@ -85,7 +100,7 @@ const Supa = (() => {
                 headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
                 body: JSON.stringify({
                     tg_id: s.tg_id, name: p.name, age: p.age, gender: p.gender, looking: p.looking,
-                    city: p.city, intents: p.intents, bio: p.bio || null, photo_url: p.photo_url || null,
+                    city: p.city, intents: p.intents, bio: p.bio || null, photo_path: p.photo_path || null,
                     updated_at: new Date().toISOString()
                 })
             });
