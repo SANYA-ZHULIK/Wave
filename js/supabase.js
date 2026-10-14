@@ -93,13 +93,14 @@ const Supa = (() => {
             const j = await res.json();
             return `${SUPA_URL}/storage/v1${j.signedURL}`;
         },
-        // Лента: подходящие анкеты (подбор делает SQL-функция discover)
-        async discover({ intent = null, sameCity = true, limit = 30, offset = 0 } = {}) {
-            const res = await rest('rpc/discover', {
-                method: 'POST',
-                body: JSON.stringify({ p_intent: intent, p_same_city: sameCity, p_limit: limit, p_offset: offset })
-            });
+        // Вызов SQL-функции (RPC): подбор анкет, волны, слоты, мэтчи
+        async rpc(fn, args = {}) {
+            const res = await rest('rpc/' + fn, { method: 'POST', body: JSON.stringify(args) });
             return res.json();
+        },
+        async setUsername(username) {
+            const s = await auth();
+            await rest(`profiles?tg_id=eq.${s.tg_id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ tg_username: username }) });
         },
         async saveProfile(p) {
             const s = await auth();
@@ -108,7 +109,7 @@ const Supa = (() => {
                 headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
                 body: JSON.stringify({
                     tg_id: s.tg_id, name: p.name, age: p.age, gender: p.gender, looking: p.looking,
-                    city: p.city, intents: p.intents, bio: p.bio || null, photo_path: p.photo_path || null,
+                    city: p.city, intents: p.intents, bio: p.bio || null, photo_path: p.photo_path || null, tg_username: p.tg_username || null,
                     updated_at: new Date().toISOString()
                 })
             });

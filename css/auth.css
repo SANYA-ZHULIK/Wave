@@ -293,7 +293,7 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     pointer-events: none; z-index: -1;
 }
 /* =========================================
-   v11: лента анкет
+   v12: колода анкет, слоты, волны
 ========================================= */
 .feed-screen {
     position: fixed; inset: 0; z-index: 100; background: #0C061B;
@@ -302,37 +302,88 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 }
 .feed-screen.active { opacity: 1; pointer-events: all; }
 
-.feed-head { display: flex; justify-content: space-between; align-items: center; padding: 20px 20px 8px; }
-.feed-head h2 { font-size: 24px; font-weight: 800; color: #B5C680; }
-.feed-me {
-    background: rgba(255,255,255,0.08); border: none; color: #fff; padding: 8px 14px;
-    border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+.feed-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 6px; gap: 8px; }
+.feed-head h2 { font-size: 20px; font-weight: 800; color: #B5C680; }
+.feed-pill {
+    position: relative; background: rgba(255,255,255,0.08); border: none; color: #fff;
+    padding: 9px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
 }
+.badge {
+    position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px;
+    border-radius: 9px; background: #ff6b6b; color: #fff; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+}
+.slots { display: flex; gap: 7px; }
+.slot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #B5C680; }
+.slot.full { background: #B5C680; }
 
-.feed-filters { padding: 0 20px 8px; display: flex; flex-direction: column; gap: 12px; }
-.feed-chips { overflow-x: auto; flex-wrap: nowrap !important; justify-content: flex-start; scrollbar-width: none; padding-bottom: 2px; }
+.feed-chips { display: flex; gap: 8px; overflow-x: auto; padding: 6px 16px 10px; scrollbar-width: none; }
 .feed-chips::-webkit-scrollbar { display: none; }
-.feed-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; opacity: 0.7; cursor: pointer; }
-.feed-toggle input { accent-color: #B5C680; width: 18px; height: 18px; }
 
-.feed-list {
-    flex: 1; overflow-y: auto; overscroll-behavior: contain;
-    padding: 8px 20px calc(24px + env(safe-area-inset-bottom, 0px));
-    display: flex; flex-direction: column; gap: 12px;
+.deck { flex: 1; min-height: 0; margin: 0 16px; position: relative; }
+.deck-card {
+    position: absolute; inset: 0; border-radius: 26px; overflow: hidden;
+    background: linear-gradient(135deg, #7C3AED, #4C1D95);
+    animation: cardIn 0.3s ease; transition: transform 0.26s ease, opacity 0.26s ease;
 }
+.deck-card.leave-left  { transform: translateX(-120%) rotate(-12deg); opacity: 0; }
+.deck-card.leave-right { transform: translateX(120%) rotate(12deg);   opacity: 0; }
+@keyframes cardIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+.deck-photo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 120px; font-weight: 800; color: rgba(255,255,255,0.35); }
+.deck-photo img { width: 100%; height: 100%; object-fit: cover; }
+.deck-info {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 70px 18px 18px;
+    background: linear-gradient(transparent, rgba(12,6,27,0.6) 35%, rgba(12,6,27,0.96));
+    display: flex; flex-direction: column; gap: 8px;
+}
+.deck-name { font-size: 28px; font-weight: 800; }
+.deck-city { font-size: 14px; opacity: 0.75; margin-top: -4px; }
+.deck-bio { font-size: 14px; line-height: 1.45; opacity: 0.9; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.deck-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 30px; opacity: 0.6; line-height: 1.5; }
+
+.hint {
+    text-align: left; cursor: pointer; padding: 10px 14px; border-radius: 14px; color: #fff; font-family: inherit;
+    background: rgba(181,198,128,0.18); border: 1px solid rgba(181,198,128,0.45);
+    display: flex; flex-direction: column; gap: 3px;
+}
+.hint-top { font-size: 12px; color: #B5C680; font-weight: 700; }
+.hint-ask { font-size: 14px; }
+
+.deck-actions { display: flex; justify-content: center; align-items: center; gap: 22px; padding: 14px 0 calc(16px + env(safe-area-inset-bottom, 0px)); }
+.act { width: 64px; height: 64px; border-radius: 50%; border: none; font-size: 26px; cursor: pointer; color: #fff; background: rgba(255,255,255,0.1); transition: transform 0.15s, opacity 0.2s; }
+.act:active { transform: scale(0.9); }
+.act-pass { color: #ff6b6b; }
+.act-msg { width: 52px; height: 52px; font-size: 20px; }
+.act-like { width: 72px; height: 72px; font-size: 30px; background: #B5C680; color: #1a1a1a; }
+.act-like.locked { opacity: 0.35; }
+
+.toast {
+    position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); width: max-content; max-width: 86%;
+    background: rgba(30,20,50,0.97); border: 1px solid rgba(255,255,255,0.15);
+    padding: 12px 16px; border-radius: 14px; font-size: 14px; text-align: center; line-height: 1.4; z-index: 300;
+}
+
+.sheet { position: absolute; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: flex-end; z-index: 20; }
+.sheet-box { width: 100%; padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px)); background: #170d2b; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; gap: 12px; }
+.sheet-box h3 { font-size: 18px; color: #B5C680; }
+
+.waves-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 6px 20px 28px; display: flex; flex-direction: column; gap: 12px; }
 .feed-empty { text-align: center; font-size: 14px; opacity: 0.6; padding: 30px; line-height: 1.5; }
+.sec-title { font-size: 12px; opacity: 0.5; letter-spacing: 1px; text-transform: uppercase; margin-top: 12px; }
+.sec-note { font-size: 13px; opacity: 0.45; }
+.slot-row { font-size: 14px; padding: 10px 14px; border-radius: 12px; background: rgba(255,255,255,0.06); }
 
 .card { display: flex; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); }
-.card-ava {
-    flex: 0 0 64px; width: 64px; height: 64px; border-radius: 50%; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #7C3AED, #4C1D95); font-size: 26px; font-weight: 800;
-}
+.card-ava { flex: 0 0 64px; width: 64px; height: 64px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #7C3AED, #4C1D95); font-size: 26px; font-weight: 800; }
 .card-ava img { width: 100%; height: 100%; object-fit: cover; }
-.card-body { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.card-body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .card-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 16px; }
 .card-city { font-size: 12px; opacity: 0.5; }
-.card .tags { justify-content: flex-start; max-width: none; gap: 6px; }
-.card .tag { font-size: 12px; padding: 4px 10px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
-.card .tag.shared { background: rgba(181,198,128,0.2); color: #B5C680; }
-.card-bio { font-size: 13px; opacity: 0.75; line-height: 1.45; }
+.card .tags, .deck-info .tags { justify-content: flex-start; max-width: none; gap: 6px; }
+.card .tag, .deck-info .tag { font-size: 12px; padding: 4px 10px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.75); }
+.card .tag.shared, .deck-info .tag.shared { background: rgba(181,198,128,0.22); color: #B5C680; }
+.w-msg { font-size: 13px; padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.08); line-height: 1.4; }
+.w-btns { display: flex; gap: 8px; }
+.w-btn { flex: 1; padding: 10px; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; color: #fff; background: rgba(255,255,255,0.1); }
+.w-btn.ok { background: #B5C680; color: #1a1a1a; }

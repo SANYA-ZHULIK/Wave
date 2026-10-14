@@ -9,8 +9,8 @@ try { DEBUG = localStorage.getItem('wave_debug') === '1'; } catch (e) {}
 
 const STORAGE_KEY = 'wave_profile';
 const STEPS = ['landing', 'screen-name', 'screen-age', 'screen-gender', 'screen-city',
-               'screen-intents', 'screen-photo', 'screen-bio', 'screen-done', 'screen-feed'];
-const FORM_STEPS = 7, DONE = 8, FEED = 9, MAX_INTENTS = 5;
+               'screen-intents', 'screen-photo', 'screen-bio', 'screen-done', 'screen-feed', 'screen-waves'];
+const FORM_STEPS = 7, DONE = 8, FEED = 9, WAVES = 10, MAX_INTENTS = 5;
 
 const INTENTS = {
     relationship: 'Отношения', friendship: 'Дружба', chat: 'Общение',
@@ -68,7 +68,7 @@ function buildDots() {
 function show(n) {
     step = n;
     STEPS.slice(1).forEach((id, i) => $(id).classList.toggle('active', i + 1 === n));
-    TG.back(n > 0 && n < DONE ? () => show(n - 1) : n === FEED ? () => show(DONE) : null);
+    TG.back(n > 0 && n < DONE ? () => show(n - 1) : n === FEED ? () => show(DONE) : n === WAVES ? () => show(FEED) : null);
     if (n === 1) setTimeout(() => $('nameInput').focus(), 450);
 }
 
@@ -218,6 +218,8 @@ async function pushRemote() {
         profile.photo_path = await Supa.uploadAvatar(blob);
         profile.photo_url = '';
     }
+    const tu = TG.user();
+    profile.tg_username = (tu && tu.username) || null;   // виден другим только после мэтча
     await Supa.saveProfile(profile);
     await refreshPhoto();
 }
@@ -296,56 +298,6 @@ function editProfile() {
     }
 }
 
-/* ---------- лента ---------- */
-const feedState = { intent: null, sameCity: true, req: 0 };
-
-function feedMessage(text) { const el = $('feedEmpty'); el.textContent = text; el.hidden = !text; }
-
-// Все тексты анкет — через textContent (описание пишут пользователи, HTML вставлять нельзя)
-function renderCard(r) {
-    const card = document.createElement('article'); card.className = 'card';
-    const ava = document.createElement('div'); ava.className = 'card-ava';
-    ava.textContent = (r.name || '?').slice(0, 1).toUpperCase();
-    if (r.photo_path) Supa.signedUrl(r.photo_path).then((u) => {
-        const im = document.createElement('img'); im.alt = ''; im.src = u;
-        ava.textContent = ''; ava.appendChild(im);
-    }).catch(() => {});
-    const body = document.createElement('div'); body.className = 'card-body';
-    const title = document.createElement('div'); title.className = 'card-title';
-    const b = document.createElement('b'); b.textContent = `${r.name}, ${r.age}`;
-    const city = document.createElement('span'); city.className = 'card-city'; city.textContent = r.city || '';
-    title.append(b, city);
-    const tags = document.createElement('div'); tags.className = 'tags';
-    (r.intents || []).forEach((k) => {
-        const t = document.createElement('span');
-        t.className = 'tag' + ((r.shared || []).includes(k) ? ' shared' : '');
-        t.textContent = INTENTS[k] || k; tags.appendChild(t);
-    });
-    body.append(title, tags);
-    if (r.bio) { const p = document.createElement('p'); p.className = 'card-bio'; p.textContent = r.bio; body.appendChild(p); }
-    card.append(ava, body);
-    return card;
-}
-
-async function loadFeed() {
-    const list = $('feedList'), req = ++feedState.req;
-    list.innerHTML = ''; feedMessage('');
-    if (!dbOn()) return feedMessage('Лента доступна только внутри Telegram');
-    feedMessage('Загружаем…');
-    try {
-        const rows = await Supa.discover({ intent: feedState.intent, sameCity: feedState.sameCity });
-        if (req !== feedState.req) return; // пришёл устаревший ответ
-        list.innerHTML = '';
-        rows.forEach((r) => list.appendChild(renderCard(r)));
-        feedMessage(rows.length ? '' : 'Пока никого не нашли. Попробуйте другую тему или снимите фильтр по городу');
-    } catch (e) {
-        if (req !== feedState.req) return;
-        console.error('Feed error:', e);
-        feedMessage('Не удалось загрузить ленту' + (DEBUG ? ' (' + e.message + ')' : ''));
-    }
-}
-function openFeed() { TG.tap(); show(FEED); loadFeed(); }
-
 /* ---------- init ---------- */
 function bindDebugToggle() {
     const logo = document.querySelector('.logo-area h1');
@@ -405,19 +357,8 @@ function init() {
     $('bioNext').addEventListener('click', finish);
     $('resetBtn').addEventListener('click', editProfile);
 
-    // Лента
-    $('feedIntents').innerHTML = [['', 'Все'], ...Object.entries(INTENTS)]
-        .map(([k, v]) => `<button type="button" class="chip sm${k ? '' : ' selected'}" data-value="${k}">${v}</button>`).join('');
-    $('feedIntents').addEventListener('click', (e) => {
-        const c = e.target.closest('.chip');
-        if (!c) return;
-        feedState.intent = c.dataset.value || null;
-        $('feedIntents').querySelectorAll('.chip').forEach((x) => x.classList.toggle('selected', x === c));
-        TG.pick(); loadFeed();
-    });
-    $('feedCity').addEventListener('change', (e) => { feedState.sameCity = e.target.checked; TG.pick(); loadFeed(); });
-    $('feedOpen').addEventListener('click', openFeed);
-    $('feedMe').addEventListener('click', () => { TG.tap(); show(DONE); });
+    // Лента (вся логика — в feed.js)
+    $('feedOpen').addEventListener('click', () => { TG.tap(); show(FEED); Feed.open(); });
 
     // Сохранённый локально профиль
     const saved = loadProfile();

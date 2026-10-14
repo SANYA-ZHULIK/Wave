@@ -46,22 +46,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=11"
+        href="css/base.css?v=12"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=11"
+        href="css/landing.css?v=12"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=11"
+        href="css/network.css?v=12"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=11"
+        href="css/auth.css?v=12"
     >
 
 </head>
@@ -236,26 +236,49 @@
 
     <section class="feed-screen" id="screen-feed">
         <header class="feed-head">
-            <h2>Анкеты</h2>
-            <button class="feed-me" id="feedMe">Профиль</button>
+            <button class="feed-pill" id="feedMe">Профиль</button>
+            <div class="slots" id="slots" aria-label="Слоты волн"></div>
+            <button class="feed-pill" id="feedWaves">Волны<span class="badge" id="wavesBadge" hidden>0</span></button>
         </header>
-        <div class="feed-filters">
-            <div class="chip-group feed-chips" id="feedIntents"></div>
-            <label class="feed-toggle"><input type="checkbox" id="feedCity" checked> Только мой город</label>
+        <div class="feed-chips" id="feedChips"></div>
+        <div class="deck" id="deck"></div>
+        <div class="deck-actions">
+            <button class="act act-pass" id="actPass" aria-label="Пропустить">✕</button>
+            <button class="act act-msg" id="actMsg" aria-label="Написать сообщение">✎</button>
+            <button class="act act-like" id="actLike" aria-label="Отправить волну">♥</button>
         </div>
-        <div class="feed-list" id="feedList"></div>
-        <p class="feed-empty" id="feedEmpty" hidden></p>
+        <div class="sheet" id="waveSheet" hidden>
+            <div class="sheet-box">
+                <h3>Первое сообщение</h3>
+                <textarea class="auth-input" id="sheetText" maxlength="200" placeholder="Необязательно — можно отправить волну и без текста"></textarea>
+                <button class="auth-button" id="sheetSend">Отправить волну</button>
+                <button class="auth-link" id="sheetCancel">Отмена</button>
+            </div>
+        </div>
     </section>
+
+    <section class="feed-screen" id="screen-waves">
+        <header class="feed-head">
+            <button class="feed-pill" id="wavesBack">← Лента</button>
+            <h2>Волны</h2>
+            <span></span>
+        </header>
+        <div class="waves-body" id="wavesBody"></div>
+    </section>
+
+    <div class="toast" id="toast" hidden></div>
 
     <!-- =================================
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=11"></script>
+    <script src="js/telegram.js?v=12"></script>
 
-    <script src="js/supabase.js?v=11"></script>
+    <script src="js/supabase.js?v=12"></script>
 
-    <script src="js/landing.js?v=11"></script>
+    <script src="js/landing.js?v=12"></script>
+
+    <script src="js/feed.js?v=12"></script>
 
 
 </body>
