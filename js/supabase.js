@@ -93,6 +93,14 @@ const Supa = (() => {
             const j = await res.json();
             return `${SUPA_URL}/storage/v1${j.signedURL}`;
         },
+        // Лента: подходящие анкеты (подбор делает SQL-функция discover)
+        async discover({ intent = null, sameCity = true, limit = 30, offset = 0 } = {}) {
+            const res = await rest('rpc/discover', {
+                method: 'POST',
+                body: JSON.stringify({ p_intent: intent, p_same_city: sameCity, p_limit: limit, p_offset: offset })
+            });
+            return res.json();
+        },
         async saveProfile(p) {
             const s = await auth();
             await rest('profiles?on_conflict=tg_id', {

@@ -46,22 +46,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=10"
+        href="css/base.css?v=11"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=10"
+        href="css/landing.css?v=11"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=10"
+        href="css/network.css?v=11"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=10"
+        href="css/auth.css?v=11"
     >
 
 </head>
@@ -228,20 +228,34 @@
         <div class="tags" id="doneIntents"></div>
         <p class="done-bio" id="doneBio"></p>
         <div class="auth-form">
+            <button class="auth-button" id="feedOpen">Смотреть анкеты</button>
             <p id="syncStatus" style="font-size:12px;opacity:.5;text-align:center"></p>
             <button class="auth-link" id="resetBtn">Изменить анкету</button>
         </div>
+    </section>
+
+    <section class="feed-screen" id="screen-feed">
+        <header class="feed-head">
+            <h2>Анкеты</h2>
+            <button class="feed-me" id="feedMe">Профиль</button>
+        </header>
+        <div class="feed-filters">
+            <div class="chip-group feed-chips" id="feedIntents"></div>
+            <label class="feed-toggle"><input type="checkbox" id="feedCity" checked> Только мой город</label>
+        </div>
+        <div class="feed-list" id="feedList"></div>
+        <p class="feed-empty" id="feedEmpty" hidden></p>
     </section>
 
     <!-- =================================
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=10"></script>
+    <script src="js/telegram.js?v=11"></script>
 
-    <script src="js/supabase.js?v=10"></script>
+    <script src="js/supabase.js?v=11"></script>
 
-    <script src="js/landing.js?v=10"></script>
+    <script src="js/landing.js?v=11"></script>
 
 
 </body>

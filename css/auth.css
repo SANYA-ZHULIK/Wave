@@ -292,3 +292,47 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     border-radius: 12px; background: rgba(255,255,255,0.08);
     pointer-events: none; z-index: -1;
 }
+/* =========================================
+   v11: лента анкет
+========================================= */
+.feed-screen {
+    position: fixed; inset: 0; z-index: 100; background: #0C061B;
+    display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px);
+    opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+}
+.feed-screen.active { opacity: 1; pointer-events: all; }
+
+.feed-head { display: flex; justify-content: space-between; align-items: center; padding: 20px 20px 8px; }
+.feed-head h2 { font-size: 24px; font-weight: 800; color: #B5C680; }
+.feed-me {
+    background: rgba(255,255,255,0.08); border: none; color: #fff; padding: 8px 14px;
+    border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+
+.feed-filters { padding: 0 20px 8px; display: flex; flex-direction: column; gap: 12px; }
+.feed-chips { overflow-x: auto; flex-wrap: nowrap !important; justify-content: flex-start; scrollbar-width: none; padding-bottom: 2px; }
+.feed-chips::-webkit-scrollbar { display: none; }
+.feed-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; opacity: 0.7; cursor: pointer; }
+.feed-toggle input { accent-color: #B5C680; width: 18px; height: 18px; }
+
+.feed-list {
+    flex: 1; overflow-y: auto; overscroll-behavior: contain;
+    padding: 8px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: column; gap: 12px;
+}
+.feed-empty { text-align: center; font-size: 14px; opacity: 0.6; padding: 30px; line-height: 1.5; }
+
+.card { display: flex; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); }
+.card-ava {
+    flex: 0 0 64px; width: 64px; height: 64px; border-radius: 50%; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #7C3AED, #4C1D95); font-size: 26px; font-weight: 800;
+}
+.card-ava img { width: 100%; height: 100%; object-fit: cover; }
+.card-body { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.card-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 16px; }
+.card-city { font-size: 12px; opacity: 0.5; }
+.card .tags { justify-content: flex-start; max-width: none; gap: 6px; }
+.card .tag { font-size: 12px; padding: 4px 10px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+.card .tag.shared { background: rgba(181,198,128,0.2); color: #B5C680; }
+.card-bio { font-size: 13px; opacity: 0.75; line-height: 1.45; }
