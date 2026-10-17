@@ -9,8 +9,8 @@ try { DEBUG = localStorage.getItem('wave_debug') === '1'; } catch (e) {}
 
 const STORAGE_KEY = 'wave_profile';
 const STEPS = ['landing', 'screen-name', 'screen-age', 'screen-gender', 'screen-city',
-               'screen-intents', 'screen-photo', 'screen-bio', 'screen-done', 'screen-feed', 'screen-waves'];
-const FORM_STEPS = 7, DONE = 8, FEED = 9, WAVES = 10, MAX_INTENTS = 5;
+               'screen-intents', 'screen-photo', 'screen-bio', 'screen-done', 'screen-feed', 'screen-waves', 'screen-notifs'];
+const FORM_STEPS = 7, DONE = 8, FEED = 9, WAVES = 10, NOTIFS = 11, MAX_INTENTS = 5;
 
 const INTENTS = {
     relationship: 'Отношения', friendship: 'Дружба', chat: 'Общение',
@@ -65,16 +65,29 @@ function buildDots() {
     });
 }
 
+// Куда ведёт кнопка «Назад» Telegram. Главная — лента анкет (FEED), у неё кнопки «Назад» нет.
+function backTarget(n) {
+    if (n === 1) return isComplete() ? DONE : 0;
+    if (n > 1 && n < DONE) return n - 1;
+    if (n === DONE || n === WAVES || n === NOTIFS) return FEED;
+    return null;
+}
+function applyBack() {
+    const t = backTarget(step);
+    TG.back(t === null || step === 0 ? null : () => show(t));
+}
+
 function show(n) {
     step = n;
     STEPS.slice(1).forEach((id, i) => $(id).classList.toggle('active', i + 1 === n));
-    TG.back(n > 0 && n < DONE ? () => show(n - 1) : n === FEED ? () => show(DONE) : n === WAVES ? () => show(FEED) : null);
+    applyBack();
     if (n === 1) setTimeout(() => $('nameInput').focus(), 450);
+    if (n === FEED && typeof Feed !== 'undefined') Feed.open();
 }
 
 // Куда вести человека с уже сохранённым профилем
 function route() {
-    if (isComplete()) { renderDone(); show(DONE); }
+    if (isComplete()) { renderDone(); show(FEED); }
     else show(!profile.city ? 4 : !profile.intents.length ? 5 : 6);
 }
 
@@ -252,7 +265,8 @@ async function finish() {
         renderDone();
         setSync(dbOn());
         TG.ok();
-        show(DONE);
+        show(FEED);
+        if (typeof Feed !== 'undefined') Feed.toast('Профиль создан! Вот анкеты для вас 🎉', 4000);
     } catch (e) {
         console.error('Save error:', e);
         fail(null, $('bioError'), 'Не удалось сохранить профиль. Проверьте интернет и попробуйте ещё раз' + (DEBUG ? ' (' + e.message + ')' : ''));
@@ -274,6 +288,7 @@ function renderDone() {
         $('doneIntents').appendChild(t);
     });
     $('doneBio').textContent = profile.bio || '';
+    if (typeof Nav !== 'undefined') Nav.renderDrawer();
 }
 
 /* ---------- профиль <-> форма ---------- */
@@ -365,8 +380,6 @@ function init() {
     $('bioNext').addEventListener('click', finish);
     $('resetBtn').addEventListener('click', editProfile);
 
-    // Лента (вся логика — в feed.js)
-    $('feedOpen').addEventListener('click', () => { TG.tap(); show(FEED); Feed.open(); });
 
     // Сохранённый локально профиль
     const saved = loadProfile();

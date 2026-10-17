@@ -19,7 +19,7 @@ const Feed = (() => {
     const st = {
         queue: [], cur: null, intent: null, sameCity: true,
         loading: false, busy: false, exhausted: false, err: '', gen: 0, nameSent: false,
-        status: { used: 0, max: 3, incoming: 0 }
+        status: { used: 0, max: 3, incoming: 0, unread: 0 }
     };
     const urlCache = new Map();
     let toastTimer;
@@ -65,6 +65,7 @@ const Feed = (() => {
         box.classList.toggle('is-full', s.used >= s.max);
         $('wavesBadge').hidden = !s.incoming;
         $('wavesBadge').textContent = s.incoming;
+        document.dispatchEvent(new CustomEvent('wave:status', { detail: s }));
     }
     async function refreshStatus() {
         try { st.status = await Supa.rpc('wave_status'); } catch (e) { console.error('Status error:', e); }
@@ -292,6 +293,14 @@ const Feed = (() => {
         loadWaves();
     }
 
+    // Один раз предлагаем разрешить боту писать — иначе push-уведомления не дойдут
+    function askNotifyPermission() {
+        const u = TG.user();
+        if (!tg || !tg.requestWriteAccess || !tg.showConfirm || !u || u.allows_write_to_pm) return;
+        try { if (localStorage.getItem('wave_wa')) return; localStorage.setItem('wave_wa', '1'); } catch (e) { return; }
+        setTimeout(() => tg.showConfirm('Присылать уведомления о лайках и волнах в Telegram?', (ok) => { if (ok) tg.requestWriteAccess(() => {}); }), 1800);
+    }
+
     /* ---------- вход и привязка ---------- */
     function open() {
         const u = TG.user();
@@ -300,21 +309,23 @@ const Feed = (() => {
         }
         buildChips(); renderStatus();
         if (!dbOn()) { st.err = 'Лента доступна только внутри Telegram'; renderDeck(); return; }
-        refreshStatus();
+        refreshStatus(); askNotifyPermission();
         if (!st.cur && !st.queue.length) { st.exhausted = false; renderDeck(); loadQueue(); } else renderDeck();
     }
     function init() {
-        $('feedMe').addEventListener('click', () => { TG.tap(); show(DONE); });
         $('feedWaves').addEventListener('click', openWaves);
         $('slots').addEventListener('click', explainSlots);
-        $('wavesBack').addEventListener('click', () => { TG.tap(); show(FEED); refreshStatus(); });
         $('actPass').addEventListener('click', pass);
         $('actLike').addEventListener('click', () => wave(null));       // волна без сообщения
         $('actMsg').addEventListener('click', () => { const k = st.cur && commonKey(st.cur); openSheet(k ? ICEBREAKERS[k] : ''); });
         $('sheetSend').addEventListener('click', () => { const t = $('sheetText').value.trim(); closeSheet(); wave(t); });
         $('sheetCancel').addEventListener('click', closeSheet);
         $('feedChips').addEventListener('click', onChip);
+        setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }
     init();
-    return { open };
+    return { open, openWaves, toast, refreshStatus };
 })();
+
+// Если лента уже показана при загрузке (вход в приложение с готовым профилем) — запускаем её
+if ($('screen-feed').classList.contains('active')) Feed.open();
