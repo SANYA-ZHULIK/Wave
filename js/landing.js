@@ -14,7 +14,7 @@ const FORM_STEPS = 7, DONE = 8, FEED = 9, WAVES = 10, MAX_INTENTS = 5;
 
 const INTENTS = {
     relationship: 'Отношения', friendship: 'Дружба', chat: 'Общение',
-    gaming: 'Напарник для игр', walks: 'Прогулки', sport: 'Спорт',
+    gaming: 'Напарник для игр', party: 'Тусовки', drives: 'Ночные покатушки', sport: 'Спорт',
     travel: 'Путешествия', events: 'Мероприятия', hobby: 'Хобби'
 };
 const CITIES = ['Минск', 'Гомель', 'Могилёв', 'Витебск', 'Гродно', 'Брест', 'Бобруйск', 'Барановичи',
@@ -48,7 +48,7 @@ function saveProfile() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(copy)); } catch (e) {}
 }
 function loadProfile() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { return null; } }
-const isComplete = () => !!(profile.name && profile.gender && profile.looking && profile.city && profile.intents.length);
+const isComplete = () => !!(profile.name && profile.gender && profile.looking && profile.city && profile.intents.length && (profile.photo_url || profile.photo_path));
 
 /* ---------- навигация ---------- */
 function buildDots() {
@@ -75,7 +75,7 @@ function show(n) {
 // Куда вести человека с уже сохранённым профилем
 function route() {
     if (isComplete()) { renderDone(); show(DONE); }
-    else show(profile.city ? 5 : 4);
+    else show(!profile.city ? 4 : !profile.intents.length ? 5 : 6);
 }
 
 function fail(input, errEl, msg) {
@@ -194,7 +194,7 @@ function paintPhoto() {
     $('avatarImg').hidden = !has;
     $('avatarPlus').hidden = has;
     if (has) $('avatarImg').src = profile.photo_url;
-    $('photoNext').textContent = has ? 'Далее' : 'Пропустить';
+    
 }
 async function onPhotoChosen(e) {
     const file = e.target.files && e.target.files[0];
@@ -202,6 +202,13 @@ async function onPhotoChosen(e) {
     clearErr('photoError');
     try { profile.photo_url = await toSquareJpeg(file); paintPhoto(); TG.pick(); }
     catch (err) { fail(null, $('photoError'), 'Не удалось открыть фото. Попробуйте другое'); }
+}
+
+// Фото обязательно: без него дальше не пускаем
+const hasPhoto = () => !!(profile.photo_url || profile.photo_path);
+function submitPhoto() {
+    if (!hasPhoto()) return fail(null, $('photoError'), 'Добавьте фото, чтобы продолжить');
+    clearErr('photoError'); TG.tap(); show(7);
 }
 
 /* ---------- 7. описание ---------- */
@@ -234,6 +241,7 @@ async function refreshPhoto() {
 }
 
 async function finish() {
+    if (!hasPhoto()) { show(6); return fail(null, $('photoError'), 'Добавьте фото, чтобы продолжить'); }
     profile.bio = $('bioInput').value.trim();
     const btn = $('bioNext');
     clearErr('bioError');
@@ -351,7 +359,7 @@ function init() {
 
     $('avatarPick').addEventListener('click', () => $('photoFile').click());
     $('photoFile').addEventListener('change', onPhotoChosen);
-    $('photoNext').addEventListener('click', () => { TG.tap(); show(7); });
+    $('photoNext').addEventListener('click', submitPhoto);
 
     $('bioInput').addEventListener('input', onBioInput);
     $('bioNext').addEventListener('click', finish);

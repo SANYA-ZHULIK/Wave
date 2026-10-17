@@ -313,9 +313,6 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     border-radius: 9px; background: #ff6b6b; color: #fff; font-size: 11px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
 }
-.slots { display: flex; gap: 7px; }
-.slot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #B5C680; }
-.slot.full { background: #B5C680; }
 
 .feed-chips { display: flex; gap: 8px; overflow-x: auto; padding: 6px 16px 10px; scrollbar-width: none; }
 .feed-chips::-webkit-scrollbar { display: none; }
@@ -356,7 +353,6 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .act-pass { color: #ff6b6b; }
 .act-msg { width: 52px; height: 52px; font-size: 20px; }
 .act-like { width: 72px; height: 72px; font-size: 30px; background: #B5C680; color: #1a1a1a; }
-.act-like.locked { opacity: 0.35; }
 
 .toast {
     position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); width: max-content; max-width: 86%;
@@ -372,7 +368,6 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .feed-empty { text-align: center; font-size: 14px; opacity: 0.6; padding: 30px; line-height: 1.5; }
 .sec-title { font-size: 12px; opacity: 0.5; letter-spacing: 1px; text-transform: uppercase; margin-top: 12px; }
 .sec-note { font-size: 13px; opacity: 0.45; }
-.slot-row { font-size: 14px; padding: 10px 14px; border-radius: 12px; background: rgba(255,255,255,0.06); }
 
 .card { display: flex; gap: 14px; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); }
 .card-ava { flex: 0 0 64px; width: 64px; height: 64px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #7C3AED, #4C1D95); font-size: 26px; font-weight: 800; }
@@ -387,3 +382,22 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .w-btns { display: flex; gap: 8px; }
 .w-btn { flex: 1; padding: 10px; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; color: #fff; background: rgba(255,255,255,0.1); }
 .w-btn.ok { background: #B5C680; color: #1a1a1a; }
+
+/* =========================================
+   v13: слоты волн (понятный индикатор), пустые слоты, завершение волны
+========================================= */
+.slots {
+    display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(181,198,128,0.35);
+    padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.slots-label { opacity: 0.7; }
+.slots-bars { display: flex; gap: 3px; }
+.slot-bar { width: 14px; height: 8px; border-radius: 3px; background: rgba(255,255,255,0.2); }
+.slot-bar.full { background: #B5C680; }
+.slots-count { color: #B5C680; font-weight: 800; }
+.slots.is-full { border-color: #ff6b6b; }
+.slots.is-full .slot-bar.full { background: #ff6b6b; }
+.slots.is-full .slots-count { color: #ff6b6b; }
+.slot-empty { padding: 16px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 18px; font-size: 13px; opacity: 0.55; text-align: center; }
+.w-btn.danger { color: #ff6b6b; }

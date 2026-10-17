@@ -8,7 +8,8 @@ const ICEBREAKERS = {
     travel: 'Какое место запомнилось больше всего?',
     events: 'На какие мероприятия ходишь?',
     hobby: 'Чем увлекаешься в свободное время?',
-    walks: 'Где в городе любимое место для прогулок?',
+    party: 'Какие тусовки тебе по душе?',
+    drives: 'На чём катаешься и какой маршрут любимый?',
     chat: 'О чём тебе интересно поговорить?',
     friendship: 'Что для тебя важно в друзьях?',
     relationship: 'Какие отношения ты ищешь?'
@@ -18,7 +19,7 @@ const Feed = (() => {
     const st = {
         queue: [], cur: null, intent: null, sameCity: true,
         loading: false, busy: false, exhausted: false, err: '', gen: 0, nameSent: false,
-        status: { used: 0, max: 3, incoming: 0, matches: 0, pending: [] }
+        status: { used: 0, max: 3, incoming: 0 }
     };
     const urlCache = new Map();
     let toastTimer;
@@ -31,9 +32,9 @@ const Feed = (() => {
         return e;
     }
     const dbg = (e) => (DEBUG ? ' (' + e.message + ')' : '');
-    function toast(msg) {
+    function toast(msg, ms = 3000) {
         const t = $('toast'); t.textContent = msg; t.hidden = false;
-        clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3000);
+        clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, ms);
     }
     async function photoUrl(path) {
         if (!urlCache.has(path)) urlCache.set(path, await Supa.signedUrl(path));
@@ -53,23 +54,25 @@ const Feed = (() => {
     }
     const commonKey = (r) => (r.shared || []).find((k) => ICEBREAKERS[k]);
 
-    /* ---------- слоты и счётчики ---------- */
+    /* ---------- слоты ---------- */
+    // Лайки без ограничений. Слот занимает только ВОЛНА — взаимный мэтч (у обоих людей).
     function renderStatus() {
         const s = st.status, box = $('slots');
         box.innerHTML = '';
-        for (let i = 0; i < s.max; i++) box.appendChild(el('span', 'slot' + (i < s.used ? ' full' : '')));
-        box.title = `Слоты волн: ${s.used}/${s.max}`;
+        const bars = el('span', 'slots-bars');
+        for (let i = 0; i < s.max; i++) bars.appendChild(el('span', 'slot-bar' + (i < s.used ? ' full' : '')));
+        box.append(el('span', 'slots-label', 'Слоты'), bars, el('span', 'slots-count', `${s.used}/${s.max}`));
+        box.classList.toggle('is-full', s.used >= s.max);
         $('wavesBadge').hidden = !s.incoming;
         $('wavesBadge').textContent = s.incoming;
-        $('actLike').classList.toggle('locked', s.used >= s.max);
     }
     async function refreshStatus() {
         try { st.status = await Supa.rpc('wave_status'); } catch (e) { console.error('Status error:', e); }
         renderStatus();
     }
-    function showFull() {
-        TG.fail();
-        toast(`Все ${st.status.max} слота заняты. Слот освободится, когда кто-то ответит или через 48 часов`);
+    function explainSlots() {
+        TG.tap();
+        toast(`Слот занимает волна — взаимный лайк. Сейчас занято ${st.status.used} из ${st.status.max}. Лайкать можно сколько угодно, а освободить слот можно, завершив волну в разделе «Волны».`, 7000);
     }
 
     /* ---------- очередь анкет ---------- */
@@ -144,21 +147,23 @@ const Feed = (() => {
     }
     async function wave(msg) {
         if (!st.cur || st.busy) return;
-        if (st.status.used >= st.status.max) {
-            await refreshStatus();                       // вдруг слот уже освободился
-            if (st.status.used >= st.status.max) return showFull();
-        }
         st.busy = true;
         try {
             const res = await Supa.rpc('send_wave', { p_to: st.cur.id, p_message: msg || null });
-            if (res.result === 'no_slots') { await refreshStatus(); showFull(); }
-            else if (['sent', 'matched', 'exists'].includes(res.result)) {
-                if (res.result === 'sent') { TG.ok(); toast('Волна отправлена 🌊'); }
-                if (res.result === 'matched') { TG.ok(); toast('Взаимно! Это мэтч 🎉 Он в разделе «Волны»'); }
+            const text = {
+                sent: 'Лайк отправлен ♥',
+                matched: 'Взаимно! Началась волна 🌊 Она занимает слот',
+                liked_no_slot: 'Взаимно, но все ваши слоты заняты. Завершите волну в разделе «Волны» — и ответите взаимностью',
+                liked_target_full: 'Взаимно! Но у человека пока нет свободного слота — волна начнётся, когда он его освободит',
+                exists: ''
+            }[res.result];
+            if (text === undefined) toast('Не получилось отправить лайк');
+            else {
+                if (text) { TG.ok(); toast(text, res.result === 'sent' ? 3000 : 5500); }
                 await leave('right'); next(); refreshStatus();
-            } else toast('Не получилось отправить волну');
+            }
         } catch (e) {
-            console.error('Wave error:', e); TG.fail(); toast('Не удалось отправить волну' + dbg(e));
+            console.error('Wave error:', e); TG.fail(); toast('Не удалось отправить лайк' + dbg(e));
         }
         st.busy = false;
     }
@@ -219,7 +224,13 @@ const Feed = (() => {
         btns.append(ok, no); body.appendChild(btns);
         return card;
     }
-    function matchCard(r) {
+    function ask(msg) {
+        return new Promise((res) => {
+            try { if (tg && tg.showConfirm) return tg.showConfirm(msg, (ok) => res(!!ok)); } catch (e) {}
+            res(window.confirm(msg));
+        });
+    }
+    function activeCard(r) {
         const { card, body } = personCard(r);
         const btns = el('div', 'w-btns');
         if (r.tg_username) {
@@ -227,24 +238,21 @@ const Feed = (() => {
             b.addEventListener('click', () => { TG.tap(); openChat(r.tg_username); });
             btns.appendChild(b);
         } else body.appendChild(el('p', 'sec-note', 'У человека нет username в Telegram'));
-        body.appendChild(btns);
+        const end = el('button', 'w-btn danger', 'Завершить волну');
+        end.addEventListener('click', () => endWave(r));
+        btns.appendChild(end); body.appendChild(btns);
         return card;
     }
     function renderWaves(inc, mat) {
         const body = $('wavesBody'), s = st.status;
         body.innerHTML = '';
-        body.appendChild(el('div', 'sec-title', `Мои волны · слоты ${s.used}/${s.max}`));
-        if (!s.pending.length) body.appendChild(el('p', 'sec-note', 'Все слоты свободны — отправляйте волны в ленте'));
-        s.pending.forEach((p) => {
-            const h = Math.max(1, Math.ceil((new Date(p.expires_at) - Date.now()) / 3600000));
-            body.appendChild(el('div', 'slot-row', `${p.name} — ждём ответа, ещё ${h} ч`));
-        });
-        body.appendChild(el('div', 'sec-title', `Вам помахали · ${inc.length}`));
-        if (!inc.length) body.appendChild(el('p', 'sec-note', 'Пока никто не помахал'));
+        body.appendChild(el('div', 'sec-title', `Активные волны · слоты ${s.used}/${s.max}`));
+        body.appendChild(el('p', 'sec-note', 'Волна начинается, когда лайк взаимный, и занимает один слот у вас обоих. Завершите волну — слот освободится.'));
+        mat.forEach((r) => body.appendChild(activeCard(r)));
+        for (let i = mat.length; i < s.max; i++) body.appendChild(el('div', 'slot-empty', 'Свободный слот — ищите кого-нибудь в ленте'));
+        body.appendChild(el('div', 'sec-title', `Вас лайкнули · ${inc.length}`));
+        if (!inc.length) body.appendChild(el('p', 'sec-note', 'Пока никто не лайкнул'));
         inc.forEach((r) => body.appendChild(incomingCard(r)));
-        body.appendChild(el('div', 'sec-title', `Мэтчи · ${mat.length}`));
-        if (!mat.length) body.appendChild(el('p', 'sec-note', 'Мэтч появляется, когда на волну отвечают взаимностью'));
-        mat.forEach((r) => body.appendChild(matchCard(r)));
     }
     async function loadWaves() {
         try {
@@ -264,10 +272,23 @@ const Feed = (() => {
     async function respond(id, accept) {
         try {
             const res = await Supa.rpc('respond_wave', { p_wave_id: id, p_accept: accept });
-            if (res.result === 'matched') { TG.ok(); toast('Мэтч! 🎉 Теперь можно написать'); }
-            else if (res.result === 'declined') toast('Отклонено');
-            else toast('Эта волна уже неактуальна');
+            if (res.result === 'matched') TG.ok();
+            toast({
+                matched: 'Взаимно! Началась волна 🌊',
+                declined: 'Отклонено',
+                no_slots: 'Все ваши слоты заняты. Завершите одну из волн, чтобы ответить взаимностью',
+                target_full: 'У человека пока нет свободного слота. Попробуйте позже',
+                gone: 'Этот лайк уже неактуален'
+            }[res.result] || 'Готово', 4500);
         } catch (e) { console.error('Respond error:', e); toast('Не получилось ответить' + dbg(e)); }
+        loadWaves();
+    }
+    async function endWave(r) {
+        if (!(await ask(`Завершить волну с ${r.name}? Слот освободится у вас обоих, вернуть волну будет нельзя.`))) return;
+        try {
+            const res = await Supa.rpc('end_wave', { p_other: r.id });
+            toast(res.result === 'ended' ? 'Волна завершена. Слот свободен' : 'Эта волна уже завершена');
+        } catch (e) { console.error('End wave error:', e); toast('Не получилось завершить волну' + dbg(e)); }
         loadWaves();
     }
 
@@ -285,6 +306,7 @@ const Feed = (() => {
     function init() {
         $('feedMe').addEventListener('click', () => { TG.tap(); show(DONE); });
         $('feedWaves').addEventListener('click', openWaves);
+        $('slots').addEventListener('click', explainSlots);
         $('wavesBack').addEventListener('click', () => { TG.tap(); show(FEED); refreshStatus(); });
         $('actPass').addEventListener('click', pass);
         $('actLike').addEventListener('click', () => wave(null));       // волна без сообщения

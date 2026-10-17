@@ -46,22 +46,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=12"
+        href="css/base.css?v=13"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=12"
+        href="css/landing.css?v=13"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=12"
+        href="css/network.css?v=13"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=12"
+        href="css/auth.css?v=13"
     >
 
 </head>
@@ -199,14 +199,14 @@
 
     <section class="auth-screen" id="screen-photo">
         <div class="auth-progress"></div>
-        <div class="auth-header"><h2>Добавьте фото</h2><p>Так вас проще узнать</p></div>
+        <div class="auth-header"><h2>Добавьте фото</h2><p>Фото обязательно — так вас проще узнать</p></div>
         <div class="auth-form">
             <button class="avatar-pick" id="avatarPick" type="button" aria-label="Выбрать фото">
                 <span id="avatarPlus">＋</span><img id="avatarImg" alt="" hidden>
             </button>
             <input type="file" id="photoFile" accept="image/*" hidden>
             <div class="auth-error" id="photoError" role="alert"></div>
-            <button class="auth-button" id="photoNext">Пропустить</button>
+            <button class="auth-button" id="photoNext">Далее</button>
         </div>
     </section>
 
@@ -237,7 +237,7 @@
     <section class="feed-screen" id="screen-feed">
         <header class="feed-head">
             <button class="feed-pill" id="feedMe">Профиль</button>
-            <div class="slots" id="slots" aria-label="Слоты волн"></div>
+            <button class="slots" id="slots" type="button" aria-label="Слоты волн"></button>
             <button class="feed-pill" id="feedWaves">Волны<span class="badge" id="wavesBadge" hidden>0</span></button>
         </header>
         <div class="feed-chips" id="feedChips"></div>
@@ -272,13 +272,13 @@
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=12"></script>
+    <script src="js/telegram.js?v=13"></script>
 
-    <script src="js/supabase.js?v=12"></script>
+    <script src="js/supabase.js?v=13"></script>
 
-    <script src="js/landing.js?v=12"></script>
+    <script src="js/landing.js?v=13"></script>
 
-    <script src="js/feed.js?v=12"></script>
+    <script src="js/feed.js?v=13"></script>
 
 
 </body>
