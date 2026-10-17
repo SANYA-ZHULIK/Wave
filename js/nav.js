@@ -5,14 +5,14 @@
 ========================================= */
 const Nav = (() => {
     const MENU = [
-        { go: 'feed',     label: 'Анкеты' },
-        { go: 'waves',    label: 'Волны', badge: 'incoming' },
-        { go: 'notifs',   label: 'Уведомления', badge: 'unread' },
-        { go: 'profile', label: 'Мой профиль' },
-        { go: 'edit',     label: 'Изменить анкету' },
+        { go: 'feed',label: 'Анкеты' },
+        { go: 'waves',label: 'Волны', badge: 'incoming' },
+        { go: 'notifs',label: 'Уведомления', badge: 'unread' },
+        { go: 'profile',label: 'Мой профиль' },
+        { go: 'edit',label: 'Изменить анкету' },
         { sep: true },
-        { go: 'about',    label: 'О нас' },
-        { go: 'rules',   label: 'Правила пользования' }
+        { go: 'about',label: 'О нас' },
+        { go: 'rules',label: 'Правила пользования' }
     ];
     const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE };
     const NOTIF = {
