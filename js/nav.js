@@ -17,8 +17,8 @@ const Nav = (() => {
     const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE };
     const NOTIF = {
         like:  ()  => ['💌', 'Вас лайкнули', 'Загляните в «Волны» — возможно, это взаимно'],
-        match: (d) => ['🌊', 'Взаимно! Началась волна' + (d.name ? ' с ' + d.name : ''), 'Напишите первым'],
-        ended: (d) => ['👋', 'Волна' + (d.name ? ' с ' + d.name : '') + ' завершена', 'Слот свободен']
+        match: (d) => ['Взаимно! Началась волна' + (d.name ? ' с ' + d.name : ''), 'Напишите первым'],
+        ended: (d) => ['Волна' + (d.name ? ' с ' + d.name : '') + ' завершена', 'Слот свободен']
     };
     let notifAsked = false;
 

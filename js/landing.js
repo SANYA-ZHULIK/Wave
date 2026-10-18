@@ -188,19 +188,36 @@ function submitIntents() {
 }
 
 /* ---------- 6. фото ---------- */
-async function toSquareJpeg(file, size = 512) {
-    let img;
+// Фото обрезается под вертикальную карточку 4:5 — именно так оно показывается в ленте.
+// Маленькие фото не увеличиваем, большие уменьшаем до 1080 px по ширине (хватает для экранов с высокой плотностью).
+const PHOTO_W = 1080, PHOTO_MIN_W = 400, PHOTO_RATIO = 4 / 5;
+function portraitCrop(w, h) {
+    let cw, ch, sx = 0, sy = 0;
+    if (w / h > PHOTO_RATIO) { ch = h; cw = h * PHOTO_RATIO; sx = (w - cw) / 2; }   // широкое — режем с боков по центру
+    else { cw = w; ch = w / PHOTO_RATIO; sy = (h - ch) * 0.35; }                     // высокое — лицо обычно выше центра
+    const outW = Math.round(Math.min(PHOTO_W, cw));
+    return { sx, sy, cw, ch, outW, outH: Math.round(outW / PHOTO_RATIO) };
+}
+async function toPortraitJpeg(file) {
+    let img, objUrl;
     try { img = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
     catch (e) {
         img = await new Promise((res, rej) => {
-            const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file);
+            const i = new Image(); i.onload = () => res(i); i.onerror = rej;
+            objUrl = URL.createObjectURL(file); i.src = objUrl;
         });
     }
-    const w = img.width, h = img.height, s = Math.min(w, h);
+    const { sx, sy, cw, ch, outW, outH } = portraitCrop(img.width, img.height);
+    if (cw < PHOTO_MIN_W) throw new Error('small');
     const c = document.createElement('canvas');
-    c.width = c.height = size;
-    c.getContext('2d').drawImage(img, (w - s) / 2, (h - s) / 2, s, s, 0, 0, size, size);
-    return c.toDataURL('image/jpeg', 0.85);
+    c.width = outW; c.height = outH;
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    g.drawImage(img, sx, sy, cw, ch, 0, 0, outW, outH);
+    if (objUrl) URL.revokeObjectURL(objUrl);
+    let q = 0.9, url;
+    do { url = c.toDataURL('image/jpeg', q); q -= 0.1; } while (url.length * 0.75 > 1.6e6 && q > 0.45);  // лимит bucket — 2 МБ
+    return url;
 }
 function paintPhoto() {
     const has = !!profile.photo_url;
@@ -213,8 +230,8 @@ async function onPhotoChosen(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     clearErr('photoError');
-    try { profile.photo_url = await toSquareJpeg(file); paintPhoto(); TG.pick(); }
-    catch (err) { fail(null, $('photoError'), 'Не удалось открыть фото. Попробуйте другое'); }
+    try { profile.photo_url = await toPortraitJpeg(file); paintPhoto(); TG.pick(); }
+    catch (err) { fail(null, $('photoError'), err.message === 'small' ? 'Фото слишком маленькое — выберите фото получше' : 'Не удалось открыть фото. Попробуйте другое'); }
 }
 
 // Фото обязательно: без него дальше не пускаем

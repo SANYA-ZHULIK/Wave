@@ -37,6 +37,22 @@
     >
 
 
+    <!-- Диагностика загрузки: собираем ошибки скриптов и файлов (покажем плашку, только если что-то сломалось) -->
+    <script>
+        window.__waveErrors = [];
+        window.addEventListener('error', function (e) {
+            var t = e.target;
+            if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) {
+                var full = t.src || t.href || '';
+                if (full.indexOf(location.origin) !== 0) return;   // внешние ресурсы (шрифты, telegram.org) не считаем поломкой проекта
+                window.__waveErrors.push('Не загрузился файл: ' + full.split('?')[0].split('/').slice(-2).join('/'));
+            } else {
+                var f = (e.filename || '').split('?')[0].split('/').pop();
+                window.__waveErrors.push((e.message || 'Ошибка скрипта') + (f ? ' (' + f + ':' + e.lineno + ')' : ''));
+            }
+        }, true);
+    </script>
+
     <!-- Telegram WebApp -->
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -46,22 +62,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=14"
+        href="css/base.css?v=16"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=14"
+        href="css/landing.css?v=16"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=14"
+        href="css/network.css?v=16"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=14"
+        href="css/auth.css?v=16"
     >
 
 </head>
@@ -294,16 +310,31 @@
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=14"></script>
+    <script src="js/telegram.js?v=16"></script>
 
-    <script src="js/supabase.js?v=14"></script>
+    <script src="js/supabase.js?v=16"></script>
 
-    <script src="js/landing.js?v=14"></script>
+    <script src="js/landing.js?v=16"></script>
 
-    <script src="js/feed.js?v=14"></script>
+    <script src="js/feed.js?v=16"></script>
 
-    <script src="js/nav.js?v=14"></script>
+    <script src="js/nav.js?v=16"></script>
 
+
+    <script>
+        // Если файлы выложены не полностью или стили не обновились — показываем, что именно не так
+        setTimeout(function () {
+            var msgs = (window.__waveErrors || []).slice();
+            var dr = document.getElementById('drawer');
+            if (dr && getComputedStyle(dr).position !== 'fixed') msgs.push('Не обновился css/auth.css (нет стилей бокового меню)');
+            if (!msgs.length) return;
+            var b = document.createElement('div');
+            b.textContent = '⚠ ' + msgs[0] + (msgs.length > 1 ? ' (+' + (msgs.length - 1) + ')' : '') + ' — проверьте файлы проекта и откройте приложение заново';
+            b.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:999;padding:10px 14px;background:#ff6b6b;color:#fff;font:600 12px/1.4 sans-serif;text-align:center';
+            b.onclick = function () { b.remove(); };
+            document.body.appendChild(b);
+        }, 900);
+    </script>
 
 </body>
 
