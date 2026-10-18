@@ -3,7 +3,9 @@ const SUPA_URL = 'https://jutfmqseclffgyfchiqv.supabase.co';
 const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1dGZtcXNlY2xmZmd5ZmNoaXF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4Mjg0ODksImV4cCI6MjEwNzQwNDQ4OX0.yggbeiIyIHDgQ0zHXLNmk-8KcyKah0kFO4sy1bs8V5M';
 
 const Supa = (() => {
-    let session = null; // { token, tg_id }
+    let session = null;   // { token, tg_id, exp }
+    let pending = null;   // идущий запрос входа (чтобы не слать несколько одновременно)
+    let rt = null;        // подписка realtime
 
     // В обычном браузере initData пустой — работаем только локально
     const initData = () => (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || '';
@@ -17,8 +19,13 @@ const Supa = (() => {
         } catch (e) { return ''; }
     }
 
-    async function auth() {
-        if (session) return session;
+    // Срок действия токена (мс). Токен живёт час — без обновления через час все запросы перестали бы проходить.
+    const jwtExp = (t) => {
+        try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp * 1000; }
+        catch (e) { return 0; }
+    };
+
+    async function login() {
         let res;
         try {
             res = await fetch(`${SUPA_URL}/functions/v1/telegram-auth`, {
@@ -33,8 +40,15 @@ const Supa = (() => {
             const t = await errText(res);
             throw new Error('auth ' + res.status + (t ? ': ' + t : ''));
         }
-        session = await res.json();
+        const j = await res.json();
+        session = { ...j, exp: jwtExp(j.token) };
+        if (rt) rt.client.realtime.setAuth(session.token);   // realtime тоже получает свежий токен
         return session;
+    }
+    async function auth() {
+        if (session && session.exp - Date.now() > 120000) return session;   // обновляем за 2 минуты до конца
+        if (!pending) pending = login().finally(() => { pending = null; });
+        return pending;
     }
 
     async function rest(path, opts = {}) {
@@ -101,6 +115,26 @@ const Supa = (() => {
         async setUsername(username) {
             const s = await auth();
             await rest(`profiles?tg_id=eq.${s.tg_id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ tg_username: username }) });
+        },
+        // Уведомления в реальном времени (Supabase Realtime). Если библиотека не загрузилась —
+        // просто возвращает false, приложение продолжает работать с периодическим опросом.
+        async subscribeNotifications(onInsert) {
+            if (rt) return true;
+            if (!window.supabase || !window.supabase.createClient) return false;
+            const s = await auth();
+            const client = window.supabase.createClient(SUPA_URL, SUPA_ANON, {
+                auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+            });
+            client.realtime.setAuth(s.token);
+            const channel = client.channel('wave-notifications-' + s.tg_id)
+                .on('postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${s.tg_id}` },
+                    (payload) => { try { onInsert(payload.new); } catch (e) { console.error('Realtime handler:', e); } })
+                .subscribe((status, err) => {
+                    if (status !== 'SUBSCRIBED') console.warn('Realtime:', status, err || '');
+                });
+            rt = { client, channel };
+            return true;
         },
         async saveProfile(p) {
             const s = await auth();

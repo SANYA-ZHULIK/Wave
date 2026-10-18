@@ -17,7 +17,7 @@ const ICEBREAKERS = {
 
 const Feed = (() => {
     const st = {
-        queue: [], cur: null, intent: null, sameCity: true,
+        queue: [], cur: null, intent: null, sameCity: false, lastZone: null,
         loading: false, busy: false, exhausted: false, err: '', gen: 0, nameSent: false,
         status: { used: 0, max: 3, incoming: 0, unread: 0 }
     };
@@ -96,13 +96,23 @@ const Feed = (() => {
         }
         if (gen === st.gen && !st.cur) next();
     }
+    // Лента идёт от своего города к ближайшим, затем дальше. При переходе говорим об этом.
+    function announceZone() {
+        const z = st.cur ? st.cur.zone : null;
+        if (z === null || z === undefined) return;
+        if (z > 0 && st.lastZone === null) toast('В вашем городе пока никого — показываем ближайшие города', 4500);
+        else if (z > 0 && st.lastZone === 0) toast('В вашем городе анкеты закончились — показываем ближайшие города', 4500);
+        else if (st.lastZone !== null && z > st.lastZone && z > 1) toast('Расширяем поиск — показываем города подальше', 4500);
+        st.lastZone = z;
+    }
     function next() {
         st.cur = st.queue.shift() || null;
+        announceZone();
         renderDeck();
         if (st.cur && st.queue.length < 4) loadQueue();
     }
     function resetDeck() {
-        st.queue = []; st.cur = null; st.exhausted = false; st.err = ''; st.loading = false; st.gen++;
+        st.queue = []; st.cur = null; st.lastZone = null; st.exhausted = false; st.err = ''; st.loading = false; st.gen++;
         renderDeck(); loadQueue();
     }
 
@@ -111,14 +121,20 @@ const Feed = (() => {
         const deck = $('deck'), r = st.cur;
         deck.innerHTML = '';
         if (!r) {
-            deck.appendChild(el('div', 'deck-empty',
-                st.loading ? 'Загружаем…' : (st.err || 'Анкеты закончились. Загляните позже или смените фильтры')));
+            const empty = el('div', 'deck-empty', st.loading ? 'Загружаем…'
+                : (st.err || 'Анкеты закончились. Пропущенные вернутся через пару дней, а новые люди появляются каждый день'));
+            if (!st.loading) {
+                const b = el('button', 'w-btn ok', 'Обновить'); b.type = 'button';
+                b.addEventListener('click', () => { TG.tap(); resetDeck(); });
+                empty.appendChild(b);
+            }
+            deck.appendChild(empty);
             return;
         }
         const card = el('article', 'deck-card');
         card.appendChild(avatar(r, 'deck-photo'));
         const info = el('div', 'deck-info');
-        info.append(el('div', 'deck-name', `${r.name}, ${r.age}`), el('div', 'deck-city', r.city || ''), tagsOf(r));
+        info.append(el('div', 'deck-name', `${r.name}, ${r.age}`), el('div', 'deck-city', (r.city || '') + (r.distance_km ? ' · ~' + r.distance_km + ' км от вас' : '')), tagsOf(r));
         if (r.bio) info.appendChild(el('p', 'deck-bio', r.bio));
         const k = commonKey(r);
         if (k) {
@@ -185,7 +201,7 @@ const Feed = (() => {
             const b = el('button', 'chip sm' + (sel ? ' selected' : ''), label);
             b.type = 'button'; b.dataset.key = key; box.appendChild(b);
         };
-        mk('📍 Мой город', 'city', st.sameCity);
+        mk('📍 Только мой город', 'city', st.sameCity);
         mk('Все', '', st.intent === null);
         Object.entries(INTENTS).forEach(([k, v]) => mk(v, k, st.intent === k));
     }
@@ -301,6 +317,26 @@ const Feed = (() => {
         setTimeout(() => tg.showConfirm('Присылать уведомления о лайках и волнах в Telegram?', (ok) => { if (ok) tg.requestWriteAccess(() => {}); }), 1800);
     }
 
+    /* ---------- уведомления в реальном времени ---------- */
+    function onNotification(n) {
+        refreshStatus();
+        const name = n.data && n.data.name ? n.data.name : '';
+        const msg = {
+            like: '💌 Вас лайкнули',
+            match: '🌊 Взаимно!' + (name ? ' Волна с ' + name : ' Началась волна'),
+            ended: 'Волна' + (name ? ' с ' + name : '') + ' завершена'
+        }[n.kind];
+        if (msg && step !== NOTIFS) { TG.tap(); toast(msg, 4000); }   // на экране уведомлений список обновится сам
+        if (step === WAVES) loadWaves();
+        document.dispatchEvent(new CustomEvent('wave:notification', { detail: n }));
+    }
+    function startRealtime() {
+        if (st.rtStarted || !dbOn()) return;
+        st.rtStarted = true;
+        Supa.subscribeNotifications(onNotification).then((on) => { if (!on) st.rtStarted = false; })
+            .catch((e) => { st.rtStarted = false; console.error('Realtime error:', e); });
+    }
+
     /* ---------- вход и привязка ---------- */
     function open() {
         const u = TG.user();
@@ -309,7 +345,7 @@ const Feed = (() => {
         }
         buildChips(); renderStatus();
         if (!dbOn()) { st.err = 'Лента доступна только внутри Telegram'; renderDeck(); return; }
-        refreshStatus(); askNotifyPermission();
+        refreshStatus(); askNotifyPermission(); startRealtime();
         if (!st.cur && !st.queue.length) { st.exhausted = false; renderDeck(); loadQueue(); } else renderDeck();
     }
     function init() {

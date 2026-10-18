@@ -5,20 +5,20 @@
 ========================================= */
 const Nav = (() => {
     const MENU = [
-        { go: 'feed',label: 'Анкеты' },
-        { go: 'waves',label: 'Волны', badge: 'incoming' },
-        { go: 'notifs',label: 'Уведомления', badge: 'unread' },
-        { go: 'profile',label: 'Мой профиль' },
-        { go: 'edit',label: 'Изменить анкету' },
+        { go: 'feed',     label: 'Анкеты' },
+        { go: 'waves',    label: 'Волны', badge: 'incoming' },
+        { go: 'notifs',   label: 'Уведомления', badge: 'unread' },
+        { go: 'profile',  label: 'Мой профиль' },
+        { go: 'edit',     label: 'Изменить анкету' },
         { sep: true },
-        { go: 'about',label: 'О нас' },
-        { go: 'rules',label: 'Правила пользования' }
+        { go: 'about',    label: 'О нас' },
+        { go: 'rules',    label: 'Правила пользования' }
     ];
     const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE };
     const NOTIF = {
         like:  ()  => ['💌', 'Вас лайкнули', 'Загляните в «Волны» — возможно, это взаимно'],
-        match: (d) => ['Взаимно! Началась волна' + (d.name ? ' с ' + d.name : ''), 'Напишите первым'],
-        ended: (d) => ['Волна' + (d.name ? ' с ' + d.name : '') + ' завершена', 'Слот свободен']
+        match: (d) => ['🌊', 'Взаимно! Началась волна' + (d.name ? ' с ' + d.name : ''), 'Напишите первым'],
+        ended: (d) => ['👋', 'Волна' + (d.name ? ' с ' + d.name : '') + ' завершена', 'Слот свободен']
     };
     let notifAsked = false;
 
@@ -103,23 +103,28 @@ const Nav = (() => {
         item.addEventListener('click', () => { if (n.kind === 'ended') show(FEED); else Feed.openWaves(); });
         return item;
     }
-    async function openNotifs() {
-        TG.tap(); show(NOTIFS);
+    // Загрузка и показ списка. После показа уведомления удаляются из базы («прочитанные» не хранятся).
+    async function loadNotifs() {
         const body = $('notifsBody');
-        body.innerHTML = ''; body.appendChild(el('p', 'feed-empty', 'Загружаем…'));
         if (!dbOn()) { body.innerHTML = ''; body.appendChild(el('p', 'feed-empty', 'Уведомления доступны только внутри Telegram')); return; }
         try {
             const rows = await Supa.rpc('my_notifications', { p_limit: 40 });
             body.innerHTML = '';
             const banner = permissionBanner(); if (banner) body.appendChild(banner);
-            if (!rows.length) body.appendChild(el('p', 'feed-empty', 'Пока уведомлений нет. Лайки и волны появятся здесь.'));
+            if (!rows.length) body.appendChild(el('p', 'feed-empty', 'Новых уведомлений нет. Лайки и волны появятся здесь, как только случатся.'));
             rows.forEach((n) => body.appendChild(notifItem(n)));
-            if (rows.some((n) => !n.is_read)) { await Supa.rpc('mark_notifications_read'); Feed.refreshStatus(); }
+            if (rows.length) { await Supa.rpc('consume_notifications', { p_ids: rows.map((n) => n.id) }); Feed.refreshStatus(); }
         } catch (e) {
             console.error('Notifications error:', e);
             body.innerHTML = '';
             body.appendChild(el('p', 'feed-empty', 'Не удалось загрузить уведомления' + (DEBUG ? ' (' + e.message + ')' : '')));
         }
+    }
+    function openNotifs() {
+        TG.tap(); show(NOTIFS);
+        const body = $('notifsBody');
+        body.innerHTML = ''; body.appendChild(el('p', 'feed-empty', 'Загружаем…'));
+        return loadNotifs();
     }
 
     function init() {
@@ -128,6 +133,8 @@ const Nav = (() => {
         $('drawerOverlay').addEventListener('click', closeDrawer);
         $('drawerNav').addEventListener('click', (e) => { const b = e.target.closest('.menu-item'); if (b) go(b.dataset.go); });
         document.addEventListener('wave:status', (e) => updateBadges(e.detail));
+        // пришло новое уведомление, пока открыт экран уведомлений — список обновляется сам
+        document.addEventListener('wave:notification', () => { if (step === NOTIFS) loadNotifs(); });
     }
     init();
     return { renderDrawer, openNotifs };

@@ -447,3 +447,7 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .notif-text { font-size: 12px; opacity: 0.65; margin-top: 3px; }
 .notif-time { font-size: 11px; opacity: 0.45; white-space: nowrap; }
 .notif-banner { padding: 14px; border-radius: 16px; background: rgba(124,58,237,0.18); border: 1px solid rgba(124,58,237,0.5); display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 1.45; }
+
+/* v17: пустое состояние ленты с кнопкой «Обновить» */
+.deck-empty { flex-direction: column; gap: 16px; }
+.deck-empty .w-btn { flex: none; padding: 10px 26px; }
