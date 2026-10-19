@@ -201,9 +201,11 @@ const Feed = (() => {
             const b = el('button', 'chip sm' + (sel ? ' selected' : ''), label);
             b.type = 'button'; b.dataset.key = key; box.appendChild(b);
         };
-        mk('📍 Только мой город', 'city', st.sameCity);
+        const mine = (profile.intents || []).filter((k) => INTENTS[k]);          // только интересы из вашей анкеты
+        if (st.intent && !mine.includes(st.intent)) st.intent = null;            // выбранной темы больше нет в анкете — сбрасываем
+        mk('📍 ' + (profile.city || 'Мой город'), 'city', st.sameCity);        // название вашего города
         mk('Все', '', st.intent === null);
-        Object.entries(INTENTS).forEach(([k, v]) => mk(v, k, st.intent === k));
+        mine.forEach((k) => mk(INTENTS[k], k, st.intent === k));
     }
     function onChip(e) {
         const c = e.target.closest('.chip');
@@ -343,8 +345,10 @@ const Feed = (() => {
         if (dbOn() && u && u.username && !st.nameSent) {   // username нужен, чтобы после мэтча можно было написать
             st.nameSent = true; Supa.setUsername(u.username).catch(() => {});
         }
+        const prevIntent = st.intent;
         buildChips(); renderStatus();
         if (!dbOn()) { st.err = 'Лента доступна только внутри Telegram'; renderDeck(); return; }
+        if (prevIntent !== st.intent) resetDeck();
         refreshStatus(); askNotifyPermission(); startRealtime();
         if (!st.cur && !st.queue.length) { st.exhausted = false; renderDeck(); loadQueue(); } else renderDeck();
     }
