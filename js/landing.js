@@ -17,10 +17,6 @@ const INTENTS = {
     gaming: 'Напарник для игр', party: 'Тусовки', drives: 'Ночные покатушки', sport: 'Спорт',
     travel: 'Путешествия', events: 'Мероприятия', hobby: 'Хобби'
 };
-const CITIES = ['Минск', 'Гомель', 'Могилёв', 'Витебск', 'Гродно', 'Брест', 'Бобруйск', 'Барановичи',
-    'Борисов', 'Пинск', 'Орша', 'Мозырь', 'Солигорск', 'Новополоцк', 'Лида', 'Молодечно', 'Полоцк',
-    'Жлобин', 'Светлогорск', 'Речица', 'Слуцк', 'Жодино', 'Слоним', 'Кобрин', 'Волковыск',
-    'Калинковичи', 'Сморгонь', 'Осиповичи', 'Новогрудок', 'Вилейка', 'Дзержинск', 'Заславль'];
 
 const profile = { name: '', age: 22, gender: '', looking: '', city: '', intents: [], photo_url: '', photo_path: '', bio: '' };
 let step = 0;
@@ -155,18 +151,59 @@ function submitGender() {
     clearErr('genderError'); TG.tap(); show(4);
 }
 
-/* ---------- 4. город ---------- */
+/* ---------- 4. город (единый справочник из базы, таблица cities) ---------- */
+let citiesFailed = false;
+let cityList = [];                                                     // [{ name, region, population }]
+const cityKey = (s) => (s || '').trim().toLowerCase().replace(/ё/g, 'е');   // так же, как _city_key в базе
+const findCity = (s) => cityList.find((c) => cityKey(c.name) === cityKey(s));
+
+async function loadCities() {
+    try { const cached = JSON.parse(localStorage.getItem('wave_cities')); if (cached && cached.length) cityList = cached; } catch (e) {}
+    renderCities();
+    try {
+        const fresh = await Supa.cities();
+        if (fresh.length) { cityList = fresh; try { localStorage.setItem('wave_cities', JSON.stringify(fresh)); } catch (e) {} }
+    } catch (e) { citiesFailed = true; console.error('Cities error:', e); }
+    renderCities();
+    validateCity();
+}
 function renderCities() {
-    const q = $('cityInput').value.trim().toLowerCase();
-    $('cityList').innerHTML = CITIES.filter((c) => c.toLowerCase().includes(q)).slice(0, 6)
-        .map((c) => `<button type="button" class="city-item" data-city="${c}">${c}</button>`).join('');
+    const box = $('cityList');
+    box.innerHTML = '';
+    if (!cityList.length) return;
+    const q = cityKey($('cityInput').value);
+    const hits = cityList.filter((c) => !q || cityKey(c.name).includes(q))
+        .sort((a, b) => (cityKey(b.name).startsWith(q) - cityKey(a.name).startsWith(q)) || (b.population || 0) - (a.population || 0))
+        .slice(0, 8);
+    hits.forEach((c) => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'city-item'; b.dataset.city = c.name;
+        const n = document.createElement('span'); n.textContent = c.name;
+        const r = document.createElement('span'); r.className = 'city-region'; r.textContent = c.region || '';
+        b.append(n, r); box.appendChild(b);
+    });
+    if (q && !hits.length) {
+        const p = document.createElement('p'); p.className = 'sec-note';
+        p.textContent = 'Такого города нет в списке. Выберите ближайший крупный город';
+        box.appendChild(p);
+    }
 }
 function submitCity() {
     const input = $('cityInput');
-    const v = input.value.trim().replace(/\s+/g, ' ');
     clearErr('cityError');
-    if (v.length < 2) return fail(input, $('cityError'), 'Укажите город — минимум 2 символа');
-    profile.city = v; TG.tap(); show(5);
+    if (!cityList.length) return fail(input, $('cityError'), citiesFailed
+        ? 'Не удалось загрузить список городов. Проверьте интернет и откройте приложение заново'
+        : 'Список городов ещё загружается — повторите через секунду');
+    const c = findCity(input.value);
+    if (!c) return fail(input, $('cityError'), 'Выберите город из списка');
+    profile.city = c.name; input.value = c.name; TG.tap(); show(5);
+}
+// Проверяем город уже сохранённого профиля: приводим написание к справочнику, а неизвестный просим выбрать заново
+function validateCity() {
+    if (!cityList.length || !profile.city || !isComplete()) return;
+    const c = findCity(profile.city);
+    if (c) { if (c.name !== profile.city) { profile.city = c.name; saveProfile(); } return; }
+    $('cityInput').value = profile.city; renderCities(); show(4);
+    fail($('cityInput'), $('cityError'), 'Вашего города нет в списке — выберите его заново');
 }
 
 /* ---------- 5. что ищете ---------- */
@@ -382,6 +419,7 @@ function init() {
         $('cityInput').value = b.dataset.city; clearErr('cityError'); TG.pick(); renderCities();
     });
     $('cityNext').addEventListener('click', submitCity);
+    if (typeof Supa !== 'undefined') loadCities();
 
     $('intentChips').addEventListener('click', (e) => {
         const c = e.target.closest('.chip');

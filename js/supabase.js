@@ -136,6 +136,13 @@ const Supa = (() => {
             rt = { client, channel };
             return true;
         },
+        // Справочник городов (публичный, читается по anon-ключу — вход не нужен)
+        async cities() {
+            const res = await fetch(`${SUPA_URL}/rest/v1/cities?select=name,region,population&order=population.desc.nullslast&limit=2000`,
+                { headers: { apikey: SUPA_ANON, Authorization: `Bearer ${SUPA_ANON}` } });
+            if (!res.ok) throw new Error('cities ' + res.status);
+            return res.json();
+        },
         async saveProfile(p) {
             const s = await auth();
             await rest('profiles?on_conflict=tg_id', {

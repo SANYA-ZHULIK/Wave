@@ -456,3 +456,7 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .drawer { width: max-content; min-width: 220px; max-width: min(300px, 84%); padding-right: 18px; }
 .drawer-user > div:last-child { min-width: 0; }
 .drawer-name, .drawer-city { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* v20: подсказки городов — название и область */
+.city-item { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.city-region { font-size: 12px; opacity: 0.5; text-align: right; }
