@@ -203,7 +203,7 @@ const Feed = (() => {
         };
         const mine = (profile.intents || []).filter((k) => INTENTS[k]);          // только интересы из вашей анкеты
         if (st.intent && !mine.includes(st.intent)) st.intent = null;            // выбранной темы больше нет в анкете — сбрасываем
-        mk('📍 ' + (profile.city || 'Мой город'), 'city', st.sameCity);        // название вашего города
+        mk((profile.city || 'Мой город'), 'city', st.sameCity);        // название вашего города
         mk('Все', '', st.intent === null);
         mine.forEach((k) => mk(INTENTS[k], k, st.intent === k));
     }
