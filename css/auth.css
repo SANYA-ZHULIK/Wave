@@ -460,3 +460,7 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 /* v20: подсказки городов — название и область */
 .city-item { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .city-region { font-size: 12px; opacity: 0.5; text-align: right; }
+
+/* v21: пункты бокового меню — по левому краю, в одну линию с аватаркой (без места под иконку) */
+.menu-ico { display: none; }
+.menu-item { gap: 0; padding-left: 8px; }
