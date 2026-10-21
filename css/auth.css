@@ -464,3 +464,9 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 /* v21: пункты бокового меню — по левому краю, в одну линию с аватаркой (без места под иконку) */
 .menu-ico { display: none; }
 .menu-item { gap: 0; padding-left: 8px; }
+
+/* v22: меню чуть шире и легче; история уведомлений */
+.drawer { min-width: 250px; padding-right: 30px; }
+.menu-item { font-weight: 500; }
+.menu-item.active { font-weight: 600; }
+.notif-more { width: 100%; flex: none; margin-top: 4px; }

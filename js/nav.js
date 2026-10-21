@@ -5,14 +5,14 @@
 ========================================= */
 const Nav = (() => {
     const MENU = [
-        { go: 'feed',     label: 'Анкеты' },
-        { go: 'waves',    label: 'Волны', badge: 'incoming' },
-        { go: 'notifs',   label: 'Уведомления', badge: 'unread' },
-        { go: 'profile',  label: 'Мой профиль' },
-        { go: 'edit',     label: 'Изменить анкету' },
+        { go: 'feed',    label: 'Анкеты' },
+        { go: 'waves',   label: 'Волны', badge: 'incoming' },
+        { go: 'notifs',  label: 'Уведомления', badge: 'unread' },
+        { go: 'profile', label: 'Мой профиль' },
+        { go: 'edit',    label: 'Изменить анкету' },
         { sep: true },
-        { go: 'about',    label: 'О нас' },
-        { go: 'rules',    label: 'Правила пользования' }
+        { go: 'about',   label: 'О нас' },
+        { go: 'rules',   label: 'Правила пользования' }
     ];
     const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE };
     const NOTIF = {
@@ -41,7 +41,7 @@ const Nav = (() => {
         MENU.forEach((m) => {
             if (m.sep) return nav.appendChild(el('div', 'drawer-sep'));
             const b = el('button', 'menu-item'); b.type = 'button'; b.dataset.go = m.go;
-            b.append(el('span', 'menu-ico', m.icon), el('span', 'menu-label', m.label));
+            b.appendChild(el('span', 'menu-label', m.label));
             if (m.badge) { const bd = el('span', 'badge static', '0'); bd.hidden = true; bd.dataset.badge = m.badge; b.appendChild(bd); }
             nav.appendChild(b);
         });
@@ -103,25 +103,102 @@ const Nav = (() => {
         item.addEventListener('click', () => { if (n.kind === 'ended') show(FEED); else Feed.openWaves(); });
         return item;
     }
-    // Загрузка и показ списка. После показа уведомления удаляются из базы («прочитанные» не хранятся).
-    async function loadNotifs() {
+    /* ---------- история уведомлений ---------- */
+    // shown — всё, что загружено за текущее посещение экрана. Новые добавляются к списку, а не заменяют его:
+    // так повторный запрос не затирает уже показанное. Подсветка «новое» хранится по первому показу.
+    const PAGE = 30;
+    const shown = new Map();
+    let notifLoading = false, notifAgain = false, hasMore = false, firstLoaded = false, lastStatus = null;
+
+    function ask(msg) {
+        return new Promise((res) => {
+            try { if (tg && tg.showConfirm) return tg.showConfirm(msg, (ok) => res(!!ok)); } catch (e) {}
+            res(window.confirm(msg));
+        });
+    }
+    function dayLabel(ts) {
+        const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+        const diff = Math.round((day(new Date()) - day(new Date(ts))) / 86400000);
+        if (diff <= 0) return 'Сегодня';
+        if (diff === 1) return 'Вчера';
+        return new Date(ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+    }
+    function pendingLikesCard(n) {
+        const card = el('button', 'notif unread'); card.type = 'button';
+        const body = el('div', 'notif-body');
+        body.append(el('div', 'notif-title', 'Вас лайкнули: ' + n), el('div', 'notif-text', 'Посмотрите и ответьте в разделе «Волны»'));
+        card.append(el('span', 'notif-ico', '💌'), body);
+        card.addEventListener('click', () => Feed.openWaves());
+        return card;
+    }
+    function renderNotifs(st) {
+        lastStatus = st || lastStatus;
+        const body = $('notifsBody');
+        body.innerHTML = '';
+        const banner = permissionBanner(); if (banner) body.appendChild(banner);
+        // лайки, ждущие ответа, остаются в «Волнах» — напоминаем о них здесь, чтобы точка в меню была понятна
+        const waiting = lastStatus && lastStatus.incoming > 0;
+        if (waiting) body.appendChild(pendingLikesCard(lastStatus.incoming));
+        const rows = [...shown.values()].sort((a, b) => b.id - a.id);
+        let label = '';
+        rows.forEach((n) => {
+            const l = dayLabel(n.created_at);
+            if (l !== label) { label = l; body.appendChild(el('div', 'sec-title', l)); }
+            body.appendChild(notifItem(n));
+        });
+        if (!rows.length && !waiting) body.appendChild(el('p', 'feed-empty', 'Пока уведомлений нет. Лайки и волны появятся здесь, как только случатся.'));
+        if (hasMore) {
+            const more = el('button', 'w-btn notif-more', 'Показать ещё'); more.type = 'button';
+            more.addEventListener('click', () => { TG.tap(); loadNotifs(true); });
+            body.appendChild(more);
+        }
+        if (rows.length) {
+            const clr = el('button', 'w-btn danger notif-more', 'Очистить историю'); clr.type = 'button';
+            clr.addEventListener('click', clearHistory);
+            body.appendChild(clr);
+        }
+    }
+
+    // Загрузка идёт по очереди: если во время загрузки пришло ещё одно уведомление, делается повторный проход.
+    // older = true — подгрузить более старые. Показанные новые уведомления помечаются прочитанными (остаются в истории).
+    async function loadNotifs(older = false) {
         const body = $('notifsBody');
         if (!dbOn()) { body.innerHTML = ''; body.appendChild(el('p', 'feed-empty', 'Уведомления доступны только внутри Telegram')); return; }
+        if (notifLoading) { notifAgain = true; return; }
+        notifLoading = true;
         try {
-            const rows = await Supa.rpc('my_notifications', { p_limit: 40 });
-            body.innerHTML = '';
-            const banner = permissionBanner(); if (banner) body.appendChild(banner);
-            if (!rows.length) body.appendChild(el('p', 'feed-empty', 'Новых уведомлений нет. Лайки и волны появятся здесь, как только случатся.'));
-            rows.forEach((n) => body.appendChild(notifItem(n)));
-            if (rows.length) { await Supa.rpc('consume_notifications', { p_ids: rows.map((n) => n.id) }); Feed.refreshStatus(); }
+            let useOlder = older;
+            do {
+                notifAgain = false;
+                const args = useOlder ? { p_limit: PAGE, p_before: Math.min(...shown.keys()) } : { p_limit: PAGE };
+                const [rows, st] = await Promise.all([Supa.rpc('my_notifications', args), Supa.rpc('wave_status')]);
+                rows.forEach((n) => { if (!shown.has(n.id)) shown.set(n.id, n); });
+                if (useOlder || !firstLoaded) hasMore = rows.length === PAGE;
+                firstLoaded = true;
+                renderNotifs(st);
+                const fresh = rows.filter((n) => !n.is_read).map((n) => n.id);
+                if (fresh.length) await Supa.rpc('mark_notifications_read', { p_ids: fresh });
+                Feed.refreshStatus();
+                useOlder = false;
+            } while (notifAgain);
         } catch (e) {
             console.error('Notifications error:', e);
             body.innerHTML = '';
             body.appendChild(el('p', 'feed-empty', 'Не удалось загрузить уведомления' + (DEBUG ? ' (' + e.message + ')' : '')));
-        }
+        } finally { notifLoading = false; }
+    }
+    async function clearHistory() {
+        if (!(await ask('Удалить всю историю уведомлений? Это действие нельзя отменить.'))) return;
+        try {
+            await Supa.rpc('clear_notifications');
+            shown.clear(); hasMore = false;
+            renderNotifs(lastStatus); Feed.refreshStatus();
+            Feed.toast('История очищена');
+        } catch (e) { console.error('Clear error:', e); Feed.toast('Не удалось очистить историю'); }
     }
     function openNotifs() {
         TG.tap(); show(NOTIFS);
+        shown.clear(); hasMore = false; firstLoaded = false;
         const body = $('notifsBody');
         body.innerHTML = ''; body.appendChild(el('p', 'feed-empty', 'Загружаем…'));
         return loadNotifs();
