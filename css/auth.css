@@ -198,6 +198,7 @@
     text-align: center;
     margin-top: 5px;
 }
+
 /* =========================================
    CHIPS (выбор пола / кого ищу)
 ========================================= */
@@ -280,7 +281,7 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 
 .wheel-item {
     height: 44px; display: flex; align-items: center; justify-content: center;
-    scroll-snap-align: center; /* Оставляем прилипание по центру */
+    scroll-snap-align: center;
     font-size: 24px; font-weight: 600; color: rgba(255,255,255,0.35);
     cursor: pointer; transition: color 0.15s, font-size 0.15s;
 }
@@ -292,6 +293,7 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     border-radius: 12px; background: rgba(255,255,255,0.08);
     pointer-events: none; z-index: -1;
 }
+
 /* =========================================
    v12: колода анкет, слоты, волны
 ========================================= */
@@ -448,10 +450,6 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .notif-time { font-size: 11px; opacity: 0.45; white-space: nowrap; }
 .notif-banner { padding: 14px; border-radius: 16px; background: rgba(124,58,237,0.18); border: 1px solid rgba(124,58,237,0.5); display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 1.45; }
 
-/* v17: пустое состояние ленты с кнопкой «Обновить» */
-.deck-empty { flex-direction: column; gap: 16px; }
-.deck-empty .w-btn { flex: none; padding: 10px 26px; }
-
 /* v19: боковое меню — ширина по содержимому (без пустого места справа) */
 .drawer { width: max-content; min-width: 220px; max-width: min(300px, 84%); padding-right: 18px; }
 .drawer-user > div:last-child { min-width: 0; }
@@ -470,3 +468,164 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .menu-item { font-weight: 500; }
 .menu-item.active { font-weight: 600; }
 .notif-more { width: 100%; flex: none; margin-top: 4px; }
+
+/* =========================================
+   v23: обновлённый экран отсутствия анкет («Пока тихо на волнах»)
+========================================= */
+.deck-empty-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 8px 8px calc(18px + env(safe-area-inset-bottom, 0px));
+    animation: cardIn 0.3s ease;
+}
+
+.empty-main {
+    margin: auto 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.empty-art {
+    position: relative;
+    width: 290px;
+    height: 165px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.empty-art svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.empty-art.is-loading {
+    animation: emptyPulse 2s ease-in-out infinite;
+}
+
+@keyframes emptyPulse {
+    0%, 100% { opacity: 0.65; transform: scale(0.98); }
+    50%      { opacity: 1;    transform: scale(1.02); }
+}
+
+.empty-title {
+    font-size: 25px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 12px;
+    letter-spacing: -0.3px;
+}
+
+.empty-desc {
+    font-size: 14px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.62);
+    max-width: 295px;
+    margin-bottom: 26px;
+    font-weight: 500;
+}
+
+.empty-refresh-btn {
+    width: 100%;
+    max-width: 276px;
+    padding: 16px 24px;
+    border-radius: 999px;
+    border: none;
+    background: #B5C680;
+    color: #12051f;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 4px 22px rgba(181, 198, 128, 0.25);
+    transition: transform 0.15s, box-shadow 0.2s;
+    margin-bottom: 18px;
+}
+
+.empty-refresh-btn:active {
+    transform: scale(0.97);
+}
+
+.empty-city-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    transition: color 0.2s, transform 0.15s;
+}
+
+.empty-city-btn:active {
+    color: #B5C680;
+    transform: scale(0.97);
+}
+
+.empty-city-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.empty-nearby-banner {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    background: rgba(22, 11, 42, 0.75);
+    border: 1px solid rgba(124, 58, 237, 0.38);
+    border-radius: 18px;
+    text-align: left;
+    color: rgba(255, 255, 255, 0.72);
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.empty-nearby-banner:active {
+    transform: scale(0.98);
+    border-color: rgba(181, 198, 128, 0.5);
+}
+
+.empty-banner-icon {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-banner-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.empty-banner-sep {
+    width: 1px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0 18px;
+    flex-shrink: 0;
+}
+
+.empty-banner-text {
+    font-size: 13.5px;
+    line-height: 1.4;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.72);
+}

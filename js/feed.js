@@ -1,6 +1,6 @@
 /* =========================================
    WAVE — колода анкет, волны, слоты, мэтчи
-   Зависит от landing.js (INTENTS, show, FEED, WAVES, DONE, DEBUG, dbOn) и supabase.js
+   Зависит от landing.js (INTENTS, show, FEED, WAVES, DONE, DEBUG, dbOn, changeCityFromFeed) и supabase.js
 ========================================= */
 const ICEBREAKERS = {
     sport: 'Каким спортом занимаешься?',
@@ -14,6 +14,111 @@ const ICEBREAKERS = {
     friendship: 'Что для тебя важно в друзьях?',
     relationship: 'Какие отношения ты ищешь?'
 };
+
+const EMPTY_WAVE_SVG = `
+<svg viewBox="0 0 320 180" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+        <filter id="glowStrong" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="8" result="blur" />
+            <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+        <filter id="glowAmbient" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="18" />
+        </filter>
+        <linearGradient id="waveMainGrad" x1="20" y1="100" x2="300" y2="100" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7C3AED" stop-opacity="0" />
+            <stop offset="22%" stop-color="#A855F7" />
+            <stop offset="58%" stop-color="#D9F99D" />
+            <stop offset="88%" stop-color="#B5C680" />
+            <stop offset="100%" stop-color="#B5C680" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient id="leftProfileGrad" x1="70" y1="30" x2="155" y2="125" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7C3AED" stop-opacity="0.15" />
+            <stop offset="45%" stop-color="#C084FC" />
+            <stop offset="100%" stop-color="#B5C680" />
+        </linearGradient>
+        <linearGradient id="rightProfileGrad" x1="190" y1="55" x2="275" y2="120" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FEF08A" />
+            <stop offset="55%" stop-color="#B5C680" />
+            <stop offset="100%" stop-color="#B5C680" stop-opacity="0.1" />
+        </linearGradient>
+        <linearGradient id="subWaveGrad" x1="40" y1="115" x2="285" y2="95" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7C3AED" stop-opacity="0" />
+            <stop offset="35%" stop-color="#9333EA" stop-opacity="0.55" />
+            <stop offset="75%" stop-color="#B5C680" stop-opacity="0.5" />
+            <stop offset="100%" stop-color="#B5C680" stop-opacity="0" />
+        </linearGradient>
+    </defs>
+
+    <!-- Фоновое неоновое свечение -->
+    <ellipse cx="115" cy="92" rx="65" ry="42" fill="#7C3AED" fill-opacity="0.28" filter="url(#glowAmbient)" />
+    <ellipse cx="195" cy="110" rx="68" ry="36" fill="#B5C680" fill-opacity="0.22" filter="url(#glowAmbient)" />
+
+    <!-- Вторичная полупрозрачная волна -->
+    <path d="M22 118 C 68 86, 118 92, 156 116 C 188 136, 226 78, 296 92"
+          stroke="url(#subWaveGrad)" stroke-width="2" stroke-linecap="round" />
+
+    <!-- Левый силуэт (профиль девушки, смотрит вправо) -->
+    <path d="M58 96
+             C 72 52, 96 32, 120 34
+             C 136 35, 144 45, 143 56
+             C 143 61, 149 66, 149 69
+             C 149 72, 144 73, 145 76
+             C 146 78, 144 81, 145 83
+             C 145 87, 139 91, 134 91
+             C 129 91, 127 99, 132 108"
+          stroke="url(#leftProfileGrad)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowStrong)" />
+
+    <!-- Правый силуэт (профиль парня/девушки, смотрит влево) -->
+    <path d="M214 118
+             C 212 112, 205 110, 205 105
+             C 205 102, 203 100, 204 98
+             C 205 96, 201 94, 201 91
+             C 201 88, 206 83, 206 77
+             C 206 66, 218 58, 236 62
+             C 256 66, 272 82, 292 80"
+          stroke="url(#rightProfileGrad)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowStrong)" />
+
+    <!-- Внутренняя линия волос правого силуэта -->
+    <path d="M206 76 C 214 66, 232 68, 252 78 C 266 85, 280 86, 294 84"
+          stroke="url(#rightProfileGrad)" stroke-width="1.4" stroke-opacity="0.7" stroke-linecap="round" />
+
+    <!-- Главная светящаяся волна, соединяющая профили -->
+    <path d="M18 112
+             C 56 82, 92 84, 130 112
+             C 162 136, 188 148, 222 122
+             C 246 103, 268 94, 302 96"
+          stroke="url(#waveMainGrad)" stroke-width="4" stroke-linecap="round" filter="url(#glowStrong)" />
+
+    <!-- Светящиеся частицы вокруг волны -->
+    <circle cx="48"  cy="84"  r="2"   fill="#FEF08A" opacity="0.85" />
+    <circle cx="84"  cy="118" r="2.5" fill="#C084FC" opacity="0.75" />
+    <circle cx="154" cy="36"  r="2.2" fill="#C084FC" opacity="0.7" />
+    <circle cx="186" cy="58"  r="1.8" fill="#D9F99D" opacity="0.8" />
+    <circle cx="168" cy="116" r="1.5" fill="#FEF08A" opacity="0.75" />
+    <circle cx="248" cy="52"  r="1.8" fill="#D9F99D" opacity="0.75" />
+    <circle cx="258" cy="114" r="2.4" fill="#A855F7" opacity="0.75" />
+    <circle cx="232" cy="136" r="1.4" fill="#FEF08A" opacity="0.6" />
+</svg>`;
+
+const PIN_ICON_SVG = `
+<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11z" />
+    <circle cx="12" cy="10" r="2.5" />
+</svg>`;
+
+const GLOBE_PIN_SVG = `
+<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle cx="16" cy="19" r="11" stroke="#B5C680" stroke-width="1.7" />
+    <ellipse cx="16" cy="19" rx="5.2" ry="11" stroke="#B5C680" stroke-width="1.6" />
+    <path d="M5.5 16h19M5.5 22h19" stroke="#B5C680" stroke-width="1.5" stroke-linecap="round" />
+    <path d="M25 6c-2.5 0-4.5 1.95-4.5 4.35 0 3.1 4.5 7.15 4.5 7.15s4.5-4.05 4.5-7.15C29.5 7.95 27.5 6 25 6z"
+          fill="#160B2A" stroke="#B5C680" stroke-width="1.7" stroke-linejoin="round" />
+    <circle cx="25" cy="10.3" r="1.4" fill="#B5C680" />
+</svg>`;
 
 const Feed = (() => {
     const st = {
@@ -117,18 +222,85 @@ const Feed = (() => {
     }
 
     /* ---------- колода ---------- */
+    function renderEmptyDeck(deck) {
+        const wrap = el('div', 'deck-empty-state');
+        const main = el('div', 'empty-main');
+
+        const art = el('div', 'empty-art' + (st.loading ? ' is-loading' : ''));
+        art.innerHTML = EMPTY_WAVE_SVG;
+        main.appendChild(art);
+
+        const titleText = st.loading ? 'Ищем людей на волне…' : (st.err ? 'Что-то пошло не так' : 'Пока тихо на волнах');
+        main.appendChild(el('h3', 'empty-title', titleText));
+
+        const desc = el('p', 'empty-desc');
+        if (st.loading) {
+            desc.textContent = 'Подбираем анкеты по вашим интересам и городу.';
+        } else if (st.err) {
+            desc.textContent = st.err;
+        } else {
+            desc.append(
+                document.createTextNode('В твоём городе анкеты закончились.'),
+                document.createElement('br'),
+                document.createTextNode('Загляни чуть позже — новые люди появляются каждый день.')
+            );
+        }
+        main.appendChild(desc);
+
+        if (!st.loading) {
+            const refreshBtn = el('button', 'empty-refresh-btn', 'Обновить анкеты');
+            refreshBtn.type = 'button';
+            refreshBtn.addEventListener('click', () => { TG.tap(); resetDeck(); });
+            main.appendChild(refreshBtn);
+
+            const cityBtn = el('button', 'empty-city-btn');
+            cityBtn.type = 'button';
+            cityBtn.innerHTML = PIN_ICON_SVG;
+            cityBtn.appendChild(el('span', '', 'Изменить город'));
+            cityBtn.addEventListener('click', () => {
+                TG.tap();
+                if (typeof changeCityFromFeed === 'function') changeCityFromFeed();
+                else show(4);
+            });
+            main.appendChild(cityBtn);
+        }
+
+        wrap.appendChild(main);
+
+        if (!st.loading) {
+            const banner = el('button', 'empty-nearby-banner');
+            banner.type = 'button';
+            const ico = el('div', 'empty-banner-icon');
+            ico.innerHTML = GLOBE_PIN_SVG;
+            const sep = el('div', 'empty-banner-sep');
+            const txt = el('div', 'empty-banner-text');
+            txt.append(
+                document.createTextNode('Показываем людей'),
+                document.createElement('br'),
+                document.createTextNode('из ближайших городов')
+            );
+            banner.append(ico, sep, txt);
+            banner.addEventListener('click', () => {
+                TG.tap();
+                if (st.sameCity) {
+                    st.sameCity = false;
+                    buildChips();
+                }
+                resetDeck();
+            });
+            wrap.appendChild(banner);
+        }
+
+        deck.appendChild(wrap);
+    }
+
     function renderDeck() {
         const deck = $('deck'), r = st.cur;
+        const actions = document.querySelector('#screen-feed .deck-actions');
+        if (actions) actions.hidden = !r;
         deck.innerHTML = '';
         if (!r) {
-            const empty = el('div', 'deck-empty', st.loading ? 'Загружаем…'
-                : (st.err || 'Анкеты закончились. Пропущенные вернутся через пару дней, а новые люди появляются каждый день'));
-            if (!st.loading) {
-                const b = el('button', 'w-btn ok', 'Обновить'); b.type = 'button';
-                b.addEventListener('click', () => { TG.tap(); resetDeck(); });
-                empty.appendChild(b);
-            }
-            deck.appendChild(empty);
+            renderEmptyDeck(deck);
             return;
         }
         const card = el('article', 'deck-card');
@@ -203,7 +375,7 @@ const Feed = (() => {
         };
         const mine = (profile.intents || []).filter((k) => INTENTS[k]);          // только интересы из вашей анкеты
         if (st.intent && !mine.includes(st.intent)) st.intent = null;            // выбранной темы больше нет в анкете — сбрасываем
-        mk((profile.city || 'Мой город'), 'city', st.sameCity);        // название вашего города
+        mk((profile.city || 'Мой город'), 'city', st.sameCity);                  // название вашего города
         mk('Все', '', st.intent === null);
         mine.forEach((k) => mk(INTENTS[k], k, st.intent === k));
     }
@@ -214,6 +386,10 @@ const Feed = (() => {
         if (c.dataset.key === 'city') st.sameCity = !st.sameCity;
         else st.intent = c.dataset.key || null;
         buildChips(); resetDeck();
+    }
+    function onCityChanged() {
+        buildChips();
+        resetDeck();
     }
 
     /* ---------- экран «Волны» ---------- */
@@ -364,7 +540,7 @@ const Feed = (() => {
         setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }
     init();
-    return { open, openWaves, toast, refreshStatus };
+    return { open, openWaves, toast, refreshStatus, onCityChanged };
 })();
 
 // Если лента уже показана при загрузке (вход в приложение с готовым профилем) — запускаем её

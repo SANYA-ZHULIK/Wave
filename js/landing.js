@@ -20,6 +20,7 @@ const INTENTS = {
 
 const profile = { name: '', age: 22, gender: '', looking: '', city: '', intents: [], photo_url: '', photo_path: '', bio: '' };
 let step = 0;
+let cityFromFeed = false; // Флаг быстрой смены города напрямую из ленты
 
 const $ = (id) => document.getElementById(id);
 const dbOn = () => typeof Supa !== 'undefined' && Supa.enabled();
@@ -63,6 +64,7 @@ function buildDots() {
 
 // Куда ведёт кнопка «Назад» Telegram. Главная — лента анкет (FEED), у неё кнопки «Назад» нет.
 function backTarget(n) {
+    if (n === 4 && cityFromFeed) return FEED;
     if (n === 1) return isComplete() ? DONE : 0;
     if (n > 1 && n < DONE) return n - 1;
     if (n === DONE || n === WAVES || n === NOTIFS) return FEED;
@@ -74,11 +76,30 @@ function applyBack() {
 }
 
 function show(n) {
+    if (n !== 4 && cityFromFeed) {
+        cityFromFeed = false;
+        const prog = $('screen-city').querySelector('.auth-progress');
+        if (prog) prog.hidden = false;
+        $('cityNext').textContent = 'Далее';
+    }
     step = n;
     STEPS.slice(1).forEach((id, i) => $(id).classList.toggle('active', i + 1 === n));
     applyBack();
     if (n === 1) setTimeout(() => $('nameInput').focus(), 450);
     if (n === FEED && typeof Feed !== 'undefined') Feed.open();
+}
+
+// Быстрый переход к смене города из экрана пустой ленты
+function changeCityFromFeed() {
+    cityFromFeed = true;
+    const prog = $('screen-city').querySelector('.auth-progress');
+    if (prog) prog.hidden = true;
+    $('cityNext').textContent = 'Сохранить';
+    $('cityInput').value = profile.city || '';
+    clearErr('cityError');
+    renderCities();
+    show(4);
+    setTimeout(() => $('cityInput').focus(), 350);
 }
 
 // Куда вести человека с уже сохранённым профилем
@@ -187,7 +208,7 @@ function renderCities() {
         box.appendChild(p);
     }
 }
-function submitCity() {
+async function submitCity() {
     const input = $('cityInput');
     clearErr('cityError');
     if (!cityList.length) return fail(input, $('cityError'), citiesFailed
@@ -195,7 +216,30 @@ function submitCity() {
         : 'Список городов ещё загружается — повторите через секунду');
     const c = findCity(input.value);
     if (!c) return fail(input, $('cityError'), 'Выберите город из списка');
-    profile.city = c.name; input.value = c.name; TG.tap(); show(5);
+    profile.city = c.name; input.value = c.name; TG.tap();
+
+    if (cityFromFeed && isComplete()) {
+        const btn = $('cityNext');
+        btn.disabled = true;
+        try {
+            if (dbOn()) await Supa.saveProfile(profile);
+            saveProfile();
+            renderDone();
+            show(FEED);
+            if (typeof Feed !== 'undefined') {
+                Feed.onCityChanged();
+                Feed.toast('Город обновлён: ' + profile.city);
+            }
+        } catch (e) {
+            console.error('City update error:', e);
+            fail(input, $('cityError'), 'Не удалось сохранить город. Проверьте интернет');
+        } finally {
+            btn.disabled = false;
+        }
+        return;
+    }
+
+    show(5);
 }
 // Проверяем город уже сохранённого профиля: приводим написание к справочнику, а неизвестный просим выбрать заново
 function validateCity() {
@@ -261,7 +305,6 @@ function paintPhoto() {
     $('avatarImg').hidden = !has;
     $('avatarPlus').hidden = has;
     if (has) $('avatarImg').src = profile.photo_url;
-    
 }
 async function onPhotoChosen(e) {
     const file = e.target.files && e.target.files[0];
@@ -434,7 +477,6 @@ function init() {
     $('bioInput').addEventListener('input', onBioInput);
     $('bioNext').addEventListener('click', finish);
     $('resetBtn').addEventListener('click', editProfile);
-
 
     // Сохранённый локально профиль
     const saved = loadProfile();
