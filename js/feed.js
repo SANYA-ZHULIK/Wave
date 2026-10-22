@@ -72,7 +72,7 @@ const EMPTY_WAVE_SVG = `
              C 129 91, 127 99, 132 108"
           stroke="url(#leftProfileGrad)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowStrong)" />
 
-    <!-- Правый силуэт (профиль парня/девушки, смотрит влево) -->
+    <!-- Правый силуэт (профиль, смотрит влево) -->
     <path d="M214 118
              C 212 112, 205 110, 205 105
              C 205 102, 203 100, 204 98
@@ -120,6 +120,21 @@ const GLOBE_PIN_SVG = `
     <circle cx="25" cy="10.3" r="1.4" fill="#B5C680" />
 </svg>`;
 
+const TOAST_ICONS = {
+    globe: GLOBE_PIN_SVG,
+    wave: `<svg viewBox="0 0 36 36" fill="none" stroke="#B5C680" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18c3.5-4.5 7.5-4.5 11 0s7.5 4.5 11 0 4.5-3 6-1.5"/><path d="M4 24c3.5-4.5 7.5-4.5 11 0s7.5 4.5 11 0 4.5-3 6-1.5" opacity=".55"/></svg>`,
+    heart: `<svg viewBox="0 0 36 36" fill="none" stroke="#B5C680" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 29s-10-6.35-10-13.5A5.5 5.5 0 0 1 18 12a5.5 5.5 0 0 1 10 3.5C28 22.65 18 29 18 29z"/></svg>`,
+    info: `<svg viewBox="0 0 36 36" fill="none" stroke="#B5C680" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="18" r="11"/><path d="M18 16v7M18 12.5h.01"/></svg>`
+};
+
+function pickToastIcon(msg) {
+    const m = (msg || '').toLowerCase();
+    if (m.includes('город') || m.includes('поиск') || m.includes('ближайш')) return TOAST_ICONS.globe;
+    if (m.includes('волна') || m.includes('взаимно')) return TOAST_ICONS.wave;
+    if (m.includes('лайк')) return TOAST_ICONS.heart;
+    return TOAST_ICONS.info;
+}
+
 const Feed = (() => {
     const st = {
         queue: [], cur: null, intent: null, sameCity: false, lastZone: null,
@@ -138,8 +153,17 @@ const Feed = (() => {
     }
     const dbg = (e) => (DEBUG ? ' (' + e.message + ')' : '');
     function toast(msg, ms = 3000) {
-        const t = $('toast'); t.textContent = msg; t.hidden = false;
-        clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, ms);
+        const t = $('toast');
+        t.innerHTML = '';
+        const ico = el('div', 'toast-icon');
+        ico.innerHTML = pickToastIcon(msg);
+        const sep = el('div', 'toast-sep');
+        const cleanMsg = (msg || '').replace(/^[💌🌊🎉👋]+\s*|\s*[♥🌊🎉]+$/g, '');
+        const txt = el('div', 'toast-text', cleanMsg);
+        t.append(ico, sep, txt);
+        t.hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { t.hidden = true; }, ms);
     }
     async function photoUrl(path) {
         if (!urlCache.has(path)) urlCache.set(path, await Supa.signedUrl(path));
@@ -205,8 +229,8 @@ const Feed = (() => {
     function announceZone() {
         const z = st.cur ? st.cur.zone : null;
         if (z === null || z === undefined) return;
-        if (z > 0 && st.lastZone === null) toast('В вашем городе пока никого — показываем ближайшие города', 4500);
-        else if (z > 0 && st.lastZone === 0) toast('В вашем городе анкеты закончились — показываем ближайшие города', 4500);
+        if (z > 0 && st.lastZone === null) toast('Показываем людей из ближайших городов', 4500);
+        else if (z > 0 && st.lastZone === 0) toast('В вашем городе анкеты закончились — показываем людей из ближайших городов', 4500);
         else if (st.lastZone !== null && z > st.lastZone && z > 1) toast('Расширяем поиск — показываем города подальше', 4500);
         st.lastZone = z;
     }
@@ -266,31 +290,6 @@ const Feed = (() => {
         }
 
         wrap.appendChild(main);
-
-        if (!st.loading) {
-            const banner = el('button', 'empty-nearby-banner');
-            banner.type = 'button';
-            const ico = el('div', 'empty-banner-icon');
-            ico.innerHTML = GLOBE_PIN_SVG;
-            const sep = el('div', 'empty-banner-sep');
-            const txt = el('div', 'empty-banner-text');
-            txt.append(
-                document.createTextNode('Показываем людей'),
-                document.createElement('br'),
-                document.createTextNode('из ближайших городов')
-            );
-            banner.append(ico, sep, txt);
-            banner.addEventListener('click', () => {
-                TG.tap();
-                if (st.sameCity) {
-                    st.sameCity = false;
-                    buildChips();
-                }
-                resetDeck();
-            });
-            wrap.appendChild(banner);
-        }
-
         deck.appendChild(wrap);
     }
 
