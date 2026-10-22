@@ -62,22 +62,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=23"
+        href="css/base.css?v=25"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=23"
+        href="css/landing.css?v=25"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=23"
+        href="css/network.css?v=25"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=23"
+        href="css/auth.css?v=25"
     >
 
 </head>
@@ -238,14 +238,61 @@
     </section>
 
     <section class="feed-screen" id="screen-done">
+        <!-- Тонкие неоновые волны на фоне в стилистике баннера пустой ленты -->
+        <div class="profile-bg" aria-hidden="true">
+            <svg class="profile-bg-top" viewBox="0 0 400 260" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="profWaveGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="6" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                    <linearGradient id="profWaveMain" x1="0" y1="130" x2="400" y2="130" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#7C3AED" stop-opacity="0" />
+                        <stop offset="20%" stop-color="#7C3AED" stop-opacity="0.75" />
+                        <stop offset="50%" stop-color="#B5C680" stop-opacity="0.55" />
+                        <stop offset="80%" stop-color="#7C3AED" stop-opacity="0.75" />
+                        <stop offset="100%" stop-color="#B5C680" stop-opacity="0" />
+                    </linearGradient>
+                    <linearGradient id="profWaveSub" x1="0" y1="150" x2="400" y2="150" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#7C3AED" stop-opacity="0" />
+                        <stop offset="30%" stop-color="#7C3AED" stop-opacity="0.35" />
+                        <stop offset="70%" stop-color="#B5C680" stop-opacity="0.35" />
+                        <stop offset="100%" stop-color="#7C3AED" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
+                <!-- Вторичная тонкая волна -->
+                <path d="M-10 158 C 65 118, 130 190, 200 162 C 270 134, 335 108, 410 146"
+                      stroke="url(#profWaveSub)" stroke-width="1.5" stroke-linecap="round" />
+                <!-- Основная светящаяся линия волны -->
+                <path d="M-10 138 C 65 96, 130 176, 200 148 C 270 120, 335 92, 410 132"
+                      stroke="url(#profWaveMain)" stroke-width="2.5" stroke-linecap="round" filter="url(#profWaveGlow)" />
+                <!-- Деликатные частицы, как в иллюстрации пустой ленты -->
+                <circle cx="52"  cy="108" r="1.8" fill="#B5C680" opacity="0.65" />
+                <circle cx="96"  cy="162" r="2"   fill="#7C3AED" opacity="0.7" />
+                <circle cx="308" cy="102" r="1.8" fill="#B5C680" opacity="0.65" />
+                <circle cx="348" cy="148" r="2"   fill="#7C3AED" opacity="0.7" />
+            </svg>
+
+            <svg class="profile-bg-bottom" viewBox="0 0 400 100" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M-10 62 C 95 28, 185 88, 290 54 C 345 36, 380 42, 410 52"
+                      stroke="url(#profWaveSub)" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+        </div>
+
         <header class="feed-head">
             <button class="menu-btn" data-menu aria-label="Меню">☰<span class="dot" hidden></span></button>
             <h2>Профиль</h2>
             <span class="head-spacer"></span>
         </header>
         <div class="profile-body">
-            <div class="done-emoji" id="doneEmoji">🌊</div>
-            <img class="done-avatar" id="doneAvatar" alt="" hidden>
+            <div class="profile-avatar-wrap">
+                <div class="done-emoji" id="doneEmoji">🌊</div>
+                <img class="done-avatar" id="doneAvatar" alt="" hidden>
+                <span class="profile-avatar-dot" aria-hidden="true"></span>
+            </div>
             <div class="auth-header"><h2 id="doneTitle">Привет!</h2><p id="doneMeta"></p></div>
             <div class="tags" id="doneIntents"></div>
             <p class="done-bio" id="doneBio"></p>
@@ -310,18 +357,18 @@
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=23"></script>
+    <script src="js/telegram.js?v=25"></script>
 
     <!-- Supabase JS — нужен только для уведомлений в реальном времени (без него приложение работает с периодическим опросом) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-    <script src="js/supabase.js?v=23"></script>
+    <script src="js/supabase.js?v=25"></script>
 
-    <script src="js/landing.js?v=23"></script>
+    <script src="js/landing.js?v=25"></script>
 
-    <script src="js/feed.js?v=23"></script>
+    <script src="js/feed.js?v=25"></script>
 
-    <script src="js/nav.js?v=23"></script>
+    <script src="js/nav.js?v=25"></script>
 
 
     <script>
