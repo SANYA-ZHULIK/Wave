@@ -163,7 +163,12 @@ const Nav = (() => {
     // older = true — подгрузить более старые. Показанные новые уведомления помечаются прочитанными (остаются в истории).
     async function loadNotifs(older = false) {
         const body = $('notifsBody');
-        if (!dbOn()) { body.innerHTML = ''; body.appendChild(el('p', 'feed-empty', 'Уведомления доступны только внутри Telegram')); return; }
+        const waitMin = !firstLoaded ? new Promise((r) => setTimeout(r, 420)) : Promise.resolve();
+        if (!dbOn()) {
+            await waitMin;
+            body.innerHTML = ''; body.appendChild(el('p', 'feed-empty', 'Уведомления доступны только внутри Telegram'));
+            return;
+        }
         if (notifLoading) { notifAgain = true; return; }
         notifLoading = true;
         try {
@@ -171,7 +176,7 @@ const Nav = (() => {
             do {
                 notifAgain = false;
                 const args = useOlder ? { p_limit: PAGE, p_before: Math.min(...shown.keys()) } : { p_limit: PAGE };
-                const [rows, st] = await Promise.all([Supa.rpc('my_notifications', args), Supa.rpc('wave_status')]);
+                const [rows, st] = await Promise.all([Supa.rpc('my_notifications', args), Supa.rpc('wave_status'), waitMin]);
                 rows.forEach((n) => { if (!shown.has(n.id)) shown.set(n.id, n); });
                 if (useOlder || !firstLoaded) hasMore = rows.length === PAGE;
                 firstLoaded = true;
@@ -182,6 +187,7 @@ const Nav = (() => {
                 useOlder = false;
             } while (notifAgain);
         } catch (e) {
+            await waitMin;
             console.error('Notifications error:', e);
             body.innerHTML = '';
             body.appendChild(el('p', 'feed-empty', 'Не удалось загрузить уведомления' + (DEBUG ? ' (' + e.message + ')' : '')));

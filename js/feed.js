@@ -210,14 +210,25 @@ const Feed = (() => {
         if (st.loading || st.exhausted) return;
         st.loading = true; st.err = '';
         const gen = st.gen;
+        if (!st.cur) renderDeck();
+        const waitMin = !st.cur ? new Promise((r) => setTimeout(r, 520)) : Promise.resolve();
         try {
-            const rows = await Supa.rpc('discover', { p_intent: st.intent, p_same_city: st.sameCity, p_limit: 20, p_offset: 0 });
-            if (gen !== st.gen) return;
-            const have = new Set(st.queue.map((r) => r.id));
-            if (st.cur) have.add(st.cur.id);
-            rows.forEach((r) => { if (!have.has(r.id)) st.queue.push(r); });
-            if (rows.length < 20) st.exhausted = true;
+            if (!dbOn()) {
+                await waitMin;
+                if (gen === st.gen) st.err = 'Лента доступна только внутри Telegram';
+            } else {
+                const [rows] = await Promise.all([
+                    Supa.rpc('discover', { p_intent: st.intent, p_same_city: st.sameCity, p_limit: 20, p_offset: 0 }),
+                    waitMin
+                ]);
+                if (gen !== st.gen) return;
+                const have = new Set(st.queue.map((r) => r.id));
+                if (st.cur) have.add(st.cur.id);
+                rows.forEach((r) => { if (!have.has(r.id)) st.queue.push(r); });
+                if (rows.length < 20) st.exhausted = true;
+            }
         } catch (e) {
+            await waitMin;
             console.error('Feed error:', e);
             if (gen === st.gen) st.err = 'Не удалось загрузить анкеты' + dbg(e);
         } finally {
@@ -242,14 +253,14 @@ const Feed = (() => {
     }
     function resetDeck() {
         st.queue = []; st.cur = null; st.lastZone = null; st.exhausted = false; st.err = ''; st.loading = false; st.gen++;
-        renderDeck(); loadQueue();
+        loadQueue();
     }
 
     /* ---------- колода ---------- */
     function renderEmptyDeck(deck) {
         const wrap = el('div', 'deck-empty-state');
         if (st.loading) {
-            wrap.appendChild(waveLoader('Ищем людей на волне…'));
+            wrap.appendChild(waveLoader('Ищем людей на волне…', 'Подбираем анкеты по интересам и городу'));
             deck.appendChild(wrap);
             return;
         }
@@ -380,9 +391,8 @@ const Feed = (() => {
         };
         const mine = (profile.intents || []).filter((k) => INTENTS[k]);          // только интересы из вашей анкеты
         if (st.intent && !mine.includes(st.intent)) st.intent = null;            // выбранной темы больше нет в анкете — сбрасываем
-        mk((profile.city || 'Мой город'), 'city', st.sameCity);                  // название вашего города
-        sep();
-        mk('Все', '', st.intent === null);
+        mk((profile.city || 'Мой город'), 'city', st.sameCity);                  // только ваш город
+        mk('Все города', 'all_cities', !st.sameCity);                            // поиск по всем городам
         if (mine.length) sep();
         mine.forEach((k) => mk(INTENTS[k], k, st.intent === k));
     }
@@ -390,8 +400,10 @@ const Feed = (() => {
         const c = e.target.closest('.chip');
         if (!c) return;
         TG.pick();
-        if (c.dataset.key === 'city') st.sameCity = !st.sameCity;
-        else st.intent = c.dataset.key || null;
+        const key = c.dataset.key;
+        if (key === 'city') st.sameCity = true;
+        else if (key === 'all_cities') st.sameCity = false;
+        else st.intent = st.intent === key ? null : (key || null);
         buildChips(); resetDeck();
     }
     function onCityChanged() {
@@ -456,11 +468,13 @@ const Feed = (() => {
         if (!inc.length) body.appendChild(el('p', 'sec-note', 'Пока никто не лайкнул'));
         inc.forEach((r) => body.appendChild(incomingCard(r)));
     }
-    async function loadWaves() {
+    async function loadWaves(withDelay = false) {
+        const waitMin = withDelay ? new Promise((r) => setTimeout(r, 420)) : Promise.resolve();
         try {
-            const [status, inc, mat] = await Promise.all([Supa.rpc('wave_status'), Supa.rpc('my_incoming'), Supa.rpc('my_matches')]);
+            const [status, inc, mat] = await Promise.all([Supa.rpc('wave_status'), Supa.rpc('my_incoming'), Supa.rpc('my_matches'), waitMin]);
             st.status = status; renderStatus(); renderWaves(inc, mat);
         } catch (e) {
+            await waitMin;
             console.error('Waves error:', e);
             const b = $('wavesBody'); b.innerHTML = '';
             b.appendChild(el('p', 'feed-empty', 'Не удалось загрузить' + dbg(e)));
@@ -469,7 +483,7 @@ const Feed = (() => {
     function openWaves() {
         TG.tap(); show(WAVES);
         $('wavesBody').innerHTML = ''; $('wavesBody').appendChild(waveLoader('Загружаем волны…'));
-        loadWaves();
+        loadWaves(true);
     }
     async function respond(id, accept) {
         try {
@@ -530,10 +544,9 @@ const Feed = (() => {
         }
         const prevIntent = st.intent;
         buildChips(); renderStatus();
-        if (!dbOn()) { st.err = 'Лента доступна только внутри Telegram'; renderDeck(); return; }
-        if (prevIntent !== st.intent) resetDeck();
-        refreshStatus(); askNotifyPermission(); startRealtime();
-        if (!st.cur && !st.queue.length) { st.exhausted = false; renderDeck(); loadQueue(); } else renderDeck();
+        if (prevIntent !== st.intent) { resetDeck(); return; }
+        if (dbOn()) { refreshStatus(); askNotifyPermission(); startRealtime(); }
+        if (!st.cur && !st.queue.length) { st.exhausted = false; loadQueue(); } else renderDeck();
     }
     function init() {
         $('feedWaves').addEventListener('click', openWaves);

@@ -26,31 +26,52 @@ const $ = (id) => document.getElementById(id);
 const dbOn = () => typeof Supa !== 'undefined' && Supa.enabled();
 
 const WAVE_LOADER_SVG = `
-<svg viewBox="0 0 120 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<svg viewBox="0 0 220 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <defs>
-        <linearGradient id="wlGradMain" x1="6" y1="22" x2="114" y2="22" gradientUnits="userSpaceOnUse">
+        <filter id="wlGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
+            <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+        <filter id="wlAmbient" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="14" />
+        </filter>
+        <linearGradient id="wlGradMain" x1="10" y1="45" x2="210" y2="45" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="#7C3AED" stop-opacity="0" />
-            <stop offset="28%" stop-color="#A855F7" />
-            <stop offset="68%" stop-color="#B5C680" />
+            <stop offset="25%" stop-color="#A855F7" />
+            <stop offset="60%" stop-color="#D9F99D" />
+            <stop offset="85%" stop-color="#B5C680" />
             <stop offset="100%" stop-color="#B5C680" stop-opacity="0" />
         </linearGradient>
-        <linearGradient id="wlGradSub" x1="12" y1="26" x2="108" y2="20" gradientUnits="userSpaceOnUse">
+        <linearGradient id="wlGradSub" x1="15" y1="50" x2="205" y2="40" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="#B5C680" stop-opacity="0" />
-            <stop offset="35%" stop-color="#B5C680" stop-opacity="0.55" />
-            <stop offset="72%" stop-color="#7C3AED" stop-opacity="0.65" />
+            <stop offset="30%" stop-color="#B5C680" stop-opacity="0.6" />
+            <stop offset="70%" stop-color="#9333EA" stop-opacity="0.7" />
             <stop offset="100%" stop-color="#7C3AED" stop-opacity="0" />
         </linearGradient>
+        <linearGradient id="wlGradDeep" x1="25" y1="45" x2="195" y2="45" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7C3AED" stop-opacity="0" />
+            <stop offset="50%" stop-color="#C084FC" stop-opacity="0.4" />
+            <stop offset="100%" stop-color="#B5C680" stop-opacity="0" />
+        </linearGradient>
     </defs>
-    <path class="wl-path wl-sub" d="M8 25 C 28 36, 48 10, 66 23 C 84 35, 98 14, 112 22"
-          stroke="url(#wlGradSub)" stroke-width="2" stroke-linecap="round" />
-    <path class="wl-path wl-main" d="M6 22 C 26 8, 44 36, 62 21 C 80 6, 96 34, 114 20"
-          stroke="url(#wlGradMain)" stroke-width="3.2" stroke-linecap="round" />
-    <circle class="wl-dot wl-dot-1" cx="35" cy="14" r="2" fill="#B5C680" />
-    <circle class="wl-dot wl-dot-2" cx="62" cy="21" r="2.3" fill="#D9F99D" />
-    <circle class="wl-dot wl-dot-3" cx="88" cy="28" r="2" fill="#A855F7" />
+    <ellipse class="wl-glow-left" cx="78" cy="45" rx="46" ry="24" fill="#7C3AED" fill-opacity="0.32" filter="url(#wlAmbient)" />
+    <ellipse class="wl-glow-right" cx="142" cy="48" rx="46" ry="22" fill="#B5C680" fill-opacity="0.24" filter="url(#wlAmbient)" />
+    <path class="wl-path wl-deep" d="M16 48 C 52 68, 86 22, 114 45 C 142 68, 174 26, 204 44"
+          stroke="url(#wlGradDeep)" stroke-width="1.6" stroke-linecap="round" />
+    <path class="wl-path wl-sub" d="M12 52 C 48 24, 82 68, 112 44 C 142 20, 176 64, 208 38"
+          stroke="url(#wlGradSub)" stroke-width="2.2" stroke-linecap="round" />
+    <path class="wl-path wl-main" d="M10 44 C 46 16, 78 72, 110 44 C 142 16, 174 70, 210 42"
+          stroke="url(#wlGradMain)" stroke-width="3.6" stroke-linecap="round" filter="url(#wlGlow)" />
+    <circle class="wl-dot wl-dot-1" cx="52" cy="28" r="2.2" fill="#C084FC" />
+    <circle class="wl-dot wl-dot-2" cx="110" cy="44" r="2.6" fill="#D9F99D" />
+    <circle class="wl-dot wl-dot-3" cx="166" cy="30" r="2.2" fill="#B5C680" />
+    <circle class="wl-dot wl-dot-4" cx="138" cy="60" r="1.8" fill="#FEF08A" />
 </svg>`;
 
-function waveLoader(text) {
+function waveLoader(text, sub) {
     const wrap = document.createElement('div');
     wrap.className = 'wave-loader';
     const art = document.createElement('div');
@@ -62,6 +83,12 @@ function waveLoader(text) {
         lbl.className = 'wave-loader-text';
         lbl.textContent = text;
         wrap.appendChild(lbl);
+    }
+    if (sub) {
+        const s = document.createElement('div');
+        s.className = 'wave-loader-sub';
+        s.textContent = sub;
+        wrap.appendChild(s);
     }
     return wrap;
 }
