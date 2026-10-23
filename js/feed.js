@@ -248,19 +248,22 @@ const Feed = (() => {
     /* ---------- колода ---------- */
     function renderEmptyDeck(deck) {
         const wrap = el('div', 'deck-empty-state');
+        if (st.loading) {
+            wrap.appendChild(waveLoader('Ищем людей на волне…'));
+            deck.appendChild(wrap);
+            return;
+        }
         const main = el('div', 'empty-main');
 
-        const art = el('div', 'empty-art' + (st.loading ? ' is-loading' : ''));
+        const art = el('div', 'empty-art');
         art.innerHTML = EMPTY_WAVE_SVG;
         main.appendChild(art);
 
-        const titleText = st.loading ? 'Ищем людей на волне…' : (st.err ? 'Что-то пошло не так' : 'Пока тихо на волнах');
+        const titleText = st.err ? 'Что-то пошло не так' : 'Пока тихо на волнах';
         main.appendChild(el('h3', 'empty-title', titleText));
 
         const desc = el('p', 'empty-desc');
-        if (st.loading) {
-            desc.textContent = 'Подбираем анкеты по вашим интересам и городу.';
-        } else if (st.err) {
+        if (st.err) {
             desc.textContent = st.err;
         } else {
             desc.append(
@@ -271,23 +274,21 @@ const Feed = (() => {
         }
         main.appendChild(desc);
 
-        if (!st.loading) {
-            const refreshBtn = el('button', 'empty-refresh-btn', 'Обновить анкеты');
-            refreshBtn.type = 'button';
-            refreshBtn.addEventListener('click', () => { TG.tap(); resetDeck(); });
-            main.appendChild(refreshBtn);
+        const refreshBtn = el('button', 'empty-refresh-btn', 'Обновить анкеты');
+        refreshBtn.type = 'button';
+        refreshBtn.addEventListener('click', () => { TG.tap(); resetDeck(); });
+        main.appendChild(refreshBtn);
 
-            const cityBtn = el('button', 'empty-city-btn');
-            cityBtn.type = 'button';
-            cityBtn.innerHTML = PIN_ICON_SVG;
-            cityBtn.appendChild(el('span', '', 'Изменить город'));
-            cityBtn.addEventListener('click', () => {
-                TG.tap();
-                if (typeof changeCityFromFeed === 'function') changeCityFromFeed();
-                else show(4);
-            });
-            main.appendChild(cityBtn);
-        }
+        const cityBtn = el('button', 'empty-city-btn');
+        cityBtn.type = 'button';
+        cityBtn.innerHTML = PIN_ICON_SVG;
+        cityBtn.appendChild(el('span', '', 'Изменить город'));
+        cityBtn.addEventListener('click', () => {
+            TG.tap();
+            if (typeof changeCityFromFeed === 'function') changeCityFromFeed();
+            else show(4);
+        });
+        main.appendChild(cityBtn);
 
         wrap.appendChild(main);
         deck.appendChild(wrap);
@@ -372,10 +373,17 @@ const Feed = (() => {
             const b = el('button', 'chip sm' + (sel ? ' selected' : ''), label);
             b.type = 'button'; b.dataset.key = key; box.appendChild(b);
         };
+        const sep = () => {
+            const s = el('span', 'chips-sep');
+            s.setAttribute('aria-hidden', 'true');
+            box.appendChild(s);
+        };
         const mine = (profile.intents || []).filter((k) => INTENTS[k]);          // только интересы из вашей анкеты
         if (st.intent && !mine.includes(st.intent)) st.intent = null;            // выбранной темы больше нет в анкете — сбрасываем
         mk((profile.city || 'Мой город'), 'city', st.sameCity);                  // название вашего города
+        sep();
         mk('Все', '', st.intent === null);
+        if (mine.length) sep();
         mine.forEach((k) => mk(INTENTS[k], k, st.intent === k));
     }
     function onChip(e) {
@@ -460,7 +468,7 @@ const Feed = (() => {
     }
     function openWaves() {
         TG.tap(); show(WAVES);
-        $('wavesBody').innerHTML = ''; $('wavesBody').appendChild(el('p', 'feed-empty', 'Загружаем…'));
+        $('wavesBody').innerHTML = ''; $('wavesBody').appendChild(waveLoader('Загружаем волны…'));
         loadWaves();
     }
     async function respond(id, accept) {

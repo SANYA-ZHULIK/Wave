@@ -25,6 +25,47 @@ let cityFromFeed = false; // Флаг быстрой смены города н�
 const $ = (id) => document.getElementById(id);
 const dbOn = () => typeof Supa !== 'undefined' && Supa.enabled();
 
+const WAVE_LOADER_SVG = `
+<svg viewBox="0 0 120 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+        <linearGradient id="wlGradMain" x1="6" y1="22" x2="114" y2="22" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7C3AED" stop-opacity="0" />
+            <stop offset="28%" stop-color="#A855F7" />
+            <stop offset="68%" stop-color="#B5C680" />
+            <stop offset="100%" stop-color="#B5C680" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient id="wlGradSub" x1="12" y1="26" x2="108" y2="20" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#B5C680" stop-opacity="0" />
+            <stop offset="35%" stop-color="#B5C680" stop-opacity="0.55" />
+            <stop offset="72%" stop-color="#7C3AED" stop-opacity="0.65" />
+            <stop offset="100%" stop-color="#7C3AED" stop-opacity="0" />
+        </linearGradient>
+    </defs>
+    <path class="wl-path wl-sub" d="M8 25 C 28 36, 48 10, 66 23 C 84 35, 98 14, 112 22"
+          stroke="url(#wlGradSub)" stroke-width="2" stroke-linecap="round" />
+    <path class="wl-path wl-main" d="M6 22 C 26 8, 44 36, 62 21 C 80 6, 96 34, 114 20"
+          stroke="url(#wlGradMain)" stroke-width="3.2" stroke-linecap="round" />
+    <circle class="wl-dot wl-dot-1" cx="35" cy="14" r="2" fill="#B5C680" />
+    <circle class="wl-dot wl-dot-2" cx="62" cy="21" r="2.3" fill="#D9F99D" />
+    <circle class="wl-dot wl-dot-3" cx="88" cy="28" r="2" fill="#A855F7" />
+</svg>`;
+
+function waveLoader(text) {
+    const wrap = document.createElement('div');
+    wrap.className = 'wave-loader';
+    const art = document.createElement('div');
+    art.className = 'wave-loader-art';
+    art.innerHTML = WAVE_LOADER_SVG;
+    wrap.appendChild(art);
+    if (text) {
+        const lbl = document.createElement('div');
+        lbl.className = 'wave-loader-text';
+        lbl.textContent = text;
+        wrap.appendChild(lbl);
+    }
+    return wrap;
+}
+
 /* ---------- отладочный статус (виден только при DEBUG = true) ---------- */
 function setSync(ok, err) {
     const el = $('syncStatus');
@@ -191,7 +232,10 @@ async function loadCities() {
 function renderCities() {
     const box = $('cityList');
     box.innerHTML = '';
-    if (!cityList.length) return;
+    if (!cityList.length) {
+        if (!citiesFailed) box.appendChild(waveLoader('Загружаем города…'));
+        return;
+    }
     const q = cityKey($('cityInput').value);
     const hits = cityList.filter((c) => !q || cityKey(c.name).includes(q))
         .sort((a, b) => (cityKey(b.name).startsWith(q) - cityKey(a.name).startsWith(q)) || (b.population || 0) - (a.population || 0))
@@ -372,7 +416,7 @@ async function finish() {
 
 /* ---------- финальный экран ---------- */
 function renderDone() {
-    $('doneTitle').textContent = `Привет, ${profile.name}!`;
+    $('doneTitle').textContent = profile.name;
     $('doneMeta').textContent = [profile.city, profile.age].filter(Boolean).join(' · ');
     const has = !!profile.photo_url;
     $('doneAvatar').hidden = !has;

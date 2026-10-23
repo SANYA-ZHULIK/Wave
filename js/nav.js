@@ -200,7 +200,7 @@ const Nav = (() => {
         TG.tap(); show(NOTIFS);
         shown.clear(); hasMore = false; firstLoaded = false;
         const body = $('notifsBody');
-        body.innerHTML = ''; body.appendChild(el('p', 'feed-empty', 'Загружаем…'));
+        body.innerHTML = ''; body.appendChild(waveLoader('Загружаем уведомления…'));
         return loadNotifs();
     }
 
