@@ -14,7 +14,7 @@ const Nav = (() => {
         { go: 'about',   label: 'О нас' },
         { go: 'rules',   label: 'Правила пользования' }
     ];
-    const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE };
+    const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE, about: ABOUT, rules: RULES };
     const NOTIF = {
         like:  ()  => ['💌', 'Вас лайкнули', 'Загляните в «Волны» — возможно, это взаимно'],
         match: (d) => ['🌊', 'Взаимно! Началась волна' + (d.name ? ' с ' + d.name : ''), 'Напишите первым'],
@@ -80,7 +80,8 @@ const Nav = (() => {
         else if (key === 'notifs') openNotifs();
         else if (key === 'profile') { renderDone(); show(DONE); }
         else if (key === 'edit') editProfile();
-        else Feed.toast(key === 'about' ? 'Раздел «О нас» скоро появится' : 'Раздел «Правила пользования» скоро появится');
+        else if (key === 'about') { TG.tap(); show(ABOUT); $('aboutBody').scrollTop = 0; }
+        else if (key === 'rules') { TG.tap(); show(RULES); $('rulesBody').scrollTop = 0; }
     }
 
     /* ---------- уведомления ---------- */
@@ -213,6 +214,7 @@ const Nav = (() => {
     function init() {
         buildMenu(); renderDrawer();
         document.querySelectorAll('[data-menu]').forEach((b) => b.addEventListener('click', openDrawer));
+        document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => go(b.dataset.go)));
         $('drawerOverlay').addEventListener('click', closeDrawer);
         $('drawerNav').addEventListener('click', (e) => { const b = e.target.closest('.menu-item'); if (b) go(b.dataset.go); });
         document.addEventListener('wave:status', (e) => updateBadges(e.detail));
@@ -220,5 +222,5 @@ const Nav = (() => {
         document.addEventListener('wave:notification', () => { if (step === NOTIFS) loadNotifs(); });
     }
     init();
-    return { renderDrawer, openNotifs };
+    return { renderDrawer, openNotifs, go };
 })();

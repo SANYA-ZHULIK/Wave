@@ -9,8 +9,9 @@ try { DEBUG = localStorage.getItem('wave_debug') === '1'; } catch (e) {}
 
 const STORAGE_KEY = 'wave_profile';
 const STEPS = ['landing', 'screen-name', 'screen-age', 'screen-gender', 'screen-city',
-               'screen-intents', 'screen-photo', 'screen-bio', 'screen-done', 'screen-feed', 'screen-waves', 'screen-notifs'];
-const FORM_STEPS = 7, DONE = 8, FEED = 9, WAVES = 10, NOTIFS = 11, MAX_INTENTS = 5;
+               'screen-intents', 'screen-photo', 'screen-bio', 'screen-done', 'screen-feed',
+               'screen-waves', 'screen-notifs', 'screen-about', 'screen-rules'];
+const FORM_STEPS = 7, DONE = 8, FEED = 9, WAVES = 10, NOTIFS = 11, ABOUT = 12, RULES = 13, MAX_INTENTS = 5;
 
 const INTENTS = {
     relationship: 'Отношения', friendship: 'Дружба', chat: 'Общение',
@@ -135,7 +136,7 @@ function backTarget(n) {
     if (n === 4 && cityFromFeed) return FEED;
     if (n === 1) return isComplete() ? DONE : 0;
     if (n > 1 && n < DONE) return n - 1;
-    if (n === DONE || n === WAVES || n === NOTIFS) return FEED;
+    if (n === DONE || n === WAVES || n === NOTIFS || n === ABOUT || n === RULES) return isComplete() ? FEED : 0;
     return null;
 }
 function applyBack() {
