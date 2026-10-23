@@ -64,22 +64,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=34"
+        href="css/base.css?v=35"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=34"
+        href="css/landing.css?v=35"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=34"
+        href="css/network.css?v=35"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=34"
+        href="css/auth.css?v=35"
     >
 
 </head>
@@ -668,6 +668,47 @@
                 </div>
                 <button type="button" class="w-btn set-action-btn" id="setResetPassesBtn">Вернуть пропущенные анкеты</button>
             </article>
+
+            <div class="sec-title">Уведомления и интерфейс</div>
+
+            <article class="info-card set-card">
+                <div class="set-row-head">
+                    <div>
+                        <h4>Тактильный отклик</h4>
+                        <p class="set-sub">Мягкая вибрация при свайпах, лайках и переключении экранов</p>
+                    </div>
+                </div>
+                <div class="chip-group" id="setHapticChips">
+                    <button type="button" class="chip sm" data-value="on">Включён</button>
+                    <button type="button" class="chip sm" data-value="off">Выключен</button>
+                </div>
+            </article>
+
+            <article class="info-card set-card">
+                <div class="set-row-head">
+                    <div>
+                        <h4>Push-уведомления в Telegram</h4>
+                        <p class="set-sub" id="setTgPushSub">Сообщения от бота о новых симпатиях и взаимных волнах</p>
+                    </div>
+                </div>
+                <div class="set-city-box">
+                    <div class="set-city-info">
+                        <span class="set-status-dot" id="setTgPushDot" aria-hidden="true"></span>
+                        <span class="set-city-name" id="setTgPushStatus">Активны</span>
+                    </div>
+                    <button type="button" class="set-city-change" id="setTgPushBtn" hidden>Разрешить</button>
+                </div>
+
+                <div class="set-divider"></div>
+
+                <div class="set-row-head">
+                    <div>
+                        <h4>Журнал уведомлений</h4>
+                        <p class="set-sub">Очистить список прошлых событий внутри приложения</p>
+                    </div>
+                </div>
+                <button type="button" class="w-btn set-action-btn" id="setClearNotifsBtn">Очистить историю уведомлений</button>
+            </article>
         </div>
     </section>
 
@@ -686,18 +727,18 @@
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=34"></script>
+    <script src="js/telegram.js?v=35"></script>
 
     <!-- Supabase JS — нужен только для уведомлений в реальном времени (без него приложение работает с периодическим опросом) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-    <script src="js/supabase.js?v=34"></script>
+    <script src="js/supabase.js?v=35"></script>
 
-    <script src="js/landing.js?v=34"></script>
+    <script src="js/landing.js?v=35"></script>
 
-    <script src="js/feed.js?v=34"></script>
+    <script src="js/feed.js?v=35"></script>
 
-    <script src="js/nav.js?v=34"></script>
+    <script src="js/nav.js?v=35"></script>
 
 
     <script>

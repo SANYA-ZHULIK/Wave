@@ -559,6 +559,9 @@ function init() {
         Supa.loadProfile().then(async (remote) => {
             if (remote) {
                 applyProfile(remote); saveProfile();
+                if (typeof remote.is_hidden === 'boolean' && typeof Feed !== 'undefined' && Feed.setSearchPrefs) {
+                    Feed.setSearchPrefs({ isHidden: remote.is_hidden });
+                }
                 if (step === 0) route();
                 setSync(true);
                 refreshPhoto();

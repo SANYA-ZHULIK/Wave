@@ -16,12 +16,20 @@ if (tg) {
     if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); // чтобы свайп не закрывал приложение
 }
 
+let haptics = true;
+try { haptics = localStorage.getItem('wave_haptics') !== '0'; } catch (e) {}
+
 const TG = {
     user: () => (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || null,
-    tap:  () => tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred('light'),
-    pick: () => tg && tg.HapticFeedback && tg.HapticFeedback.selectionChanged(),
-    ok:   () => tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'),
-    fail: () => tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('error'),
+    hapticsOn: () => haptics,
+    setHaptics: (on) => {
+        haptics = !!on;
+        try { localStorage.setItem('wave_haptics', haptics ? '1' : '0'); } catch (e) {}
+    },
+    tap:  () => haptics && tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred('light'),
+    pick: () => haptics && tg && tg.HapticFeedback && tg.HapticFeedback.selectionChanged(),
+    ok:   () => haptics && tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success'),
+    fail: () => haptics && tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('error'),
     back: (fn) => {
         if (!tg || !tg.BackButton) return;
         tg.BackButton.offClick(TG._fn);

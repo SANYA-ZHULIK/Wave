@@ -141,6 +141,71 @@ const Nav = (() => {
                 ? 'Ваша анкета сейчас на паузе и не показывается новым людям в ленте. Активные волны и чаты продолжают работать.'
                 : 'Ваша анкета видна другим пользователям в ленте подбора.';
         }
+
+        const hapticGroup = $('setHapticChips');
+        if (hapticGroup) {
+            const hOn = typeof TG.hapticsOn === 'function' ? TG.hapticsOn() : true;
+            hapticGroup.querySelectorAll('.chip').forEach((c) => {
+                c.classList.toggle('selected', (c.dataset.value === 'on') === hOn);
+            });
+        }
+
+        const pushStatus = $('setTgPushStatus');
+        const pushDot = $('setTgPushDot');
+        const pushBtn = $('setTgPushBtn');
+        const pushSub = $('setTgPushSub');
+        if (pushStatus && pushDot && pushBtn) {
+            const u = TG.user();
+            const canAsk = !!(tg && tg.requestWriteAccess && u);
+            const allowed = !!(tgWriteGranted || (u && u.allows_write_to_pm));
+            if (!u) {
+                pushStatus.textContent = 'Доступно в Telegram';
+                pushDot.className = 'set-status-dot neutral';
+                pushBtn.hidden = true;
+                if (pushSub) pushSub.textContent = 'Откройте мини-приложение внутри Telegram для получения push-уведомлений от бота';
+            } else if (allowed) {
+                pushStatus.textContent = 'Разрешены в личные сообщения';
+                pushDot.className = 'set-status-dot on';
+                pushBtn.hidden = true;
+                if (pushSub) pushSub.textContent = 'Бот мгновенно пришлёт сообщение о новом лайке или взаимной волне';
+            } else {
+                pushStatus.textContent = 'Ожидают разрешения';
+                pushDot.className = 'set-status-dot warn';
+                pushBtn.hidden = !canAsk;
+                if (pushSub) pushSub.textContent = 'Разрешите боту писать вам, чтобы не пропускать новые симпатии';
+            }
+        }
+    }
+
+    let tgWriteGranted = false;
+
+    function onSetHaptic(e) {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        const on = chip.dataset.value === 'on';
+        if (typeof TG.setHaptics === 'function') TG.setHaptics(on);
+        if (on) TG.pick();
+        renderSettings();
+        if (typeof Feed !== 'undefined') {
+            Feed.toast(on ? 'Тактильный отклик включён' : 'Тактильный отклик выключен');
+        }
+    }
+
+    function onRequestTgPush() {
+        TG.tap();
+        if (!tg || !tg.requestWriteAccess) return;
+        try {
+            tg.requestWriteAccess((ok) => {
+                if (ok) {
+                    tgWriteGranted = true;
+                    notifAsked = true;
+                    renderSettings();
+                    if (typeof Feed !== 'undefined') Feed.toast('Push-уведомления в Telegram включены');
+                } else if (typeof Feed !== 'undefined') {
+                    Feed.toast('Разрешение не выдано');
+                }
+            });
+        } catch (e) {}
     }
 
     async function onSetLooking(e) {
@@ -372,13 +437,20 @@ const Nav = (() => {
         } finally { notifLoading = false; }
     }
     async function clearHistory() {
+        TG.tap();
         if (!(await ask('Удалить всю историю уведомлений? Это действие нельзя отменить.'))) return;
         try {
-            await Supa.rpc('clear_notifications');
+            if (dbOn()) await Supa.rpc('clear_notifications');
             shown.clear(); hasMore = false;
-            renderNotifs(lastStatus); Feed.refreshStatus();
-            Feed.toast('История очищена');
-        } catch (e) { console.error('Clear error:', e); Feed.toast('Не удалось очистить историю'); }
+            if (step === NOTIFS) renderNotifs(lastStatus);
+            if (typeof Feed !== 'undefined') {
+                Feed.refreshStatus();
+                Feed.toast('История уведомлений очищена');
+            }
+        } catch (e) {
+            console.error('Clear error:', e);
+            if (typeof Feed !== 'undefined') Feed.toast('Не удалось очистить историю');
+        }
     }
     function openNotifs() {
         TG.tap(); show(NOTIFS);
@@ -399,6 +471,9 @@ const Nav = (() => {
         if ($('setAgeChips')) $('setAgeChips').addEventListener('click', onSetAge);
         if ($('setVisChips')) $('setVisChips').addEventListener('click', onSetVis);
         if ($('setResetPassesBtn')) $('setResetPassesBtn').addEventListener('click', onResetPasses);
+        if ($('setHapticChips')) $('setHapticChips').addEventListener('click', onSetHaptic);
+        if ($('setTgPushBtn')) $('setTgPushBtn').addEventListener('click', onRequestTgPush);
+        if ($('setClearNotifsBtn')) $('setClearNotifsBtn').addEventListener('click', clearHistory);
         if ($('setChangeCityBtn')) $('setChangeCityBtn').addEventListener('click', () => {
             TG.tap();
             if (typeof changeCityFromFeed === 'function') changeCityFromFeed(SETTINGS);

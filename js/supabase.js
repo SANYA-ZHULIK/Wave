@@ -73,7 +73,7 @@ const Supa = (() => {
         enabled,
         async loadProfile() {
             const s = await auth();
-            const res = await rest(`profiles?tg_id=eq.${s.tg_id}&select=name,age,gender,looking,city,intents,bio,photo_path`);
+            const res = await rest(`profiles?tg_id=eq.${s.tg_id}&select=name,age,gender,looking,city,intents,bio,photo_path,is_hidden`);
             const rows = await res.json();
             return rows[0] || null;
         },

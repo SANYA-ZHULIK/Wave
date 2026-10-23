@@ -1246,3 +1246,25 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .set-action-btn:disabled {
     opacity: 0.5;
 }
+
+.set-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.set-status-dot.on {
+    background: #B5C680;
+    box-shadow: 0 0 10px rgba(181, 198, 128, 0.75);
+}
+
+.set-status-dot.warn {
+    background: #A855F7;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.75);
+}
+
+.set-status-dot.neutral {
+    background: rgba(255, 255, 255, 0.35);
+}
