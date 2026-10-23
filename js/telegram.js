@@ -4,8 +4,15 @@ const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : 
 if (tg) {
     tg.ready();
     tg.expand();
-    if (tg.setHeaderColor)     tg.setHeaderColor('#12051f');
+
+    // Синхронизируем цвета шапки и панелей под единую темную тему приложения (#0C061B),
+    // чтобы нативные кнопки Telegram на iOS не заливались белым цветом.
     if (tg.setBackgroundColor) tg.setBackgroundColor('#0C061B');
+    if (tg.setBottomBarColor)  tg.setBottomBarColor('#0C061B');
+    if (tg.setHeaderColor) {
+        try { tg.setHeaderColor('#0C061B'); } catch (e) { tg.setHeaderColor('bg_color'); }
+    }
+
     if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); // чтобы свайп не закрывал приложение
 }
 
