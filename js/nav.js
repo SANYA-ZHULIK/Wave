@@ -16,10 +16,16 @@ const Nav = (() => {
         { go: 'rules',    label: 'Правила пользования' }
     ];
     const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE, about: ABOUT, rules: RULES, settings: SETTINGS };
+    const NOTIF_ICONS = {
+        like: `<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7-4.6-7-9.8A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7 3.1c0 5.2-7 9.8-7 9.8z"/></svg>`,
+        match: `<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11.5c2.5-3.2 5.2-3.2 7.7 0s5.2 3.2 7.7 0 3.1-2.1 4.1-1"/><path d="M2.5 16.5c2.5-3.2 5.2-3.2 7.7 0s5.2 3.2 7.7 0 3.1-2.1 4.1-1" opacity=".6"/></svg>`,
+        ended: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg>`,
+        bell: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`
+    };
     const NOTIF = {
-        like:  ()  => ['💌', 'Вас лайкнули', 'Загляните в «Волны» — возможно, это взаимно'],
-        match: (d) => ['🌊', 'Взаимно! Началась волна' + (d.name ? ' с ' + d.name : ''), 'Напишите первым'],
-        ended: (d) => ['👋', 'Волна' + (d.name ? ' с ' + d.name : '') + ' завершена', 'Слот свободен']
+        like:  ()  => ['like',  'Вас лайкнули', 'Загляните в «Волны» — возможно, это взаимно'],
+        match: (d) => ['match', 'Взаимно! Началась волна' + (d.name ? ' с ' + d.name : ''), 'Откройте «Волны» и напишите первым'],
+        ended: (d) => ['ended', 'Волна' + (d.name ? ' с ' + d.name : '') + ' завершена', 'Слот снова свободен для новых знакомств']
     };
     let notifAsked = false;
 
@@ -121,6 +127,20 @@ const Nav = (() => {
                 c.classList.toggle('selected', c.dataset.value === (prefs.ageMode || 'peer'));
             });
         }
+
+        const visGroup = $('setVisChips');
+        if (visGroup) {
+            visGroup.querySelectorAll('.chip').forEach((c) => {
+                const isHid = c.dataset.value === 'hidden';
+                c.classList.toggle('selected', isHid === !!prefs.isHidden);
+            });
+        }
+        const visNote = $('setVisNote');
+        if (visNote) {
+            visNote.textContent = prefs.isHidden
+                ? 'Ваша анкета сейчас на паузе и не показывается новым людям в ленте. Активные волны и чаты продолжают работать.'
+                : 'Ваша анкета видна другим пользователям в ленте подбора.';
+        }
     }
 
     async function onSetLooking(e) {
@@ -175,24 +195,75 @@ const Nav = (() => {
         renderSettings();
     }
 
+    async function onSetVis(e) {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        TG.pick();
+        const isHidden = chip.dataset.value === 'hidden';
+        if (typeof Feed !== 'undefined' && Feed.setSearchPrefs) {
+            Feed.setSearchPrefs({ isHidden });
+        }
+        renderSettings();
+        if (dbOn() && typeof Supa.setHidden === 'function') {
+            await Supa.setHidden(isHidden);
+        }
+        if (typeof Feed !== 'undefined') {
+            Feed.toast(isHidden ? 'Анкета поставлена на паузу' : 'Анкета снова видна в поиске');
+        }
+    }
+
+    async function onResetPasses() {
+        TG.tap();
+        const btn = $('setResetPassesBtn');
+        if (btn) btn.disabled = true;
+        try {
+            if (dbOn() && typeof Supa.resetPasses === 'function') {
+                await Supa.resetPasses();
+            }
+            if (typeof Feed !== 'undefined') {
+                Feed.onCityChanged();
+                Feed.toast('Пропущенные анкеты снова доступны в ленте');
+            }
+        } catch (e) {
+            console.error('Reset passes error:', e);
+            if (typeof Feed !== 'undefined') Feed.toast('Не удалось сбросить пропущенные анкеты');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
     /* ---------- уведомления ---------- */
     function permissionBanner() {
         const u = TG.user();
         if (notifAsked || !tg || !tg.requestWriteAccess || !u || u.allows_write_to_pm) return null;
         const box = el('div', 'notif-banner');
-        box.appendChild(el('p', '', 'Включите уведомления в Telegram, чтобы не пропустить лайки и волны, когда приложение закрыто.'));
+        const head = el('div', 'notif-banner-head');
+        const ico = el('span', 'notif-ico kind-bell');
+        ico.innerHTML = NOTIF_ICONS.bell;
+        const txtWrap = el('div', 'notif-banner-body');
+        txtWrap.append(
+            el('div', 'notif-title', 'Push-уведомления в Telegram'),
+            el('p', 'notif-banner-sub', 'Разрешите боту писать вам, чтобы сразу узнавать о новых лайках и взаимных волнах.')
+        );
+        head.append(ico, txtWrap);
         const b = el('button', 'w-btn ok', 'Включить уведомления');
+        b.type = 'button';
         b.addEventListener('click', () => { notifAsked = true; try { tg.requestWriteAccess(() => {}); } catch (e) {} box.remove(); });
-        box.appendChild(b);
+        box.append(head, b);
         return box;
     }
     function notifItem(n) {
-        const [ico, title, text] = (NOTIF[n.kind] || (() => ['🔔', 'Уведомление', '']))(n.data || {});
+        const [kindKey, title, text] = (NOTIF[n.kind] || (() => ['bell', 'Уведомление', '']))(n.data || {});
         const item = el('button', 'notif' + (n.is_read ? '' : ' unread')); item.type = 'button';
+        const ico = el('span', 'notif-ico kind-' + kindKey);
+        ico.innerHTML = NOTIF_ICONS[kindKey] || NOTIF_ICONS.bell;
         const body = el('div', 'notif-body');
-        body.append(el('div', 'notif-title', title), el('div', 'notif-text', text));
-        item.append(el('span', 'notif-ico', ico), body, el('span', 'notif-time', ago(n.created_at)));
-        item.addEventListener('click', () => { if (n.kind === 'ended') show(FEED); else Feed.openWaves(); });
+        const top = el('div', 'notif-head');
+        top.append(el('div', 'notif-title', title), el('span', 'notif-time', ago(n.created_at)));
+        body.append(top, el('div', 'notif-text', text));
+        const arr = el('span', 'notif-chevron', '›');
+        item.append(ico, body, arr);
+        item.addEventListener('click', () => { TG.tap(); if (n.kind === 'ended') show(FEED); else Feed.openWaves(); });
         return item;
     }
     /* ---------- история уведомлений ---------- */
@@ -216,10 +287,15 @@ const Nav = (() => {
         return new Date(ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
     }
     function pendingLikesCard(n) {
-        const card = el('button', 'notif unread'); card.type = 'button';
+        const card = el('button', 'notif unread notif-pending'); card.type = 'button';
+        const ico = el('span', 'notif-ico kind-like');
+        ico.innerHTML = NOTIF_ICONS.like;
         const body = el('div', 'notif-body');
-        body.append(el('div', 'notif-title', 'Вас лайкнули: ' + n), el('div', 'notif-text', 'Посмотрите и ответьте в разделе «Волны»'));
-        card.append(el('span', 'notif-ico', '💌'), body);
+        const top = el('div', 'notif-head');
+        top.append(el('div', 'notif-title', 'Вас лайкнули · ' + n), el('span', 'notif-pill-new', 'Ждут ответа'));
+        body.append(top, el('div', 'notif-text', 'Откройте раздел «Волны», чтобы посмотреть анкеты и ответить взаимностью'));
+        const arr = el('span', 'notif-chevron', '›');
+        card.append(ico, body, arr);
         card.addEventListener('click', () => Feed.openWaves());
         return card;
     }
@@ -230,15 +306,25 @@ const Nav = (() => {
         const banner = permissionBanner(); if (banner) body.appendChild(banner);
         // лайки, ждущие ответа, остаются в «Волнах» — напоминаем о них здесь, чтобы точка в меню была понятна
         const waiting = lastStatus && lastStatus.incoming > 0;
-        if (waiting) body.appendChild(pendingLikesCard(lastStatus.incoming));
+        if (waiting) {
+            body.appendChild(el('div', 'sec-title', 'Новые симпатии'));
+            body.appendChild(pendingLikesCard(lastStatus.incoming));
+        }
         const rows = [...shown.values()].sort((a, b) => b.id - a.id);
+        if (!rows.length) {
+            body.appendChild(el('div', 'sec-title', 'История событий'));
+            body.appendChild(el('p', 'sec-note', 'Здесь сохраняются взаимные волны, новые лайки и освободившиеся слоты.'));
+            const emptyBox = el('div', 'slot-empty notif-empty-slot');
+            emptyBox.textContent = 'Пока новых уведомлений нет — загляните в ленту анкет';
+            body.appendChild(emptyBox);
+            return;
+        }
         let label = '';
         rows.forEach((n) => {
             const l = dayLabel(n.created_at);
             if (l !== label) { label = l; body.appendChild(el('div', 'sec-title', l)); }
             body.appendChild(notifItem(n));
         });
-        if (!rows.length && !waiting) body.appendChild(el('p', 'feed-empty', 'Пока уведомлений нет. Лайки и волны появятся здесь, как только случатся.'));
         if (hasMore) {
             const more = el('button', 'w-btn notif-more', 'Показать ещё'); more.type = 'button';
             more.addEventListener('click', () => { TG.tap(); loadNotifs(true); });
@@ -311,6 +397,8 @@ const Nav = (() => {
         if ($('setLookingChips')) $('setLookingChips').addEventListener('click', onSetLooking);
         if ($('setGeoChips')) $('setGeoChips').addEventListener('click', onSetGeo);
         if ($('setAgeChips')) $('setAgeChips').addEventListener('click', onSetAge);
+        if ($('setVisChips')) $('setVisChips').addEventListener('click', onSetVis);
+        if ($('setResetPassesBtn')) $('setResetPassesBtn').addEventListener('click', onResetPasses);
         if ($('setChangeCityBtn')) $('setChangeCityBtn').addEventListener('click', () => {
             TG.tap();
             if (typeof changeCityFromFeed === 'function') changeCityFromFeed(SETTINGS);

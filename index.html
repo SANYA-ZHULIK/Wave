@@ -64,22 +64,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=33"
+        href="css/base.css?v=34"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=33"
+        href="css/landing.css?v=34"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=33"
+        href="css/network.css?v=34"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=33"
+        href="css/auth.css?v=34"
     >
 
 </head>
@@ -643,6 +643,31 @@
                     <button type="button" class="chip sm" data-value="all">Все города</button>
                 </div>
             </article>
+
+            <div class="sec-title">Видимость и лента</div>
+
+            <article class="info-card set-card">
+                <div class="set-row-head">
+                    <div>
+                        <h4>Показ моей анкеты</h4>
+                        <p class="set-sub" id="setVisNote">Ваша анкета видна другим пользователям в ленте подбора.</p>
+                    </div>
+                </div>
+                <div class="chip-group" id="setVisChips">
+                    <button type="button" class="chip sm" data-value="visible">Активна в поиске</button>
+                    <button type="button" class="chip sm" data-value="hidden">Скрыта (на паузе)</button>
+                </div>
+            </article>
+
+            <article class="info-card set-card">
+                <div class="set-row-head">
+                    <div>
+                        <h4>Пропущенные анкеты</h4>
+                        <p class="set-sub">Люди, которых вы пропустили (✕), скрываются на 2 дня. Вы можете вернуть их в выдачу прямо сейчас</p>
+                    </div>
+                </div>
+                <button type="button" class="w-btn set-action-btn" id="setResetPassesBtn">Вернуть пропущенные анкеты</button>
+            </article>
         </div>
     </section>
 
@@ -661,18 +686,18 @@
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=33"></script>
+    <script src="js/telegram.js?v=34"></script>
 
     <!-- Supabase JS — нужен только для уведомлений в реальном времени (без него приложение работает с периодическим опросом) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-    <script src="js/supabase.js?v=33"></script>
+    <script src="js/supabase.js?v=34"></script>
 
-    <script src="js/landing.js?v=33"></script>
+    <script src="js/landing.js?v=34"></script>
 
-    <script src="js/feed.js?v=33"></script>
+    <script src="js/feed.js?v=34"></script>
 
-    <script src="js/nav.js?v=33"></script>
+    <script src="js/nav.js?v=34"></script>
 
 
     <script>

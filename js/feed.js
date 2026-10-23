@@ -137,12 +137,13 @@ function pickToastIcon(msg) {
 
 const Feed = (() => {
     const PREFS_KEY = 'wave_search_prefs';
-    const prefs = { ageMode: 'peer', sameCity: false };
+    const prefs = { ageMode: 'peer', sameCity: false, isHidden: false };
     try {
         const savedPrefs = JSON.parse(localStorage.getItem(PREFS_KEY));
         if (savedPrefs && typeof savedPrefs === 'object') {
             if (savedPrefs.ageMode) prefs.ageMode = savedPrefs.ageMode;
             if (typeof savedPrefs.sameCity === 'boolean') prefs.sameCity = savedPrefs.sameCity;
+            if (typeof savedPrefs.isHidden === 'boolean') prefs.isHidden = savedPrefs.isHidden;
         }
     } catch (e) {}
 
@@ -434,19 +435,25 @@ const Feed = (() => {
         resetDeck();
     }
     function setSearchPrefs(next) {
-        if (typeof next.sameCity === 'boolean') {
+        let reload = false;
+        if (typeof next.sameCity === 'boolean' && next.sameCity !== st.sameCity) {
             prefs.sameCity = next.sameCity;
             st.sameCity = next.sameCity;
+            reload = true;
         }
-        if (next.ageMode) {
+        if (next.ageMode && next.ageMode !== prefs.ageMode) {
             prefs.ageMode = next.ageMode;
+            reload = true;
+        }
+        if (typeof next.isHidden === 'boolean') {
+            prefs.isHidden = next.isHidden;
         }
         savePrefs();
         buildChips();
-        resetDeck();
+        if (reload) resetDeck();
     }
     function getSearchPrefs() {
-        return { ageMode: prefs.ageMode, sameCity: st.sameCity };
+        return { ageMode: prefs.ageMode, sameCity: st.sameCity, isHidden: !!prefs.isHidden };
     }
 
     /* ---------- экран «Волны» ---------- */

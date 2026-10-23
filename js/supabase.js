@@ -154,6 +154,22 @@ const Supa = (() => {
                     updated_at: new Date().toISOString()
                 })
             });
+        },
+        async resetPasses() {
+            try {
+                await this.rpc('reset_my_passes');
+            } catch (e) {
+                const s = await auth();
+                await rest(`passes?user_id=eq.${s.tg_id}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } }).catch(() => {});
+            }
+        },
+        async setHidden(isHidden) {
+            const s = await auth();
+            await rest(`profiles?tg_id=eq.${s.tg_id}`, {
+                method: 'PATCH',
+                headers: { Prefer: 'return=minimal' },
+                body: JSON.stringify({ is_hidden: !!isHidden, updated_at: new Date().toISOString() })
+            }).catch(() => {});
         }
     };
 })();

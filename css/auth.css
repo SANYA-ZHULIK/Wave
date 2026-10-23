@@ -618,40 +618,64 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 }
 
 .notif {
-    display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; border-radius: 18px;
+    display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; border-radius: 20px;
     text-align: left; cursor: pointer; color: #fff; font-family: inherit;
-    background: rgba(18, 10, 36, 0.7);
+    background: rgba(18, 10, 36, 0.72);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.09);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
-    transition: transform 0.15s, border-color 0.2s;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.26);
+    transition: transform 0.15s, border-color 0.2s, background 0.2s;
 }
 .notif:active { transform: scale(0.98); }
 .notif.unread {
-    background: linear-gradient(135deg, rgba(181, 198, 128, 0.16), rgba(124, 58, 237, 0.14));
-    border-color: rgba(181, 198, 128, 0.45);
-    box-shadow: 0 6px 22px rgba(181, 198, 128, 0.1);
+    background: linear-gradient(135deg, rgba(181, 198, 128, 0.15), rgba(18, 10, 36, 0.82));
+    border-color: rgba(181, 198, 128, 0.42);
+    box-shadow: 0 8px 24px rgba(181, 198, 128, 0.1);
 }
 .notif-ico {
-    width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+    width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.09);
-    font-size: 20px;
+    background: rgba(124, 58, 237, 0.14); border: 1px solid rgba(124, 58, 237, 0.32);
+    box-shadow: 0 0 14px rgba(124, 58, 237, 0.18);
+}
+.notif-ico svg {
+    width: 22px; height: 22px;
+}
+.notif-ico.kind-like,
+.notif-ico.kind-match {
+    background: rgba(181, 198, 128, 0.14);
+    border-color: rgba(181, 198, 128, 0.38);
+    box-shadow: 0 0 14px rgba(181, 198, 128, 0.16);
 }
 .notif.unread .notif-ico {
-    background: rgba(181, 198, 128, 0.16); border-color: rgba(181, 198, 128, 0.35);
+    background: rgba(181, 198, 128, 0.2);
+    border-color: rgba(181, 198, 128, 0.52);
 }
-.notif-body { flex: 1; min-width: 0; }
-.notif-title { font-size: 14px; font-weight: 700; color: #fff; }
-.notif-text { font-size: 12.5px; color: rgba(255, 255, 255, 0.65); margin-top: 3px; line-height: 1.35; }
-.notif-time { font-size: 11px; color: rgba(255, 255, 255, 0.45); white-space: nowrap; }
+.notif-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.notif-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.notif-title { font-size: 14.5px; font-weight: 700; color: #fff; line-height: 1.3; }
+.notif-text { font-size: 12.5px; color: rgba(255, 255, 255, 0.64); line-height: 1.4; }
+.notif-time { font-size: 11px; font-weight: 500; color: rgba(255, 255, 255, 0.42); white-space: nowrap; flex-shrink: 0; }
+.notif-pill-new {
+    font-size: 10.5px; font-weight: 700; color: #12051f; background: #B5C680;
+    padding: 2px 8px; border-radius: 999px; white-space: nowrap; flex-shrink: 0;
+}
+.notif-chevron {
+    font-size: 20px; font-weight: 600; color: rgba(181, 198, 128, 0.55);
+    margin-left: 2px; flex-shrink: 0; line-height: 1;
+}
 .notif-banner {
-    padding: 15px 16px; border-radius: 18px;
-    background: rgba(124, 58, 237, 0.18);
+    padding: 15px 16px; border-radius: 20px;
+    background: rgba(18, 10, 36, 0.78);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(124, 58, 237, 0.48);
-    display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 1.45;
+    border: 1px solid rgba(124, 58, 237, 0.45);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.26);
+    display: flex; flex-direction: column; gap: 12px; font-size: 13px; line-height: 1.45;
 }
+.notif-banner-head { display: flex; align-items: center; gap: 12px; }
+.notif-banner-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.notif-banner-sub { font-size: 12.5px; color: rgba(255, 255, 255, 0.65); line-height: 1.4; }
+.notif-empty-slot { margin-top: 2px; }
 
 /* v19: боковое меню — ширина по содержимому (без пустого места справа) */
 .drawer { width: max-content; min-width: 220px; max-width: min(300px, 84%); padding-right: 18px; }
@@ -1201,4 +1225,24 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     height: 1px;
     background: rgba(255, 255, 255, 0.08);
     margin: 2px 0;
+}
+
+.set-action-btn {
+    flex: none;
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(181, 198, 128, 0.35);
+    background: rgba(181, 198, 128, 0.12);
+    color: #B5C680;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.set-action-btn:active {
+    background: rgba(181, 198, 128, 0.22);
+}
+
+.set-action-btn:disabled {
+    opacity: 0.5;
 }
