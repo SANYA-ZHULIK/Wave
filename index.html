@@ -64,22 +64,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=29"
+        href="css/base.css?v=30"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=29"
+        href="css/landing.css?v=30"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=29"
+        href="css/network.css?v=30"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=29"
+        href="css/auth.css?v=30"
     >
 
 </head>
@@ -326,6 +326,28 @@
     </section>
 
     <section class="feed-screen" id="screen-waves">
+        <div class="profile-bg" aria-hidden="true">
+            <svg class="profile-bg-top" viewBox="0 0 400 260" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M-10 164 C 75 198, 145 112, 220 148 C 295 184, 345 126, 410 154"
+                      stroke="url(#profWaveSub)" stroke-width="1.5" stroke-linecap="round" />
+                <path d="M-10 142 C 70 182, 145 94, 220 132 C 295 170, 345 106, 410 136"
+                      stroke="url(#profWaveMain)" stroke-width="2.5" stroke-linecap="round" filter="url(#profWaveGlow)" />
+                <circle cx="64"  cy="152" r="1.8" fill="#7C3AED" opacity="0.7" />
+                <circle cx="176" cy="112" r="2"   fill="#B5C680" opacity="0.65" />
+                <circle cx="318" cy="144" r="1.8" fill="#B5C680" opacity="0.65" />
+                <circle cx="356" cy="116" r="2"   fill="#7C3AED" opacity="0.7" />
+            </svg>
+            <svg class="profile-bg-mid" viewBox="0 0 400 180" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M-10 96 C 85 52, 175 134, 265 88 C 330 56, 375 78, 410 68"
+                      stroke="url(#profWaveSub)" stroke-width="1.4" stroke-linecap="round" />
+                <circle cx="122" cy="84"  r="1.6" fill="#B5C680" opacity="0.5" />
+                <circle cx="284" cy="78"  r="1.8" fill="#7C3AED" opacity="0.55" />
+            </svg>
+            <svg class="profile-bg-bottom" viewBox="0 0 400 100" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M-10 56 C 95 86, 195 26, 295 62 C 350 80, 382 52, 410 46"
+                      stroke="url(#profWaveSub)" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+        </div>
         <header class="feed-head">
             <button class="menu-btn" data-menu aria-label="Меню">☰<span class="dot" hidden></span></button>
             <h2>Волны</h2>
@@ -335,6 +357,28 @@
     </section>
 
     <section class="feed-screen" id="screen-notifs">
+        <div class="profile-bg" aria-hidden="true">
+            <svg class="profile-bg-top" viewBox="0 0 400 260" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M-10 152 C 70 112, 150 186, 230 144 C 305 104, 355 162, 410 138"
+                      stroke="url(#profWaveSub)" stroke-width="1.5" stroke-linecap="round" />
+                <path d="M-10 132 C 70 90, 150 170, 230 126 C 305 84, 355 146, 410 120"
+                      stroke="url(#profWaveMain)" stroke-width="2.5" stroke-linecap="round" filter="url(#profWaveGlow)" />
+                <circle cx="58"  cy="112" r="1.8" fill="#B5C680" opacity="0.65" />
+                <circle cx="148" cy="154" r="2"   fill="#7C3AED" opacity="0.7" />
+                <circle cx="288" cy="106" r="1.8" fill="#B5C680" opacity="0.65" />
+                <circle cx="352" cy="138" r="2"   fill="#7C3AED" opacity="0.7" />
+            </svg>
+            <svg class="profile-bg-mid" viewBox="0 0 400 180" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M-10 84 C 95 128, 185 48, 280 94 C 340 122, 378 82, 410 92"
+                      stroke="url(#profWaveSub)" stroke-width="1.4" stroke-linecap="round" />
+                <circle cx="104" cy="96"  r="1.6" fill="#7C3AED" opacity="0.55" />
+                <circle cx="246" cy="76"  r="1.8" fill="#B5C680" opacity="0.5" />
+            </svg>
+            <svg class="profile-bg-bottom" viewBox="0 0 400 100" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M-10 64 C 90 32, 190 84, 290 50 C 345 32, 380 46, 410 56"
+                      stroke="url(#profWaveSub)" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+        </div>
         <header class="feed-head">
             <button class="menu-btn" data-menu aria-label="Меню">☰<span class="dot" hidden></span></button>
             <h2>Уведомления</h2>
@@ -358,18 +402,18 @@
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=29"></script>
+    <script src="js/telegram.js?v=30"></script>
 
     <!-- Supabase JS — нужен только для уведомлений в реальном времени (без него приложение работает с периодическим опросом) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-    <script src="js/supabase.js?v=29"></script>
+    <script src="js/supabase.js?v=30"></script>
 
-    <script src="js/landing.js?v=29"></script>
+    <script src="js/landing.js?v=30"></script>
 
-    <script src="js/feed.js?v=29"></script>
+    <script src="js/feed.js?v=30"></script>
 
-    <script src="js/nav.js?v=29"></script>
+    <script src="js/nav.js?v=30"></script>
 
 
     <script>
