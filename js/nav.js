@@ -5,16 +5,17 @@
 ========================================= */
 const Nav = (() => {
     const MENU = [
-        { go: 'feed',    label: 'Анкеты' },
-        { go: 'waves',   label: 'Волны', badge: 'incoming' },
-        { go: 'notifs',  label: 'Уведомления', badge: 'unread' },
-        { go: 'profile', label: 'Мой профиль' },
-        { go: 'edit',    label: 'Изменить анкету' },
+        { go: 'feed',     label: 'Анкеты' },
+        { go: 'waves',    label: 'Волны', badge: 'incoming' },
+        { go: 'notifs',   label: 'Уведомления', badge: 'unread' },
+        { go: 'profile',  label: 'Мой профиль' },
+        { go: 'edit',     label: 'Изменить анкету' },
+        { go: 'settings', label: 'Настройки' },
         { sep: true },
-        { go: 'about',   label: 'О нас' },
-        { go: 'rules',   label: 'Правила пользования' }
+        { go: 'about',    label: 'О нас' },
+        { go: 'rules',    label: 'Правила пользования' }
     ];
-    const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE, about: ABOUT, rules: RULES };
+    const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE, about: ABOUT, rules: RULES, settings: SETTINGS };
     const NOTIF = {
         like:  ()  => ['💌', 'Вас лайкнули', 'Загляните в «Волны» — возможно, это взаимно'],
         match: (d) => ['🌊', 'Взаимно! Началась волна' + (d.name ? ' с ' + d.name : ''), 'Напишите первым'],
@@ -80,8 +81,100 @@ const Nav = (() => {
         else if (key === 'notifs') openNotifs();
         else if (key === 'profile') { renderDone(); show(DONE); }
         else if (key === 'edit') editProfile();
+        else if (key === 'settings') { TG.tap(); renderSettings(); show(SETTINGS); $('settingsBody').scrollTop = 0; }
         else if (key === 'about') { TG.tap(); show(ABOUT); $('aboutBody').scrollTop = 0; }
         else if (key === 'rules') { TG.tap(); show(RULES); $('rulesBody').scrollTop = 0; }
+    }
+
+    /* ---------- настройки: 1. параметры поиска ---------- */
+    const AGE_LABELS = {
+        peer:    'Ровесники (±5 лет)',
+        '18-24': '18 – 24 года',
+        '25-34': '25 – 34 года',
+        any:     'Любой (18+)'
+    };
+
+    function renderSettings() {
+        const cityEl = $('setCityVal');
+        if (cityEl) cityEl.textContent = profile.city || 'Не выбран';
+
+        const lookingGroup = $('setLookingChips');
+        if (lookingGroup) {
+            lookingGroup.querySelectorAll('.chip').forEach((c) => {
+                c.classList.toggle('selected', c.dataset.value === (profile.looking || 'any'));
+            });
+        }
+
+        const prefs = typeof Feed !== 'undefined' && Feed.getSearchPrefs ? Feed.getSearchPrefs() : { ageMode: 'peer', sameCity: false };
+
+        const geoGroup = $('setGeoChips');
+        if (geoGroup) {
+            geoGroup.querySelectorAll('.chip').forEach((c) => {
+                const isSame = c.dataset.value === 'city';
+                c.classList.toggle('selected', isSame === !!prefs.sameCity);
+            });
+        }
+
+        const ageGroup = $('setAgeChips');
+        if (ageGroup) {
+            ageGroup.querySelectorAll('.chip').forEach((c) => {
+                c.classList.toggle('selected', c.dataset.value === (prefs.ageMode || 'peer'));
+            });
+        }
+        const ageBadge = $('setAgeBadge');
+        if (ageBadge) ageBadge.textContent = AGE_LABELS[prefs.ageMode] || AGE_LABELS.peer;
+    }
+
+    async function onSetLooking(e) {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        const val = chip.dataset.value;
+        if (!val || val === profile.looking) return;
+        TG.pick();
+        profile.looking = val;
+        saveProfile();
+        // Синхронизируем чипы в форме анкеты
+        const formGroup = $('lookingChips');
+        if (formGroup) {
+            formGroup.querySelectorAll('.chip').forEach((c) => c.classList.toggle('selected', c.dataset.value === val));
+        }
+        renderSettings();
+        if (typeof Feed !== 'undefined') Feed.onCityChanged();
+        if (dbOn() && isComplete()) {
+            try {
+                await Supa.saveProfile(profile);
+                if (typeof Feed !== 'undefined') Feed.toast('Параметры поиска сохранены');
+            } catch (err) {
+                console.error('Save looking error:', err);
+                if (typeof Feed !== 'undefined') Feed.toast('Сохранено локально (нет сети)');
+            }
+        } else if (typeof Feed !== 'undefined') {
+            Feed.toast('Параметры поиска обновлены');
+        }
+    }
+
+    function onSetGeo(e) {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        TG.pick();
+        const sameCity = chip.dataset.value === 'city';
+        if (typeof Feed !== 'undefined' && Feed.setSearchPrefs) {
+            Feed.setSearchPrefs({ sameCity });
+            Feed.toast(sameCity ? 'Показываем анкеты только из вашего города' : 'Показываем все города (сначала ближайшие)');
+        }
+        renderSettings();
+    }
+
+    function onSetAge(e) {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        TG.pick();
+        const ageMode = chip.dataset.value || 'peer';
+        if (typeof Feed !== 'undefined' && Feed.setSearchPrefs) {
+            Feed.setSearchPrefs({ ageMode });
+            Feed.toast('Возраст в поиске: ' + (AGE_LABELS[ageMode] || ageMode));
+        }
+        renderSettings();
     }
 
     /* ---------- уведомления ---------- */
@@ -217,10 +310,18 @@ const Nav = (() => {
         document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => go(b.dataset.go)));
         $('drawerOverlay').addEventListener('click', closeDrawer);
         $('drawerNav').addEventListener('click', (e) => { const b = e.target.closest('.menu-item'); if (b) go(b.dataset.go); });
+        if ($('setLookingChips')) $('setLookingChips').addEventListener('click', onSetLooking);
+        if ($('setGeoChips')) $('setGeoChips').addEventListener('click', onSetGeo);
+        if ($('setAgeChips')) $('setAgeChips').addEventListener('click', onSetAge);
+        if ($('setChangeCityBtn')) $('setChangeCityBtn').addEventListener('click', () => {
+            TG.tap();
+            if (typeof changeCityFromFeed === 'function') changeCityFromFeed(SETTINGS);
+            else show(4);
+        });
         document.addEventListener('wave:status', (e) => updateBadges(e.detail));
         // пришло новое уведомление, пока открыт экран уведомлений — список обновляется сам
         document.addEventListener('wave:notification', () => { if (step === NOTIFS) loadNotifs(); });
     }
     init();
-    return { renderDrawer, openNotifs, go };
+    return { renderDrawer, openNotifs, go, renderSettings };
 })();

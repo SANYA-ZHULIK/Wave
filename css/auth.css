@@ -532,7 +532,8 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 #screen-waves,
 #screen-notifs,
 #screen-about,
-#screen-rules {
+#screen-rules,
+#screen-settings {
     overflow: hidden;
 }
 
@@ -540,7 +541,8 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 #screen-waves .feed-head,
 #screen-notifs .feed-head,
 #screen-about .feed-head,
-#screen-rules .feed-head {
+#screen-rules .feed-head,
+#screen-settings .feed-head {
     position: relative;
     z-index: 2;
 }
@@ -1099,4 +1101,109 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     font-weight: 600;
     text-decoration: underline;
     cursor: pointer;
+}
+
+/* =========================================
+   v32: раздел «Настройки» — блок 1 (Параметры поиска)
+========================================= */
+.set-card {
+    gap: 12px;
+}
+
+.set-row-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.set-row-head h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.3;
+}
+
+.set-sub {
+    font-size: 12.5px !important;
+    line-height: 1.4 !important;
+    color: rgba(255, 255, 255, 0.52) !important;
+    margin-top: 3px;
+}
+
+.set-card .chip-group .chip.sm {
+    flex: 1;
+    text-align: center;
+    padding: 11px 10px;
+    font-size: 13.5px;
+}
+
+.set-chips .chip.sm {
+    flex: 1 1 calc(50% - 6px);
+}
+
+.set-city-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.set-city-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.set-city-pin {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.set-city-pin svg {
+    width: 100%;
+    height: 100%;
+}
+
+.set-city-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.set-city-change {
+    flex-shrink: 0;
+    padding: 7px 13px;
+    border-radius: 10px;
+    border: 1px solid rgba(181, 198, 128, 0.4);
+    background: rgba(181, 198, 128, 0.14);
+    color: #B5C680;
+    font-size: 12.5px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s;
+}
+
+.set-city-change:active {
+    transform: scale(0.96);
+    background: rgba(181, 198, 128, 0.24);
+}
+
+.set-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 2px 0;
 }

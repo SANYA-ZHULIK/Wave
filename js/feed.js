@@ -136,8 +136,31 @@ function pickToastIcon(msg) {
 }
 
 const Feed = (() => {
+    const PREFS_KEY = 'wave_search_prefs';
+    const prefs = { ageMode: 'peer', sameCity: false };
+    try {
+        const savedPrefs = JSON.parse(localStorage.getItem(PREFS_KEY));
+        if (savedPrefs && typeof savedPrefs === 'object') {
+            if (savedPrefs.ageMode) prefs.ageMode = savedPrefs.ageMode;
+            if (typeof savedPrefs.sameCity === 'boolean') prefs.sameCity = savedPrefs.sameCity;
+        }
+    } catch (e) {}
+
+    function savePrefs() {
+        try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+    }
+
+    function matchAgePref(age) {
+        const a = Number(age) || 22;
+        const myAge = Number(profile.age) || 22;
+        if (prefs.ageMode === '18-24') return a >= 18 && a <= 24;
+        if (prefs.ageMode === '25-34') return a >= 25 && a <= 34;
+        if (prefs.ageMode === 'any')   return a >= 18;
+        return a >= myAge - 5 && a <= myAge + 5; // 'peer' (±5 лет)
+    }
+
     const st = {
-        queue: [], cur: null, intent: null, sameCity: false, lastZone: null,
+        queue: [], cur: null, intent: null, sameCity: prefs.sameCity, lastZone: null,
         loading: false, busy: false, exhausted: false, err: '', gen: 0, nameSent: false,
         status: { used: 0, max: 3, incoming: 0, unread: 0 }
     };
@@ -224,7 +247,7 @@ const Feed = (() => {
                 if (gen !== st.gen) return;
                 const have = new Set(st.queue.map((r) => r.id));
                 if (st.cur) have.add(st.cur.id);
-                rows.forEach((r) => { if (!have.has(r.id)) st.queue.push(r); });
+                rows.forEach((r) => { if (!have.has(r.id) && matchAgePref(r.age)) st.queue.push(r); });
                 if (rows.length < 20) st.exhausted = true;
             }
         } catch (e) {
@@ -401,14 +424,29 @@ const Feed = (() => {
         if (!c) return;
         TG.pick();
         const key = c.dataset.key;
-        if (key === 'city') st.sameCity = true;
-        else if (key === 'all_cities') st.sameCity = false;
+        if (key === 'city') { st.sameCity = true; prefs.sameCity = true; savePrefs(); }
+        else if (key === 'all_cities') { st.sameCity = false; prefs.sameCity = false; savePrefs(); }
         else st.intent = st.intent === key ? null : (key || null);
         buildChips(); resetDeck();
     }
     function onCityChanged() {
         buildChips();
         resetDeck();
+    }
+    function setSearchPrefs(next) {
+        if (typeof next.sameCity === 'boolean') {
+            prefs.sameCity = next.sameCity;
+            st.sameCity = next.sameCity;
+        }
+        if (next.ageMode) {
+            prefs.ageMode = next.ageMode;
+        }
+        savePrefs();
+        buildChips();
+        resetDeck();
+    }
+    function getSearchPrefs() {
+        return { ageMode: prefs.ageMode, sameCity: st.sameCity };
     }
 
     /* ---------- экран «Волны» ---------- */
@@ -560,7 +598,7 @@ const Feed = (() => {
         setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }
     init();
-    return { open, openWaves, toast, refreshStatus, onCityChanged };
+    return { open, openWaves, toast, refreshStatus, onCityChanged, setSearchPrefs, getSearchPrefs };
 })();
 
 // Если лента уже показана при загрузке (вход в приложение с готовым профилем) — запускаем её

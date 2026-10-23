@@ -10,8 +10,8 @@ try { DEBUG = localStorage.getItem('wave_debug') === '1'; } catch (e) {}
 const STORAGE_KEY = 'wave_profile';
 const STEPS = ['landing', 'screen-name', 'screen-age', 'screen-gender', 'screen-city',
                'screen-intents', 'screen-photo', 'screen-bio', 'screen-done', 'screen-feed',
-               'screen-waves', 'screen-notifs', 'screen-about', 'screen-rules'];
-const FORM_STEPS = 7, DONE = 8, FEED = 9, WAVES = 10, NOTIFS = 11, ABOUT = 12, RULES = 13, MAX_INTENTS = 5;
+               'screen-waves', 'screen-notifs', 'screen-about', 'screen-rules', 'screen-settings'];
+const FORM_STEPS = 7, DONE = 8, FEED = 9, WAVES = 10, NOTIFS = 11, ABOUT = 12, RULES = 13, SETTINGS = 14, MAX_INTENTS = 5;
 
 const INTENTS = {
     relationship: 'Отношения', friendship: 'Дружба', chat: 'Общение',
@@ -21,7 +21,7 @@ const INTENTS = {
 
 const profile = { name: '', age: 22, gender: '', looking: '', city: '', intents: [], photo_url: '', photo_path: '', bio: '' };
 let step = 0;
-let cityFromFeed = false; // Флаг быстрой смены города напрямую из ленты
+let cityReturnStep = null; // Куда вернуть после быстрой смены города (FEED или SETTINGS)
 
 const $ = (id) => document.getElementById(id);
 const dbOn = () => typeof Supa !== 'undefined' && Supa.enabled();
@@ -133,10 +133,10 @@ function buildDots() {
 
 // Куда ведёт кнопка «Назад» Telegram. Главная — лента анкет (FEED), у неё кнопки «Назад» нет.
 function backTarget(n) {
-    if (n === 4 && cityFromFeed) return FEED;
+    if (n === 4 && cityReturnStep) return cityReturnStep;
     if (n === 1) return isComplete() ? DONE : 0;
     if (n > 1 && n < DONE) return n - 1;
-    if (n === DONE || n === WAVES || n === NOTIFS || n === ABOUT || n === RULES) return isComplete() ? FEED : 0;
+    if (n === DONE || n === WAVES || n === NOTIFS || n === ABOUT || n === RULES || n === SETTINGS) return isComplete() ? FEED : 0;
     return null;
 }
 function applyBack() {
@@ -145,8 +145,8 @@ function applyBack() {
 }
 
 function show(n) {
-    if (n !== 4 && cityFromFeed) {
-        cityFromFeed = false;
+    if (n !== 4 && cityReturnStep) {
+        cityReturnStep = null;
         const prog = $('screen-city').querySelector('.auth-progress');
         if (prog) prog.hidden = false;
         $('cityNext').textContent = 'Далее';
@@ -158,9 +158,9 @@ function show(n) {
     if (n === FEED && typeof Feed !== 'undefined') Feed.open();
 }
 
-// Быстрый переход к смене города из экрана пустой ленты
-function changeCityFromFeed() {
-    cityFromFeed = true;
+// Быстрый переход к смене города из ленты или настроек
+function changeCityFromFeed(returnTo = FEED) {
+    cityReturnStep = returnTo;
     const prog = $('screen-city').querySelector('.auth-progress');
     if (prog) prog.hidden = true;
     $('cityNext').textContent = 'Сохранить';
@@ -290,18 +290,18 @@ async function submitCity() {
     if (!c) return fail(input, $('cityError'), 'Выберите город из списка');
     profile.city = c.name; input.value = c.name; TG.tap();
 
-    if (cityFromFeed && isComplete()) {
+    if (cityReturnStep && isComplete()) {
+        const ret = cityReturnStep;
         const btn = $('cityNext');
         btn.disabled = true;
         try {
             if (dbOn()) await Supa.saveProfile(profile);
             saveProfile();
             renderDone();
-            show(FEED);
-            if (typeof Feed !== 'undefined') {
-                Feed.onCityChanged();
-                Feed.toast('Город обновлён: ' + profile.city);
-            }
+            if (typeof Feed !== 'undefined') Feed.onCityChanged();
+            if (ret === SETTINGS && typeof Nav !== 'undefined') Nav.renderSettings();
+            show(ret);
+            if (typeof Feed !== 'undefined') Feed.toast('Город обновлён: ' + profile.city);
         } catch (e) {
             console.error('City update error:', e);
             fail(input, $('cityError'), 'Не удалось сохранить город. Проверьте интернет');
