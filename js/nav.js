@@ -121,8 +121,6 @@ const Nav = (() => {
                 c.classList.toggle('selected', c.dataset.value === (prefs.ageMode || 'peer'));
             });
         }
-        const ageBadge = $('setAgeBadge');
-        if (ageBadge) ageBadge.textContent = AGE_LABELS[prefs.ageMode] || AGE_LABELS.peer;
     }
 
     async function onSetLooking(e) {
