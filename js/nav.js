@@ -622,9 +622,8 @@ const Nav = (() => {
                 const title = el('h3', 'notif-empty-title', 'Пока тихо');
                 const desc = el('p', 'notif-empty-desc');
                 desc.append(
-                    document.createTextNode('Здесь будут новые лайки, взаимные волны'),
-                    document.createElement('br'),
-                    document.createTextNode('и освободившиеся слоты.')
+                    document.createTextNode('Здесь будут новые лайкии и взаимные волны.'),
+                    
                 );
                 const cta = el('button', 'notif-empty-cta');
                 cta.type = 'button';
