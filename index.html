@@ -64,22 +64,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=41"
+        href="css/base.css?v=42"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=41"
+        href="css/landing.css?v=42"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=41"
+        href="css/network.css?v=42"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=41"
+        href="css/auth.css?v=42"
     >
 
 </head>
@@ -821,24 +821,32 @@
         </div>
     </div>
 
+    <div class="photo-viewer" id="photoViewer" hidden role="dialog" aria-modal="true" aria-label="Фото профиля">
+        <button type="button" class="photo-viewer-close" id="photoViewerClose" aria-label="Закрыть">✕</button>
+        <div class="photo-viewer-stage" id="photoViewerStage">
+            <img class="photo-viewer-img" id="photoViewerImg" alt="">
+            <div class="photo-viewer-caption" id="photoViewerCaption" hidden></div>
+        </div>
+    </div>
+
     <div class="toast" id="toast" hidden></div>
 
     <!-- =================================
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=41"></script>
+    <script src="js/telegram.js?v=42"></script>
 
     <!-- Supabase JS — нужен только для уведомлений в реальном времени (без него приложение работает с периодическим опросом) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-    <script src="js/supabase.js?v=41"></script>
+    <script src="js/supabase.js?v=42"></script>
 
-    <script src="js/landing.js?v=41"></script>
+    <script src="js/landing.js?v=42"></script>
 
-    <script src="js/feed.js?v=41"></script>
+    <script src="js/feed.js?v=42"></script>
 
-    <script src="js/nav.js?v=41"></script>
+    <script src="js/nav.js?v=42"></script>
 
 
     <script>

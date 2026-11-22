@@ -18,7 +18,7 @@ const Nav = (() => {
     ];
     const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE, about: ABOUT, rules: RULES, settings: SETTINGS };
     const NOTIF_ICONS = {
-        like: `<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7-4.6-7-9.8A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7 3.1c0 5.2-7 9.8-7 9.8z"/></svg>`,
+        like: `<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
         match: `<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11.5c2.5-3.2 5.2-3.2 7.7 0s5.2 3.2 7.7 0 3.1-2.1 4.1-1"/><path d="M2.5 16.5c2.5-3.2 5.2-3.2 7.7 0s5.2 3.2 7.7 0 3.1-2.1 4.1-1" opacity=".6"/></svg>`,
         ended: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg>`,
         bell: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`
@@ -158,7 +158,7 @@ const Nav = (() => {
         document.querySelectorAll('.menu-btn .dot').forEach((d) => { d.hidden = !(s.incoming || s.unread); });
         $('drawerNav').querySelectorAll('.badge[data-badge]').forEach((b) => {
             const n = b.dataset.badge === 'notifs'
-                ? (s.incoming || 0) + (s.unread || 0)
+                ? Math.max(s.incoming || 0, s.unread || 0)
                 : (s[b.dataset.badge] || 0);
             b.hidden = !n; b.textContent = n;
         });

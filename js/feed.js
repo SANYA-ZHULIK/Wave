@@ -440,10 +440,43 @@ const Feed = (() => {
         if (!urlCache.has(path)) urlCache.set(path, await Supa.signedUrl(path));
         return urlCache.get(path);
     }
-    function avatar(r, cls) {
+    function openPhotoViewer(url, caption) {
+        const viewer = $('photoViewer');
+        const img = $('photoViewerImg');
+        const cap = $('photoViewerCaption');
+        if (!viewer || !img || !url) return;
+        TG.tap();
+        img.src = url;
+        if (cap) {
+            cap.textContent = caption || '';
+            cap.hidden = !caption;
+        }
+        viewer.hidden = false;
+        TG.back(closePhotoViewer);
+    }
+    function closePhotoViewer() {
+        const viewer = $('photoViewer');
+        if (!viewer || viewer.hidden) return;
+        viewer.hidden = true;
+        const img = $('photoViewerImg');
+        if (img) img.removeAttribute('src');
+        applyBack();
+    }
+    function avatar(r, cls, zoomable = false) {
         const a = el('div', cls, (r.name || '?').slice(0, 1).toUpperCase());
         if (r.photo_path) photoUrl(r.photo_path).then((u) => {
-            const im = new Image(); im.alt = ''; im.src = u; a.textContent = ''; a.appendChild(im);
+            const im = new Image(); im.alt = r.name || ''; im.src = u; a.textContent = ''; a.appendChild(im);
+            if (zoomable) {
+                a.classList.add('is-zoomable');
+                a.setAttribute('role', 'button');
+                a.setAttribute('tabindex', '0');
+                a.setAttribute('aria-label', 'Открыть фото профиля');
+                const cap = [r.name ? (r.age ? `${r.name}, ${r.age}` : r.name) : '', r.city || ''].filter(Boolean).join(' · ');
+                a.addEventListener('click', (e) => { e.stopPropagation(); openPhotoViewer(u, cap); });
+                a.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPhotoViewer(u, cap); }
+                });
+            }
         }).catch(() => {});
         return a;
     }
@@ -940,7 +973,7 @@ const Feed = (() => {
     }
     function personCard(r) {
         const card = el('article', 'card');
-        card.appendChild(avatar(r, 'card-ava'));
+        card.appendChild(avatar(r, 'card-ava', true));
         const body = el('div', 'card-body');
         const title = el('div', 'card-title');
         title.append(el('b', '', `${r.name}, ${r.age}`), el('span', 'card-city', r.city || ''));
@@ -956,7 +989,6 @@ const Feed = (() => {
     }
     function incomingCard(r, onDone) {
         const { card, body } = personCard(r);
-        body.appendChild(tagsOf(r));
         if (r.message) body.appendChild(el('p', 'w-msg', '«' + r.message + '»'));
         const btns = el('div', 'w-btns');
         const ok = el('button', 'w-btn ok', 'Ответить взаимностью');
@@ -1146,11 +1178,28 @@ const Feed = (() => {
         if ($('reportSendBtn')) $('reportSendBtn').addEventListener('click', submitReport);
         if ($('reportCancelBtn')) $('reportCancelBtn').addEventListener('click', closeReportSheet);
         if ($('reportSheet')) $('reportSheet').addEventListener('click', (e) => { if (e.target === $('reportSheet')) closeReportSheet(); });
+        if ($('photoViewerClose')) $('photoViewerClose').addEventListener('click', closePhotoViewer);
+        if ($('photoViewer')) {
+            $('photoViewer').addEventListener('click', (e) => {
+                if (e.target === $('photoViewer') || e.target === $('photoViewerStage')) closePhotoViewer();
+            });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePhotoViewer(); });
+        }
+        if ($('doneAvatar')) {
+            $('doneAvatar').style.cursor = 'pointer';
+            $('doneAvatar').addEventListener('click', () => {
+                const src = $('doneAvatar').src;
+                if (src && !$('doneAvatar').hidden) {
+                    const cap = [profile.name ? (profile.age ? `${profile.name}, ${profile.age}` : profile.name) : '', profile.city || ''].filter(Boolean).join(' · ');
+                    openPhotoViewer(src, cap);
+                }
+            });
+        }
         $('feedChips').addEventListener('click', onChip);
         setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }
     init();
-    return { open, openWaves, toast, refreshStatus, onCityChanged, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession, incomingCard };
+    return { open, openWaves, toast, refreshStatus, onCityChanged, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession, incomingCard, openPhotoViewer };
 })();
 
 // Если лента уже показана при загрузке (вход в приложение с готовым профилем) — запускаем её
