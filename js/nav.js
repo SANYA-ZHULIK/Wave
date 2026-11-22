@@ -620,11 +620,7 @@ const Nav = (() => {
                 const art = el('div', 'notif-empty-art');
                 art.innerHTML = EMPTY_NOTIF_BELL_SVG;
                 const title = el('h3', 'notif-empty-title', 'Пока тихо');
-                const desc = el('p', 'notif-empty-desc');
-                desc.append(
-                    document.createTextNode('Здесь будут новые лайкии и взаимные волны.'),
-                    
-                );
+                const desc = el('p', 'notif-empty-desc', 'Здесь будут новые лайки и взаимные волны.');
                 const cta = el('button', 'notif-empty-cta');
                 cta.type = 'button';
                 cta.append(el('span', '', 'Перейти к анкетам'));
@@ -638,7 +634,7 @@ const Nav = (() => {
             }
             if (scr) scr.classList.remove('is-empty');
             body.appendChild(el('div', 'sec-title', 'История событий'));
-            body.appendChild(el('p', 'sec-note', 'Здесь сохраняются взаимные волны, новые лайки и освободившиеся слоты.'));
+            body.appendChild(el('p', 'sec-note', 'Здесь сохраняются новые лайки и взаимные волны.'));
             const emptyBox = el('div', 'slot-empty notif-empty-slot');
             emptyBox.textContent = 'Пока новых уведомлений нет — загляните в ленту анкет';
             body.appendChild(emptyBox);
