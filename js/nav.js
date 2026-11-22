@@ -113,12 +113,17 @@ const Nav = (() => {
 
         const prefs = typeof Feed !== 'undefined' && Feed.getSearchPrefs ? Feed.getSearchPrefs() : { ageMode: 'peer', sameCity: false };
 
-        const geoGroup = $('setGeoChips');
-        if (geoGroup) {
-            geoGroup.querySelectorAll('.chip').forEach((c) => {
-                const isSame = c.dataset.value === 'city';
-                c.classList.toggle('selected', isSame === !!prefs.sameCity);
-            });
+        const geoToggle = $('setGeoToggle');
+        if (geoToggle) {
+            const on = !!prefs.sameCity;
+            geoToggle.classList.toggle('on', on);
+            geoToggle.setAttribute('aria-checked', on ? 'true' : 'false');
+        }
+        const geoNote = $('setGeoNote');
+        if (geoNote) {
+            geoNote.textContent = prefs.sameCity
+                ? 'В ленте показываются анкеты только из вашего города'
+                : 'Показываются все города (сначала ближайшие)';
         }
 
         const ageGroup = $('setAgeChips');
@@ -128,84 +133,36 @@ const Nav = (() => {
             });
         }
 
-        const visGroup = $('setVisChips');
-        if (visGroup) {
-            visGroup.querySelectorAll('.chip').forEach((c) => {
-                const isHid = c.dataset.value === 'hidden';
-                c.classList.toggle('selected', isHid === !!prefs.isHidden);
-            });
+        const visToggle = $('setVisToggle');
+        if (visToggle) {
+            const visible = !prefs.isHidden;
+            visToggle.classList.toggle('on', visible);
+            visToggle.setAttribute('aria-checked', visible ? 'true' : 'false');
         }
         const visNote = $('setVisNote');
         if (visNote) {
             visNote.textContent = prefs.isHidden
-                ? 'Ваша анкета сейчас на паузе и не показывается новым людям в ленте. Активные волны и чаты продолжают работать.'
+                ? 'Анкета на паузе и скрыта из поиска. Активные волны и чаты продолжают работать.'
                 : 'Ваша анкета видна другим пользователям в ленте подбора.';
         }
 
-        const hapticGroup = $('setHapticChips');
-        if (hapticGroup) {
+        const hapticToggle = $('setHapticToggle');
+        if (hapticToggle) {
             const hOn = typeof TG.hapticsOn === 'function' ? TG.hapticsOn() : true;
-            hapticGroup.querySelectorAll('.chip').forEach((c) => {
-                c.classList.toggle('selected', (c.dataset.value === 'on') === hOn);
-            });
-        }
-
-        const pushStatus = $('setTgPushStatus');
-        const pushDot = $('setTgPushDot');
-        const pushBtn = $('setTgPushBtn');
-        const pushSub = $('setTgPushSub');
-        if (pushStatus && pushDot && pushBtn) {
-            const u = TG.user();
-            const canAsk = !!(tg && tg.requestWriteAccess && u);
-            const allowed = !!(tgWriteGranted || (u && u.allows_write_to_pm));
-            if (!u) {
-                pushStatus.textContent = 'Доступно в Telegram';
-                pushDot.className = 'set-status-dot neutral';
-                pushBtn.hidden = true;
-                if (pushSub) pushSub.textContent = 'Откройте мини-приложение внутри Telegram для получения push-уведомлений от бота';
-            } else if (allowed) {
-                pushStatus.textContent = 'Разрешены в личные сообщения';
-                pushDot.className = 'set-status-dot on';
-                pushBtn.hidden = true;
-                if (pushSub) pushSub.textContent = 'Бот мгновенно пришлёт сообщение о новом лайке или взаимной волне';
-            } else {
-                pushStatus.textContent = 'Ожидают разрешения';
-                pushDot.className = 'set-status-dot warn';
-                pushBtn.hidden = !canAsk;
-                if (pushSub) pushSub.textContent = 'Разрешите боту писать вам, чтобы не пропускать новые симпатии';
-            }
+            hapticToggle.classList.toggle('on', hOn);
+            hapticToggle.setAttribute('aria-checked', hOn ? 'true' : 'false');
         }
     }
 
-    let tgWriteGranted = false;
-
-    function onSetHaptic(e) {
-        const chip = e.target.closest('.chip');
-        if (!chip) return;
-        const on = chip.dataset.value === 'on';
+    function onSetHaptic() {
+        const cur = typeof TG.hapticsOn === 'function' ? TG.hapticsOn() : true;
+        const on = !cur;
         if (typeof TG.setHaptics === 'function') TG.setHaptics(on);
         if (on) TG.pick();
         renderSettings();
         if (typeof Feed !== 'undefined') {
             Feed.toast(on ? 'Тактильный отклик включён' : 'Тактильный отклик выключен');
         }
-    }
-
-    function onRequestTgPush() {
-        TG.tap();
-        if (!tg || !tg.requestWriteAccess) return;
-        try {
-            tg.requestWriteAccess((ok) => {
-                if (ok) {
-                    tgWriteGranted = true;
-                    notifAsked = true;
-                    renderSettings();
-                    if (typeof Feed !== 'undefined') Feed.toast('Push-уведомления в Telegram включены');
-                } else if (typeof Feed !== 'undefined') {
-                    Feed.toast('Разрешение не выдано');
-                }
-            });
-        } catch (e) {}
     }
 
     async function onSetLooking(e) {
@@ -236,11 +193,10 @@ const Nav = (() => {
         }
     }
 
-    function onSetGeo(e) {
-        const chip = e.target.closest('.chip');
-        if (!chip) return;
+    function onSetGeo() {
         TG.pick();
-        const sameCity = chip.dataset.value === 'city';
+        const prefs = typeof Feed !== 'undefined' && Feed.getSearchPrefs ? Feed.getSearchPrefs() : { sameCity: false };
+        const sameCity = !prefs.sameCity;
         if (typeof Feed !== 'undefined' && Feed.setSearchPrefs) {
             Feed.setSearchPrefs({ sameCity });
             Feed.toast(sameCity ? 'Показываем анкеты только из вашего города' : 'Показываем все города (сначала ближайшие)');
@@ -260,11 +216,10 @@ const Nav = (() => {
         renderSettings();
     }
 
-    async function onSetVis(e) {
-        const chip = e.target.closest('.chip');
-        if (!chip) return;
+    async function onSetVis() {
         TG.pick();
-        const isHidden = chip.dataset.value === 'hidden';
+        const prefs = typeof Feed !== 'undefined' && Feed.getSearchPrefs ? Feed.getSearchPrefs() : { isHidden: false };
+        const isHidden = !prefs.isHidden;
         if (typeof Feed !== 'undefined' && Feed.setSearchPrefs) {
             Feed.setSearchPrefs({ isHidden });
         }
@@ -467,12 +422,11 @@ const Nav = (() => {
         $('drawerOverlay').addEventListener('click', closeDrawer);
         $('drawerNav').addEventListener('click', (e) => { const b = e.target.closest('.menu-item'); if (b) go(b.dataset.go); });
         if ($('setLookingChips')) $('setLookingChips').addEventListener('click', onSetLooking);
-        if ($('setGeoChips')) $('setGeoChips').addEventListener('click', onSetGeo);
+        if ($('setGeoRow')) $('setGeoRow').addEventListener('click', onSetGeo);
         if ($('setAgeChips')) $('setAgeChips').addEventListener('click', onSetAge);
-        if ($('setVisChips')) $('setVisChips').addEventListener('click', onSetVis);
+        if ($('setVisRow')) $('setVisRow').addEventListener('click', onSetVis);
         if ($('setResetPassesBtn')) $('setResetPassesBtn').addEventListener('click', onResetPasses);
-        if ($('setHapticChips')) $('setHapticChips').addEventListener('click', onSetHaptic);
-        if ($('setTgPushBtn')) $('setTgPushBtn').addEventListener('click', onRequestTgPush);
+        if ($('setHapticRow')) $('setHapticRow').addEventListener('click', onSetHaptic);
         if ($('setClearNotifsBtn')) $('setClearNotifsBtn').addEventListener('click', clearHistory);
         if ($('setChangeCityBtn')) $('setChangeCityBtn').addEventListener('click', () => {
             TG.tap();
