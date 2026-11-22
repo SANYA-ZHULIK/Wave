@@ -135,10 +135,16 @@ function pickToastIcon(msg) {
     return TOAST_ICONS.info;
 }
 
-const BLOCK_ICON_SVG = `
+const MORE_ICON_SVG = `
+<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <circle cx="6" cy="12" r="1.8" />
+    <circle cx="12" cy="12" r="1.8" />
+    <circle cx="18" cy="12" r="1.8" />
+</svg>`;
+
+const MSG_ICON_SVG = `
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <circle cx="12" cy="12" r="9" />
-    <line x1="5.6" y1="5.6" x2="18.4" y2="18.4" />
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
 </svg>`;
 
 const Feed = (() => {
@@ -216,6 +222,9 @@ const Feed = (() => {
     };
     const urlCache = new Map();
     let toastTimer;
+    let toastHideAnimTimer;
+    let toastRemainingMs = 3000;
+    let toastShownAt = 0;
 
     /* ---------- помощники ---------- */
     function el(tag, cls, text) {
@@ -225,8 +234,104 @@ const Feed = (() => {
         return e;
     }
     const dbg = (e) => (DEBUG ? ' (' + e.message + ')' : '');
+    function scheduleToastHide(ms) {
+        clearTimeout(toastTimer);
+        toastRemainingMs = Math.max(800, ms);
+        toastShownAt = Date.now();
+        toastTimer = setTimeout(() => {
+            const t = $('toast');
+            if (t) t.hidden = true;
+        }, toastRemainingMs);
+    }
+    function dismissToast(dir) {
+        const t = $('toast');
+        if (!t || t.hidden) return;
+        clearTimeout(toastTimer);
+        clearTimeout(toastHideAnimTimer);
+        t.classList.remove('dragging', 'snap-back');
+        t.style.transform = '';
+        t.style.opacity = '';
+        t.classList.add(dir === 'left' ? 'dismiss-left' : 'dismiss-right');
+        TG.pick();
+        toastHideAnimTimer = setTimeout(() => {
+            t.hidden = true;
+            t.classList.remove('dismiss-left', 'dismiss-right');
+        }, 210);
+    }
+    function initToastSwipe() {
+        const t = $('toast');
+        if (!t) return;
+        let startX = 0, startY = 0, dx = 0, startTime = 0;
+        let tracking = false, dragging = false, pointerId = null;
+
+        t.addEventListener('pointerdown', (e) => {
+            if (t.hidden || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            tracking = true;
+            dragging = false;
+            pointerId = e.pointerId;
+            startX = e.clientX;
+            startY = e.clientY;
+            dx = 0;
+            startTime = Date.now();
+            clearTimeout(toastTimer);
+            toastRemainingMs = Math.max(1200, toastRemainingMs - (Date.now() - toastShownAt));
+            t.classList.remove('snap-back', 'dismiss-left', 'dismiss-right');
+        });
+
+        t.addEventListener('pointermove', (e) => {
+            if (!tracking || e.pointerId !== pointerId) return;
+            dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            if (!dragging) {
+                if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+                if (Math.abs(dy) > Math.abs(dx) * 1.4) {
+                    tracking = false;
+                    scheduleToastHide(toastRemainingMs);
+                    return;
+                }
+                dragging = true;
+                t.classList.add('dragging');
+                try { t.setPointerCapture(pointerId); } catch (err) {}
+            }
+            e.preventDefault();
+            t.style.transform = `translate(calc(-50% + ${dx}px), 0)`;
+            t.style.opacity = String(Math.max(0.18, 1 - Math.abs(dx) / 160));
+        });
+
+        function onEnd(e) {
+            if (!tracking || e.pointerId !== pointerId) return;
+            tracking = false;
+            if (!dragging) {
+                scheduleToastHide(toastRemainingMs);
+                return;
+            }
+            dragging = false;
+            try { t.releasePointerCapture(pointerId); } catch (err) {}
+
+            const elapsed = Math.max(1, Date.now() - startTime);
+            const velocity = Math.abs(dx) / elapsed;
+            if (Math.abs(dx) >= 54 || (velocity > 0.35 && Math.abs(dx) >= 22)) {
+                dismissToast(dx < 0 ? 'left' : 'right');
+            } else {
+                t.classList.remove('dragging');
+                t.classList.add('snap-back');
+                t.style.transform = '';
+                t.style.opacity = '';
+                setTimeout(() => t.classList.remove('snap-back'), 250);
+                scheduleToastHide(toastRemainingMs);
+            }
+        }
+
+        t.addEventListener('pointerup', onEnd);
+        t.addEventListener('pointercancel', onEnd);
+    }
     function toast(msg, ms = 3000) {
         const t = $('toast');
+        clearTimeout(toastTimer);
+        clearTimeout(toastHideAnimTimer);
+        t.classList.remove('dragging', 'snap-back', 'dismiss-left', 'dismiss-right');
+        t.style.transform = '';
+        t.style.opacity = '';
         t.innerHTML = '';
         const ico = el('div', 'toast-icon');
         ico.innerHTML = pickToastIcon(msg);
@@ -235,8 +340,7 @@ const Feed = (() => {
         const txt = el('div', 'toast-text', cleanMsg);
         t.append(ico, sep, txt);
         t.hidden = false;
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => { t.hidden = true; }, ms);
+        scheduleToastHide(ms);
     }
     async function photoUrl(path) {
         if (!urlCache.has(path)) urlCache.set(path, await Supa.signedUrl(path));
@@ -469,8 +573,6 @@ const Feed = (() => {
 
     function renderDeck() {
         const deck = $('deck'), r = st.cur;
-        const actions = document.querySelector('#screen-feed .deck-actions');
-        if (actions) actions.hidden = !r;
         deck.innerHTML = '';
         if (!r) {
             renderEmptyDeck(deck);
@@ -483,19 +585,37 @@ const Feed = (() => {
         const stampPass = el('div', 'swipe-stamp swipe-stamp-pass', 'ПРОПУСК');
         card.append(stampLike, stampPass);
 
-        const blockBtn = el('button', 'deck-block-btn');
-        blockBtn.type = 'button';
-        blockBtn.setAttribute('aria-label', 'Заблокировать пользователя');
-        blockBtn.title = 'Заблокировать';
-        blockBtn.innerHTML = BLOCK_ICON_SVG;
-        blockBtn.addEventListener('click', (e) => {
+        const moreBtn = el('button', 'deck-more-btn');
+        moreBtn.type = 'button';
+        moreBtn.setAttribute('aria-label', 'Действия с анкетой');
+        moreBtn.innerHTML = MORE_ICON_SVG;
+        moreBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            blockPerson(r, false);
+            openPersonMenu(r, false);
         });
-        card.appendChild(blockBtn);
+        card.appendChild(moreBtn);
 
         const info = el('div', 'deck-info');
-        info.append(el('div', 'deck-name', `${r.name}, ${r.age}`), el('div', 'deck-city', (r.city || '') + (r.distance_km ? ' · ~' + r.distance_km + ' км от вас' : '')), tagsOf(r));
+        const headRow = el('div', 'deck-head-row');
+        const headMain = el('div', 'deck-head-main');
+        headMain.append(
+            el('div', 'deck-name', `${r.name}, ${r.age}`),
+            el('div', 'deck-city', (r.city || '') + (r.distance_km ? ' · ~' + r.distance_km + ' км от вас' : ''))
+        );
+        const msgBtn = el('button', 'deck-msg-btn');
+        msgBtn.type = 'button';
+        msgBtn.setAttribute('aria-label', 'Написать сообщение');
+        msgBtn.title = 'Написать сообщение';
+        msgBtn.innerHTML = MSG_ICON_SVG;
+        msgBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            TG.tap();
+            const ck = commonKey(r);
+            openSheet(ck ? ICEBREAKERS[ck] : '');
+        });
+        headRow.append(headMain, msgBtn);
+        info.append(headRow, tagsOf(r));
+
         if (r.bio) info.appendChild(el('p', 'deck-bio', r.bio));
         const k = commonKey(r);
         if (k) {
@@ -554,6 +674,25 @@ const Feed = (() => {
         }
         st.busy = false;
     }
+    let menuTarget = null;
+    let menuFromWaves = false;
+
+    function openPersonMenu(r, fromWaves) {
+        if (!r || st.busy) return;
+        TG.tap();
+        menuTarget = r;
+        menuFromWaves = !!fromWaves;
+        const title = $('personMenuTitle');
+        if (title) title.textContent = r.name ? `${r.name}${r.age ? ', ' + r.age : ''}` : 'Действия с анкетой';
+        const sh = $('personMenuSheet');
+        if (sh) sh.hidden = false;
+    }
+    function closePersonMenu() {
+        const sh = $('personMenuSheet');
+        if (sh) sh.hidden = true;
+        menuTarget = null;
+    }
+
     async function blockPerson(r, fromWaves) {
         if (!r || st.busy) return;
         TG.tap();
@@ -657,13 +796,12 @@ const Feed = (() => {
         const body = el('div', 'card-body');
         const title = el('div', 'card-title');
         title.append(el('b', '', `${r.name}, ${r.age}`), el('span', 'card-city', r.city || ''));
-        const blk = el('button', 'card-block-btn');
-        blk.type = 'button';
-        blk.setAttribute('aria-label', 'Заблокировать');
-        blk.title = 'Заблокировать';
-        blk.innerHTML = BLOCK_ICON_SVG;
-        blk.addEventListener('click', () => blockPerson(r, true));
-        title.appendChild(blk);
+        const more = el('button', 'card-more-btn');
+        more.type = 'button';
+        more.setAttribute('aria-label', 'Действия');
+        more.innerHTML = MORE_ICON_SVG;
+        more.addEventListener('click', () => openPersonMenu(r, true));
+        title.appendChild(more);
         body.appendChild(title);
         card.appendChild(body);
         return { card, body };
@@ -800,13 +938,20 @@ const Feed = (() => {
         urlCache.clear();
     }
     function init() {
+        initToastSwipe();
         $('feedWaves').addEventListener('click', openWaves);
         $('slots').addEventListener('click', explainSlots);
-        $('actPass').addEventListener('click', pass);
-        $('actLike').addEventListener('click', () => wave(null));       // волна без сообщения
-        $('actMsg').addEventListener('click', () => { const k = st.cur && commonKey(st.cur); openSheet(k ? ICEBREAKERS[k] : ''); });
         $('sheetSend').addEventListener('click', () => { const t = $('sheetText').value.trim(); closeSheet(); wave(t); });
         $('sheetCancel').addEventListener('click', closeSheet);
+        if ($('waveSheet')) $('waveSheet').addEventListener('click', (e) => { if (e.target === $('waveSheet')) closeSheet(); });
+        if ($('personMenuCancel')) $('personMenuCancel').addEventListener('click', closePersonMenu);
+        if ($('personMenuSheet')) $('personMenuSheet').addEventListener('click', (e) => { if (e.target === $('personMenuSheet')) closePersonMenu(); });
+        if ($('personMenuBlock')) $('personMenuBlock').addEventListener('click', () => {
+            const target = menuTarget;
+            const fromWaves = menuFromWaves;
+            closePersonMenu();
+            if (target) blockPerson(target, fromWaves);
+        });
         $('feedChips').addEventListener('click', onChip);
         setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }

@@ -64,22 +64,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=37"
+        href="css/base.css?v=38"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=37"
+        href="css/landing.css?v=38"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=37"
+        href="css/network.css?v=38"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=37"
+        href="css/auth.css?v=38"
     >
 
 </head>
@@ -311,13 +311,9 @@
         </header>
         <div class="feed-chips" id="feedChips"></div>
         <div class="deck" id="deck"></div>
-        <div class="deck-actions">
-            <button class="act act-pass" id="actPass" aria-label="Пропустить">✕</button>
-            <button class="act act-msg" id="actMsg" aria-label="Написать сообщение">✎</button>
-            <button class="act act-like" id="actLike" aria-label="Отправить волну">♥</button>
-        </div>
         <div class="sheet" id="waveSheet" hidden>
             <div class="sheet-box">
+                <div class="sheet-handle" aria-hidden="true"></div>
                 <h3>Первое сообщение</h3>
                 <textarea class="auth-input" id="sheetText" maxlength="200" placeholder="Необязательно — можно отправить волну и без текста"></textarea>
                 <button class="auth-button" id="sheetSend">Отправить волну</button>
@@ -765,24 +761,44 @@
         <nav class="drawer-nav" id="drawerNav"></nav>
     </aside>
 
+    <div class="sheet sheet-global" id="personMenuSheet" hidden>
+        <div class="sheet-box person-menu-box">
+            <div class="sheet-handle" aria-hidden="true"></div>
+            <div class="person-menu-title" id="personMenuTitle">Действия с анкетой</div>
+            <button type="button" class="person-menu-item danger" id="personMenuBlock">
+                <span class="person-menu-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9" />
+                        <line x1="5.6" y1="5.6" x2="18.4" y2="18.4" />
+                    </svg>
+                </span>
+                <span class="person-menu-text">
+                    <b>Добавить в чёрный список</b>
+                    <span>Вы больше не увидите друг друга в ленте и волнах</span>
+                </span>
+            </button>
+            <button type="button" class="person-menu-cancel" id="personMenuCancel">Отмена</button>
+        </div>
+    </div>
+
     <div class="toast" id="toast" hidden></div>
 
     <!-- =================================
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=37"></script>
+    <script src="js/telegram.js?v=38"></script>
 
     <!-- Supabase JS — нужен только для уведомлений в реальном времени (без него приложение работает с периодическим опросом) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-    <script src="js/supabase.js?v=37"></script>
+    <script src="js/supabase.js?v=38"></script>
 
-    <script src="js/landing.js?v=37"></script>
+    <script src="js/landing.js?v=38"></script>
 
-    <script src="js/feed.js?v=37"></script>
+    <script src="js/feed.js?v=38"></script>
 
-    <script src="js/nav.js?v=37"></script>
+    <script src="js/nav.js?v=38"></script>
 
 
     <script>
