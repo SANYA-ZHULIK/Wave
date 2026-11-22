@@ -18,10 +18,10 @@ const Nav = (() => {
     ];
     const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE, about: ABOUT, rules: RULES, settings: SETTINGS };
     const NOTIF_ICONS = {
-        like: `<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7-4.6-7-9.8A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7 3.1c0 5.2-7 9.8-7 9.8z"/></svg>`,
-        match: `<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11.5c2.5-3.2 5.2-3.2 7.7 0s5.2 3.2 7.7 0 3.1-2.1 4.1-1"/><path d="M2.5 16.5c2.5-3.2 5.2-3.2 7.7 0s5.2 3.2 7.7 0 3.1-2.1 4.1-1" opacity=".6"/></svg>`,
-        ended: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg>`,
-        bell: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`
+        like: `<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7-4.6-7-9.8A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7 3.1c0 5.2-7 9.8-7 9.8z"/></svg>`,
+        match: `<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11.5c2.5-3.2 5.2-3.2 7.7 0s5.2 3.2 7.7 0 3.1-2.1 4.1-1"/><path d="M2.5 16.5c2.5-3.2 5.2-3.2 7.7 0s5.2 3.2 7.7 0 3.1-2.1 4.1-1" opacity=".6"/></svg>`,
+        ended: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg>`,
+        bell: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`
     };
     const EMPTY_NOTIF_BELL_SVG = `
     <svg viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -564,8 +564,7 @@ const Nav = (() => {
         const top = el('div', 'notif-head');
         top.append(el('div', 'notif-title', title), el('span', 'notif-time', ago(n.created_at)));
         body.append(top, el('div', 'notif-text', text));
-        const arr = el('span', 'notif-chevron', '›');
-        item.append(ico, body, arr);
+        item.append(ico, body);
         item.addEventListener('click', () => {
             TG.tap();
             if (n.kind === 'ended') show(FEED);
@@ -628,27 +627,29 @@ const Nav = (() => {
                 return;
             }
             if (scr) scr.classList.remove('is-empty');
-            body.appendChild(el('div', 'sec-title', 'История событий'));
-            body.appendChild(el('p', 'sec-note', 'Здесь сохраняются новые лайки и взаимные волны.'));
-            const emptyBox = el('div', 'slot-empty notif-empty-slot');
-            emptyBox.textContent = 'Пока новых уведомлений нет — загляните в ленту анкет';
-            body.appendChild(emptyBox);
+            body.appendChild(el('p', 'notif-history-empty', 'История уведомлений пуста'));
             return;
         }
         if (scr) scr.classList.remove('is-empty');
         let label = '';
+        let listEl = null;
         rows.forEach((n) => {
             const l = dayLabel(n.created_at);
-            if (l !== label) { label = l; body.appendChild(el('div', 'sec-title', l)); }
-            body.appendChild(notifItem(n));
+            if (l !== label) {
+                label = l;
+                body.appendChild(el('div', 'sec-title notif-day-title', l));
+                listEl = el('div', 'notif-list');
+                body.appendChild(listEl);
+            }
+            listEl.appendChild(notifItem(n));
         });
         if (hasMore) {
-            const more = el('button', 'w-btn notif-more', 'Показать ещё'); more.type = 'button';
+            const more = el('button', 'notif-more-btn', 'Показать ещё'); more.type = 'button';
             more.addEventListener('click', () => { TG.tap(); loadNotifs(true); });
             body.appendChild(more);
         }
         if (rows.length) {
-            const clr = el('button', 'w-btn danger notif-more', 'Очистить историю'); clr.type = 'button';
+            const clr = el('button', 'notif-clear-btn', 'Очистить историю'); clr.type = 'button';
             clr.addEventListener('click', clearHistory);
             body.appendChild(clr);
         }
