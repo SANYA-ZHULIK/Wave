@@ -440,7 +440,6 @@ const Feed = (() => {
         if (!urlCache.has(path)) urlCache.set(path, await Supa.signedUrl(path));
         return urlCache.get(path);
     }
-    const SLOTS_WAVE_SVG = `<svg viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 6.5c2.2-2.8 4.4-2.8 6.6 0s4.4 2.8 6.6 0 3.4-2.5 5.8-.5"/><path d="M1.5 11c2.2-2.4 4.4-2.4 6.6 0s4.4 2.4 6.6 0 3.4-2.1 5.8-.4" opacity=".48"/></svg>`;
     const SWIPE_HEART_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
     const SWIPE_PASS_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
 
@@ -637,15 +636,12 @@ const Feed = (() => {
     function renderStatus() {
         const s = st.status, box = $('slots');
         box.innerHTML = '';
-        const ico = el('span', 'slots-wave-ico');
-        ico.setAttribute('aria-hidden', 'true');
-        ico.innerHTML = SLOTS_WAVE_SVG;
         const bars = el('span', 'slots-bars');
         for (let i = 0; i < s.max; i++) bars.appendChild(el('span', 'slot-bar' + (i < s.used ? ' full' : '')));
         const cnt = el('span', 'slots-count');
         const usedNum = el('b', '', String(s.used));
         cnt.append(usedNum, document.createTextNode('/' + s.max));
-        box.append(ico, bars, cnt);
+        box.append(bars, cnt);
         box.classList.toggle('is-full', s.used >= s.max);
         $('wavesBadge').hidden = true;
         document.dispatchEvent(new CustomEvent('wave:status', { detail: s }));
