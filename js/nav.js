@@ -4,7 +4,7 @@
    и от feed.js (Feed)
 ========================================= */
 const Nav = (() => {
-    const SUPPORT_TG_URL = 'https://t.me/wave_support'; // Замените на ваш @username поддержки или бота
+    const SUPPORT_TG_URL = 'https://t.me/zhul1nsky'; // Замените на ваш @username поддержки или бота
     const MENU = [
         { go: 'feed',     label: 'Анкеты' },
         { go: 'waves',    label: 'Волны', badge: 'incoming' },
