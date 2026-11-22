@@ -1604,3 +1604,161 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .set-danger-btn:disabled {
     opacity: 0.5;
 }
+
+/* =========================================
+   v39: жалоба в меню анкеты и пустой экран уведомлений
+========================================= */
+.person-menu-item.warn {
+    border-color: rgba(168, 85, 247, 0.28);
+    background: rgba(124, 58, 237, 0.12);
+}
+.person-menu-ico.warn {
+    background: rgba(168, 85, 247, 0.2);
+    color: #D8B4FE;
+}
+.person-menu-item.warn .person-menu-text b {
+    color: #E9D5FF;
+}
+
+.report-sub {
+    font-size: 13px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.56);
+    margin-top: -4px;
+}
+
+.report-reasons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.report-reason {
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s;
+}
+.report-reason:active { transform: scale(0.98); }
+.report-reason.selected {
+    background: rgba(181, 198, 128, 0.16);
+    border-color: #B5C680;
+    color: #B5C680;
+}
+
+.report-comment {
+    min-height: 76px;
+    resize: none;
+    font-size: 14px;
+}
+
+.report-submit-btn {
+    flex: none;
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 15px;
+    font-size: 14px;
+}
+.report-submit-btn:disabled { opacity: 0.5; }
+
+/* Пустой экран уведомлений («Пока тихо») */
+#screen-notifs.is-empty .profile-bg-top,
+#screen-notifs.is-empty .profile-bg-mid {
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+#screen-notifs .notif-bg-bottom {
+    height: 128px;
+}
+
+.notif-empty-state {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 12px 64px;
+    animation: emptyFadeIn 0.28s ease;
+}
+
+.notif-empty-art {
+    width: 280px;
+    max-width: 100%;
+    height: 186px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notif-empty-art svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.notif-empty-title {
+    font-size: 27px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+    margin-bottom: 12px;
+}
+
+.notif-empty-desc {
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.56);
+    max-width: 290px;
+    margin-bottom: 28px;
+}
+
+.notif-empty-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 248px;
+    padding: 16px 28px;
+    border: none;
+    border-radius: 999px;
+    background: #B5C680;
+    color: #12051f;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 8px 28px rgba(181, 198, 128, 0.26);
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.notif-empty-cta:active {
+    transform: scale(0.96);
+    background: #c5d68f;
+    box-shadow: 0 4px 16px rgba(181, 198, 128, 0.36);
+}
+
+.notif-empty-cta-ico {
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notif-empty-cta-ico svg {
+    width: 100%;
+    height: 100%;
+}

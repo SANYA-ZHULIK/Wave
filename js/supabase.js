@@ -180,6 +180,13 @@ const Supa = (() => {
         async getBlockedUsers() {
             return await this.rpc('my_blocked_users');
         },
+        async reportUser(targetId, reason, details) {
+            await this.rpc('report_user', {
+                p_target: targetId,
+                p_reason: reason || 'other',
+                p_details: details || null
+            });
+        },
         async deleteAccount() {
             const s = await auth();
             // Удаляем аватар из приватного хранилища (если есть)

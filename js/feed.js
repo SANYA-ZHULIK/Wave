@@ -676,6 +676,9 @@ const Feed = (() => {
     }
     let menuTarget = null;
     let menuFromWaves = false;
+    let reportTarget = null;
+    let reportFromWaves = false;
+    let reportReason = 'fake';
 
     function openPersonMenu(r, fromWaves) {
         if (!r || st.busy) return;
@@ -691,6 +694,57 @@ const Feed = (() => {
         const sh = $('personMenuSheet');
         if (sh) sh.hidden = true;
         menuTarget = null;
+    }
+
+    function openReportSheet(r, fromWaves) {
+        if (!r) return;
+        TG.tap();
+        reportTarget = r;
+        reportFromWaves = !!fromWaves;
+        reportReason = 'fake';
+        const sub = $('reportTargetSub');
+        if (sub) sub.textContent = `Жалоба на ${r.name || 'пользователя'} — мы проверим анкету и скроем её из вашей ленты`;
+        const box = $('reportReasons');
+        if (box) {
+            box.querySelectorAll('.report-reason').forEach((b) => {
+                b.classList.toggle('selected', b.dataset.reason === reportReason);
+            });
+        }
+        if ($('reportComment')) $('reportComment').value = '';
+        if ($('reportSheet')) $('reportSheet').hidden = false;
+    }
+    function closeReportSheet() {
+        if ($('reportSheet')) $('reportSheet').hidden = true;
+        reportTarget = null;
+    }
+    async function submitReport() {
+        if (!reportTarget || st.busy) return;
+        const target = reportTarget;
+        const fromWaves = reportFromWaves;
+        const reason = reportReason || 'other';
+        const comment = ($('reportComment') && $('reportComment').value.trim()) || '';
+        const btn = $('reportSendBtn');
+        if (btn) btn.disabled = true;
+        st.busy = true;
+        try {
+            if (dbOn() && typeof Supa.reportUser === 'function') {
+                await Supa.reportUser(target.id, reason, comment).catch((e) => console.error('Report error:', e));
+            }
+            // Скрываем анкету из ленты, чтобы не попадалась повторно
+            if (!fromWaves && dbOn()) {
+                Supa.rpc('pass_profile', { p_target: target.id }).catch(() => {});
+            }
+            closeReportSheet();
+            TG.ok();
+            toast('Жалоба отправлена на модерацию. Спасибо!', 4000);
+            if (!fromWaves && st.cur && String(st.cur.id) === String(target.id)) {
+                await leave('left');
+                next();
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+            st.busy = false;
+        }
     }
 
     async function blockPerson(r, fromWaves) {
@@ -946,12 +1000,28 @@ const Feed = (() => {
         if ($('waveSheet')) $('waveSheet').addEventListener('click', (e) => { if (e.target === $('waveSheet')) closeSheet(); });
         if ($('personMenuCancel')) $('personMenuCancel').addEventListener('click', closePersonMenu);
         if ($('personMenuSheet')) $('personMenuSheet').addEventListener('click', (e) => { if (e.target === $('personMenuSheet')) closePersonMenu(); });
+        if ($('personMenuReport')) $('personMenuReport').addEventListener('click', () => {
+            const target = menuTarget;
+            const fromWaves = menuFromWaves;
+            closePersonMenu();
+            if (target) openReportSheet(target, fromWaves);
+        });
         if ($('personMenuBlock')) $('personMenuBlock').addEventListener('click', () => {
             const target = menuTarget;
             const fromWaves = menuFromWaves;
             closePersonMenu();
             if (target) blockPerson(target, fromWaves);
         });
+        if ($('reportReasons')) $('reportReasons').addEventListener('click', (e) => {
+            const b = e.target.closest('.report-reason');
+            if (!b) return;
+            TG.pick();
+            reportReason = b.dataset.reason || 'other';
+            $('reportReasons').querySelectorAll('.report-reason').forEach((x) => x.classList.toggle('selected', x === b));
+        });
+        if ($('reportSendBtn')) $('reportSendBtn').addEventListener('click', submitReport);
+        if ($('reportCancelBtn')) $('reportCancelBtn').addEventListener('click', closeReportSheet);
+        if ($('reportSheet')) $('reportSheet').addEventListener('click', (e) => { if (e.target === $('reportSheet')) closeReportSheet(); });
         $('feedChips').addEventListener('click', onChip);
         setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }

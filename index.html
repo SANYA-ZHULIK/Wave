@@ -64,22 +64,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=38"
+        href="css/base.css?v=39"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=38"
+        href="css/landing.css?v=39"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=38"
+        href="css/network.css?v=39"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=38"
+        href="css/auth.css?v=39"
     >
 
 </head>
@@ -371,9 +371,14 @@
                 <circle cx="104" cy="96"  r="1.6" fill="#7C3AED" opacity="0.55" />
                 <circle cx="246" cy="76"  r="1.8" fill="#B5C680" opacity="0.5" />
             </svg>
-            <svg class="profile-bg-bottom" viewBox="0 0 400 100" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M-10 64 C 90 32, 190 84, 290 50 C 345 32, 380 46, 410 56"
-                      stroke="url(#profWaveSub)" stroke-width="1.5" stroke-linecap="round" />
+            <svg class="profile-bg-bottom notif-bg-bottom" viewBox="0 0 400 130" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M-10 86 C 80 42, 165 112, 260 66 C 325 36, 368 48, 412 24"
+                      stroke="url(#profWaveSub)" stroke-width="1.5" stroke-linecap="round" opacity="0.7" />
+                <path d="M-10 78 C 72 118, 154 96, 226 60 C 292 28, 348 48, 412 86"
+                      stroke="url(#profWaveMain)" stroke-width="2.4" stroke-linecap="round" filter="url(#profWaveGlow)" />
+                <circle cx="88"  cy="74" r="2"   fill="#B5C680" opacity="0.6" />
+                <circle cx="298" cy="30" r="2.2" fill="#A855F7" opacity="0.65" />
+                <circle cx="332" cy="88" r="1.5" fill="#B5C680" opacity="0.45" />
             </svg>
         </div>
         <header class="feed-head">
@@ -765,6 +770,18 @@
         <div class="sheet-box person-menu-box">
             <div class="sheet-handle" aria-hidden="true"></div>
             <div class="person-menu-title" id="personMenuTitle">Действия с анкетой</div>
+            <button type="button" class="person-menu-item warn" id="personMenuReport">
+                <span class="person-menu-ico warn" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                        <line x1="4" y1="22" x2="4" y2="15" />
+                    </svg>
+                </span>
+                <span class="person-menu-text">
+                    <b>Пожаловаться</b>
+                    <span>Сообщить о фейке, спаме или нарушении правил</span>
+                </span>
+            </button>
             <button type="button" class="person-menu-item danger" id="personMenuBlock">
                 <span class="person-menu-ico" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -781,24 +798,42 @@
         </div>
     </div>
 
+    <div class="sheet sheet-global" id="reportSheet" hidden>
+        <div class="sheet-box report-sheet-box">
+            <div class="sheet-handle" aria-hidden="true"></div>
+            <h3>Пожаловаться на анкету</h3>
+            <p class="report-sub" id="reportTargetSub">Выберите причину — мы проверим жалобу и скроем анкету из вашей ленты</p>
+            <div class="report-reasons" id="reportReasons">
+                <button type="button" class="report-reason selected" data-reason="fake">Фейк или чужие фото</button>
+                <button type="button" class="report-reason" data-reason="spam">Спам или реклама</button>
+                <button type="button" class="report-reason" data-reason="inappropriate">Оскорбления или 18+ контент</button>
+                <button type="button" class="report-reason" data-reason="scam">Мошенничество</button>
+                <button type="button" class="report-reason" data-reason="other">Другая причина</button>
+            </div>
+            <textarea class="auth-input report-comment" id="reportComment" maxlength="240" placeholder="Комментарий (необязательно)"></textarea>
+            <button type="button" class="w-btn danger report-submit-btn" id="reportSendBtn">Отправить жалобу</button>
+            <button type="button" class="person-menu-cancel" id="reportCancelBtn">Отмена</button>
+        </div>
+    </div>
+
     <div class="toast" id="toast" hidden></div>
 
     <!-- =================================
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=38"></script>
+    <script src="js/telegram.js?v=39"></script>
 
     <!-- Supabase JS — нужен только для уведомлений в реальном времени (без него приложение работает с периодическим опросом) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-    <script src="js/supabase.js?v=38"></script>
+    <script src="js/supabase.js?v=39"></script>
 
-    <script src="js/landing.js?v=38"></script>
+    <script src="js/landing.js?v=39"></script>
 
-    <script src="js/feed.js?v=38"></script>
+    <script src="js/feed.js?v=39"></script>
 
-    <script src="js/nav.js?v=38"></script>
+    <script src="js/nav.js?v=39"></script>
 
 
     <script>

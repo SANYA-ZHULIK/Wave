@@ -23,6 +23,97 @@ const Nav = (() => {
         ended: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg>`,
         bell: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`
     };
+    const EMPTY_NOTIF_BELL_SVG = `
+    <svg viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+            <filter id="nbGlow" x="-35%" y="-35%" width="170%" height="170%">
+                <feGaussianBlur stdDeviation="5.5" result="blur" />
+                <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+            <filter id="nbSoft" x="-45%" y="-45%" width="190%" height="190%">
+                <feGaussianBlur stdDeviation="20" />
+            </filter>
+            <linearGradient id="nbWaveGrad" x1="16" y1="100" x2="284" y2="100" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#7C3AED" stop-opacity="0" />
+                <stop offset="22%" stop-color="#A855F7" stop-opacity="0.88" />
+                <stop offset="52%" stop-color="#C084FC" stop-opacity="0.72" />
+                <stop offset="78%" stop-color="#D9F99D" stop-opacity="0.88" />
+                <stop offset="100%" stop-color="#B5C680" stop-opacity="0" />
+            </linearGradient>
+            <linearGradient id="nbWaveDim" x1="20" y1="108" x2="280" y2="102" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#7C3AED" stop-opacity="0" />
+                <stop offset="30%" stop-color="#9333EA" stop-opacity="0.34" />
+                <stop offset="70%" stop-color="#B5C680" stop-opacity="0.34" />
+                <stop offset="100%" stop-color="#B5C680" stop-opacity="0" />
+            </linearGradient>
+            <linearGradient id="nbBellStroke" x1="92" y1="54" x2="196" y2="152" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#A855F7" />
+                <stop offset="38%" stop-color="#D8B4FE" />
+                <stop offset="72%" stop-color="#D9F99D" />
+                <stop offset="100%" stop-color="#B5C680" />
+            </linearGradient>
+            <linearGradient id="nbBellFill" x1="100" y1="50" x2="195" y2="150" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#7C3AED" stop-opacity="0.16" />
+                <stop offset="100%" stop-color="#B5C680" stop-opacity="0.1" />
+            </linearGradient>
+        </defs>
+
+        <!-- Мягкое неоновое свечение за колокольчиком -->
+        <ellipse cx="122" cy="100" rx="58" ry="44" fill="#7C3AED" fill-opacity="0.28" filter="url(#nbSoft)" />
+        <ellipse cx="176" cy="108" rx="54" ry="40" fill="#B5C680" fill-opacity="0.22" filter="url(#nbSoft)" />
+
+        <!-- Фоновые волны -->
+        <path d="M18 112 C 48 134, 72 90, 108 108 C 146 126, 178 86, 214 114 C 244 136, 262 96, 286 106"
+              stroke="url(#nbWaveDim)" stroke-width="1.6" stroke-linecap="round" />
+        <path d="M16 104 C 42 128, 60 124, 82 94 C 98 72, 114 82, 128 102"
+              stroke="url(#nbWaveGrad)" stroke-width="2.4" stroke-linecap="round" filter="url(#nbGlow)" />
+        <path d="M174 110 C 194 138, 214 142, 232 104 C 248 72, 266 78, 286 96"
+              stroke="url(#nbWaveGrad)" stroke-width="2.4" stroke-linecap="round" filter="url(#nbGlow)" />
+
+        <!-- Наклонённый неоновый колокольчик -->
+        <g transform="rotate(14 150 100)">
+            <!-- Дуги звонка слева -->
+            <path d="M96 68 C 91 79, 91 91, 95 102" stroke="#C084FC" stroke-width="2.2" stroke-linecap="round" opacity="0.82" filter="url(#nbGlow)" />
+            <path d="M84 62 C 77 77, 77 95, 83 110" stroke="#A855F7" stroke-width="2" stroke-linecap="round" opacity="0.52" />
+            <!-- Дуги звонка справа -->
+            <path d="M204 68 C 209 79, 209 91, 205 102" stroke="#D9F99D" stroke-width="2.2" stroke-linecap="round" opacity="0.85" filter="url(#nbGlow)" />
+            <path d="M216 62 C 223 77, 223 95, 217 110" stroke="#B5C680" stroke-width="2" stroke-linecap="round" opacity="0.52" />
+
+            <!-- Верхнее колечко -->
+            <path d="M142 50 A 8 8 0 0 1 158 50" stroke="url(#nbBellStroke)" stroke-width="2.6" stroke-linecap="round" filter="url(#nbGlow)" />
+            <!-- Купол колокольчика -->
+            <path d="M150 51
+                     C 127 51, 112 69, 112 94
+                     L 112 110
+                     C 112 121, 104 128, 99 133
+                     C 97 135, 98 139, 102 139
+                     L 198 139
+                     C 202 139, 203 135, 201 133
+                     C 196 128, 188 121, 188 110
+                     L 188 94
+                     C 188 69, 173 51, 150 51 Z"
+                  fill="url(#nbBellFill)" stroke="url(#nbBellStroke)" stroke-width="3" stroke-linejoin="round" filter="url(#nbGlow)" />
+            <!-- Внутренний блик -->
+            <path d="M126 84 C 127 72, 134 64, 143 61" stroke="#F5D0FE" stroke-width="2" stroke-linecap="round" opacity="0.7" />
+            <!-- Нижняя кромка -->
+            <path d="M107 134 C 132 130, 168 130, 193 134" stroke="url(#nbBellStroke)" stroke-width="1.3" stroke-linecap="round" opacity="0.45" />
+            <!-- Язычок -->
+            <path d="M139 140 C 139 147, 144 152, 150 152 C 156 152, 161 147, 161 140"
+                  stroke="url(#nbBellStroke)" stroke-width="2.8" stroke-linecap="round" filter="url(#nbGlow)" />
+        </g>
+
+        <!-- Искры и звёздочки -->
+        <path d="M72 130 L74.2 135.8 L80 138 L74.2 140.2 L72 146 L69.8 140.2 L64 138 L69.8 135.8 Z" fill="#C084FC" opacity="0.9" filter="url(#nbGlow)" />
+        <path d="M235 66 L236.6 70.4 L241 72 L236.6 73.6 L235 78 L233.4 73.6 L229 72 L233.4 70.4 Z" fill="#D9F99D" opacity="0.88" filter="url(#nbGlow)" />
+        <circle cx="72"  cy="66"  r="2.2" fill="#C084FC" opacity="0.75" />
+        <circle cx="48"  cy="98"  r="1.4" fill="#E9D5FF" opacity="0.55" />
+        <circle cx="212" cy="148" r="2"   fill="#D9F99D" opacity="0.8" />
+        <circle cx="256" cy="118" r="1.4" fill="#B5C680" opacity="0.5" />
+    </svg>`;
+    const ARROW_RIGHT_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>`;
     const NOTIF = {
         like:  ()  => ['like',  'Вас лайкнули', 'Загляните в «Волны» — возможно, это взаимно'],
         match: (d) => ['match', 'Взаимно! Началась волна' + (d.name ? ' с ' + d.name : ''), 'Откройте «Волны» и напишите первым'],
@@ -511,6 +602,7 @@ const Nav = (() => {
     }
     function renderNotifs(st) {
         lastStatus = st || lastStatus;
+        const scr = $('screen-notifs');
         const body = $('notifsBody');
         body.innerHTML = '';
         const banner = permissionBanner(); if (banner) body.appendChild(banner);
@@ -522,6 +614,30 @@ const Nav = (() => {
         }
         const rows = [...shown.values()].sort((a, b) => b.id - a.id);
         if (!rows.length) {
+            if (!waiting && !banner) {
+                if (scr) scr.classList.add('is-empty');
+                const wrap = el('div', 'notif-empty-state');
+                const art = el('div', 'notif-empty-art');
+                art.innerHTML = EMPTY_NOTIF_BELL_SVG;
+                const title = el('h3', 'notif-empty-title', 'Пока тихо');
+                const desc = el('p', 'notif-empty-desc');
+                desc.append(
+                    document.createTextNode('Здесь будут новые лайки, взаимные волны'),
+                    document.createElement('br'),
+                    document.createTextNode('и освободившиеся слоты.')
+                );
+                const cta = el('button', 'notif-empty-cta');
+                cta.type = 'button';
+                cta.append(el('span', '', 'Перейти к анкетам'));
+                const arr = el('span', 'notif-empty-cta-ico');
+                arr.innerHTML = ARROW_RIGHT_SVG;
+                cta.appendChild(arr);
+                cta.addEventListener('click', () => { TG.tap(); show(FEED); });
+                wrap.append(art, title, desc, cta);
+                body.appendChild(wrap);
+                return;
+            }
+            if (scr) scr.classList.remove('is-empty');
             body.appendChild(el('div', 'sec-title', 'История событий'));
             body.appendChild(el('p', 'sec-note', 'Здесь сохраняются взаимные волны, новые лайки и освободившиеся слоты.'));
             const emptyBox = el('div', 'slot-empty notif-empty-slot');
@@ -529,6 +645,7 @@ const Nav = (() => {
             body.appendChild(emptyBox);
             return;
         }
+        if (scr) scr.classList.remove('is-empty');
         let label = '';
         rows.forEach((n) => {
             const l = dayLabel(n.created_at);
@@ -554,7 +671,7 @@ const Nav = (() => {
         const waitMin = !firstLoaded ? new Promise((r) => setTimeout(r, 420)) : Promise.resolve();
         if (!dbOn()) {
             await waitMin;
-            body.innerHTML = ''; body.appendChild(el('p', 'feed-empty', 'Уведомления доступны только внутри Telegram'));
+            renderNotifs(lastStatus);
             return;
         }
         if (notifLoading) { notifAgain = true; return; }
@@ -577,6 +694,8 @@ const Nav = (() => {
         } catch (e) {
             await waitMin;
             console.error('Notifications error:', e);
+            const scr = $('screen-notifs');
+            if (scr) scr.classList.remove('is-empty');
             body.innerHTML = '';
             body.appendChild(el('p', 'feed-empty', 'Не удалось загрузить уведомления' + (DEBUG ? ' (' + e.message + ')' : '')));
         } finally { notifLoading = false; }
@@ -599,6 +718,8 @@ const Nav = (() => {
     }
     function openNotifs() {
         TG.tap(); show(NOTIFS);
+        const scr = $('screen-notifs');
+        if (scr) scr.classList.remove('is-empty');
         shown.clear(); hasMore = false; firstLoaded = false;
         const body = $('notifsBody');
         body.innerHTML = ''; body.appendChild(waveLoader('Загружаем уведомления…'));
