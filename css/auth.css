@@ -307,8 +307,27 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .feed-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 6px; gap: 8px; }
 .feed-head h2 { font-size: 20px; font-weight: 800; color: #B5C680; }
 .feed-pill {
-    position: relative; background: rgba(255,255,255,0.08); border: none; color: #fff;
-    padding: 9px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+    position: relative;
+    height: 40px;
+    padding: 0 15px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.feed-pill:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.11);
 }
 .badge {
     position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px;
@@ -345,37 +364,80 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .deck-card.leave-right { transform: translateX(135%) rotate(16deg) !important;   opacity: 0; }
 @keyframes cardIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
 
-.swipe-stamp {
+.swipe-aura {
     position: absolute;
-    top: 26px;
-    z-index: 6;
-    padding: 7px 14px;
-    border-radius: 12px;
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: 1.4px;
-    opacity: 0;
+    inset: 0;
+    z-index: 4;
     pointer-events: none;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    transition: opacity 0.12s ease;
+    opacity: 0;
+    transition: opacity 0.22s ease;
 }
-.deck-card.dragging .swipe-stamp { transition: none; }
-.swipe-stamp-like {
-    left: 20px;
-    color: #B5C680;
-    border: 2.5px solid #B5C680;
-    background: rgba(12, 6, 27, 0.52);
-    transform: rotate(-10deg);
-    box-shadow: 0 0 20px rgba(181, 198, 128, 0.32);
+.deck-card.dragging .swipe-aura { transition: none; }
+.swipe-aura-like {
+    background: radial-gradient(circle at 82% 38%, rgba(181, 198, 128, 0.36) 0%, rgba(181, 198, 128, 0.12) 40%, transparent 74%);
 }
-.swipe-stamp-pass {
-    right: 20px;
-    color: #ff6b6b;
-    border: 2.5px solid #ff6b6b;
-    background: rgba(12, 6, 27, 0.52);
-    transform: rotate(10deg);
-    box-shadow: 0 0 20px rgba(255, 107, 107, 0.32);
+.swipe-aura-pass {
+    background: radial-gradient(circle at 18% 38%, rgba(255, 107, 107, 0.34) 0%, rgba(255, 107, 107, 0.12) 40%, transparent 74%);
+}
+
+.swipe-badge {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    z-index: 6;
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate3d(-50%, -50%, 0) scale(0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition: opacity 0.22s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.deck-card.dragging .swipe-badge {
+    transition: background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.swipe-badge svg {
+    width: 38px;
+    height: 38px;
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), fill 0.18s ease;
+}
+.swipe-badge-like {
+    color: #D9F99D;
+    background: rgba(16, 12, 30, 0.56);
+    border: 1.5px solid rgba(181, 198, 128, 0.62);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.42), 0 0 28px rgba(181, 198, 128, 0.32);
+}
+.swipe-badge-like.is-ready {
+    background: rgba(181, 198, 128, 0.28);
+    border-color: #D9F99D;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45), 0 0 38px rgba(181, 198, 128, 0.55);
+}
+.swipe-badge-like.is-ready svg {
+    fill: rgba(217, 249, 157, 0.34);
+    transform: scale(1.08);
+}
+.swipe-badge-pass {
+    color: #FF8585;
+    background: rgba(24, 10, 26, 0.56);
+    border: 1.5px solid rgba(255, 107, 107, 0.58);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.42), 0 0 28px rgba(255, 107, 107, 0.28);
+}
+.swipe-badge-pass.is-ready {
+    background: rgba(255, 107, 107, 0.24);
+    border-color: #FF8585;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45), 0 0 36px rgba(255, 107, 107, 0.48);
+}
+.swipe-badge-pass.is-ready svg {
+    transform: scale(1.08);
+}
+.swipe-badge.is-commit {
+    transform: translate3d(-50%, -50%, 0) scale(1.18) !important;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 .deck-more-btn {
@@ -665,21 +727,88 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .w-btn.ok { background: #B5C680; border-color: transparent; color: #12051f; box-shadow: 0 4px 16px rgba(181, 198, 128, 0.22); }
 
 /* =========================================
-   v13: слоты волн (понятный индикатор), пустые слоты, завершение волны
+   v13/v43: слоты волн — неоновая стеклянная капсула
 ========================================= */
 .slots {
-    display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff;
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(181,198,128,0.35);
-    padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    border-radius: 999px;
+    color: #fff;
+    font-family: inherit;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(181, 198, 128, 0.28);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 4px 16px rgba(0, 0, 0, 0.24);
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.22s ease, box-shadow 0.22s ease;
 }
-.slots-label { opacity: 0.7; }
-.slots-bars { display: flex; gap: 3px; }
-.slot-bar { width: 14px; height: 8px; border-radius: 3px; background: rgba(255,255,255,0.2); }
-.slot-bar.full { background: #B5C680; }
-.slots-count { color: #B5C680; font-weight: 800; }
-.slots.is-full { border-color: #ff6b6b; }
-.slots.is-full .slot-bar.full { background: #ff6b6b; }
-.slots.is-full .slots-count { color: #ff6b6b; }
+.slots:active {
+    transform: scale(0.95);
+}
+.slots-wave-ico {
+    width: 19px;
+    height: 13px;
+    color: #B5C680;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 6px rgba(181, 198, 128, 0.45));
+}
+.slots-wave-ico svg {
+    width: 100%;
+    height: 100%;
+}
+.slots-bars {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.slot-bar {
+    width: 17px;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.11);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.slot-bar.full {
+    background: linear-gradient(90deg, #B5C680, #D9F99D);
+    border-color: transparent;
+    box-shadow: 0 0 10px rgba(181, 198, 128, 0.65);
+}
+.slots-count {
+    font-size: 12.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.45);
+    padding-left: 2px;
+    letter-spacing: 0.3px;
+}
+.slots-count b {
+    color: #D9F99D;
+    font-weight: 800;
+}
+.slots.is-full {
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.16), rgba(255, 255, 255, 0.04));
+    border-color: rgba(255, 107, 107, 0.45);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 18px rgba(255, 107, 107, 0.18);
+}
+.slots.is-full .slots-wave-ico {
+    color: #FF8585;
+    filter: drop-shadow(0 0 6px rgba(255, 107, 107, 0.5));
+}
+.slots.is-full .slot-bar.full {
+    background: linear-gradient(90deg, #FF6B6B, #FF9494);
+    box-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
+}
+.slots.is-full .slots-count b {
+    color: #FF8585;
+}
 .slot-empty {
     padding: 16px; border: 1.5px dashed rgba(181, 198, 128, 0.22); border-radius: 18px;
     background: rgba(18, 10, 36, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
@@ -1793,20 +1922,30 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     box-shadow: 0 4px 16px rgba(181, 198, 128, 0.36);
 }
 
-/* Полноэкранный просмотр фото профиля */
+/* Полноэкранный просмотр фото профиля с плавной FLIP-анимацией */
 .photo-viewer {
     position: fixed;
     inset: 0;
     z-index: 360;
-    background: rgba(8, 4, 18, 0.94);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    background: rgba(8, 4, 18, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: calc(64px + env(safe-area-inset-top, 0px)) 16px calc(28px + env(safe-area-inset-bottom, 0px));
-    animation: emptyFadeIn 0.2s ease;
+    transition: background 0.3s cubic-bezier(0.22, 1, 0.36, 1), backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease;
+}
+
+.photo-viewer.is-open {
+    background: rgba(8, 4, 18, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.photo-viewer.is-dragging {
+    transition: none;
 }
 
 .photo-viewer-close {
@@ -1826,11 +1965,18 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     justify-content: center;
     cursor: pointer;
     z-index: 2;
-    transition: transform 0.15s ease, background 0.2s ease;
+    opacity: 0;
+    transform: scale(0.82);
+    transition: opacity 0.24s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease;
+}
+
+.photo-viewer.is-open .photo-viewer-close {
+    opacity: 1;
+    transform: scale(1);
 }
 
 .photo-viewer-close:active {
-    transform: scale(0.92);
+    transform: scale(0.9);
     background: rgba(255, 255, 255, 0.18);
 }
 
@@ -1841,16 +1987,19 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 14px;
+    gap: 16px;
 }
 
 .photo-viewer-img {
     max-width: 100%;
     max-height: calc(100dvh - 150px);
     object-fit: contain;
-    border-radius: 18px;
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65);
-    animation: photoZoomIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius: 20px;
+    box-shadow: 0 20px 56px rgba(0, 0, 0, 0.65);
+    will-change: transform, border-radius, opacity;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .photo-viewer-caption {
@@ -1858,9 +2007,18 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     font-weight: 700;
     color: rgba(255, 255, 255, 0.9);
     text-align: center;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.28s ease 0.08s, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1) 0.08s;
 }
 
-@keyframes photoZoomIn {
-    from { opacity: 0; transform: scale(0.92); }
-    to   { opacity: 1; transform: scale(1); }
+.photo-viewer.is-open .photo-viewer-caption {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.photo-viewer.is-dragging .photo-viewer-close,
+.photo-viewer.is-dragging .photo-viewer-caption {
+    opacity: 0;
+    transition: opacity 0.12s ease;
 }

@@ -440,28 +440,173 @@ const Feed = (() => {
         if (!urlCache.has(path)) urlCache.set(path, await Supa.signedUrl(path));
         return urlCache.get(path);
     }
-    function openPhotoViewer(url, caption) {
+    const SLOTS_WAVE_SVG = `<svg viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 6.5c2.2-2.8 4.4-2.8 6.6 0s4.4 2.8 6.6 0 3.4-2.5 5.8-.5"/><path d="M1.5 11c2.2-2.4 4.4-2.4 6.6 0s4.4 2.4 6.6 0 3.4-2.1 5.8-.4" opacity=".48"/></svg>`;
+    const SWIPE_HEART_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+    const SWIPE_PASS_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
+
+    let viewerSourceEl = null;
+    let viewerCloseTimer = null;
+    let viewerClosing = false;
+
+    function openPhotoViewer(url, caption, sourceEl = null) {
         const viewer = $('photoViewer');
         const img = $('photoViewerImg');
         const cap = $('photoViewerCaption');
         if (!viewer || !img || !url) return;
         TG.tap();
+        clearTimeout(viewerCloseTimer);
+        viewerClosing = false;
+        viewerSourceEl = sourceEl && sourceEl.isConnected ? sourceEl : null;
+
+        const srcRect = viewerSourceEl ? viewerSourceEl.getBoundingClientRect() : null;
+        img.style.transition = 'none';
+        img.style.transform = '';
+        img.style.borderRadius = '';
+        img.style.opacity = '';
+        viewer.style.background = '';
         img.src = url;
         if (cap) {
             cap.textContent = caption || '';
             cap.hidden = !caption;
         }
+        viewer.classList.remove('is-open', 'is-dragging');
         viewer.hidden = false;
+
+        const runFlip = () => {
+            if (viewerClosing || viewer.hidden) return;
+            const dst = img.getBoundingClientRect();
+            if (srcRect && dst.width > 10 && dst.height > 10) {
+                const dx = (srcRect.left + srcRect.width / 2) - (dst.left + dst.width / 2);
+                const dy = (srcRect.top + srcRect.height / 2) - (dst.top + dst.height / 2);
+                const scale = Math.max(0.14, Math.min(0.85, srcRect.width / dst.width));
+                img.style.transition = 'none';
+                img.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`;
+                img.style.borderRadius = '50%';
+                img.style.opacity = '0.55';
+                void img.offsetWidth;
+                requestAnimationFrame(() => {
+                    if (viewerClosing || viewer.hidden) return;
+                    viewer.classList.add('is-open');
+                    img.style.transition = 'transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), border-radius 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease';
+                    img.style.transform = 'translate3d(0, 0, 0) scale(1)';
+                    img.style.borderRadius = '20px';
+                    img.style.opacity = '1';
+                });
+            } else {
+                img.style.transition = 'none';
+                img.style.transform = 'translate3d(0, 18px, 0) scale(0.86)';
+                img.style.opacity = '0';
+                void img.offsetWidth;
+                requestAnimationFrame(() => {
+                    if (viewerClosing || viewer.hidden) return;
+                    viewer.classList.add('is-open');
+                    img.style.transition = 'transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease';
+                    img.style.transform = 'translate3d(0, 0, 0) scale(1)';
+                    img.style.opacity = '1';
+                });
+            }
+        };
+
+        if (img.complete && img.naturalWidth > 0) requestAnimationFrame(runFlip);
+        else img.addEventListener('load', () => requestAnimationFrame(runFlip), { once: true });
+
         TG.back(closePhotoViewer);
     }
+
     function closePhotoViewer() {
         const viewer = $('photoViewer');
-        if (!viewer || viewer.hidden) return;
-        viewer.hidden = true;
         const img = $('photoViewerImg');
-        if (img) img.removeAttribute('src');
-        applyBack();
+        if (!viewer || viewer.hidden || viewerClosing) return;
+        viewerClosing = true;
+        viewer.classList.remove('is-open', 'is-dragging');
+        viewer.style.background = '';
+
+        if (img) {
+            const dst = img.getBoundingClientRect();
+            const srcRect = viewerSourceEl && viewerSourceEl.isConnected ? viewerSourceEl.getBoundingClientRect() : null;
+            if (srcRect && srcRect.width > 0 && dst.width > 10) {
+                const dx = (srcRect.left + srcRect.width / 2) - (dst.left + dst.width / 2);
+                const dy = (srcRect.top + srcRect.height / 2) - (dst.top + dst.height / 2);
+                const scale = Math.max(0.14, Math.min(0.85, srcRect.width / dst.width));
+                img.style.transition = 'transform 0.26s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.26s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease';
+                img.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`;
+                img.style.borderRadius = '50%';
+                img.style.opacity = '0';
+            } else {
+                img.style.transition = 'transform 0.24s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease';
+                img.style.transform = 'translate3d(0, 26px, 0) scale(0.88)';
+                img.style.opacity = '0';
+            }
+        }
+
+        clearTimeout(viewerCloseTimer);
+        viewerCloseTimer = setTimeout(() => {
+            viewer.hidden = true;
+            viewerClosing = false;
+            if (img) {
+                img.style.transition = '';
+                img.style.transform = '';
+                img.style.borderRadius = '';
+                img.style.opacity = '';
+                img.removeAttribute('src');
+            }
+            applyBack();
+        }, 270);
     }
+
+    function initPhotoViewerDrag() {
+        const viewer = $('photoViewer');
+        const img = $('photoViewerImg');
+        if (!viewer || !img) return;
+        let startY = 0, dy = 0, tracking = false, dragging = false, pointerId = null;
+
+        img.addEventListener('pointerdown', (e) => {
+            if (viewerClosing || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            tracking = true;
+            dragging = false;
+            pointerId = e.pointerId;
+            startY = e.clientY;
+            dy = 0;
+        });
+
+        img.addEventListener('pointermove', (e) => {
+            if (!tracking || e.pointerId !== pointerId) return;
+            dy = e.clientY - startY;
+            if (!dragging) {
+                if (Math.abs(dy) < 10) return;
+                dragging = true;
+                viewer.classList.add('is-dragging');
+                img.style.transition = 'none';
+                try { img.setPointerCapture(pointerId); } catch (err) {}
+            }
+            e.preventDefault();
+            const progress = Math.min(1, Math.abs(dy) / 220);
+            const scale = Math.max(0.76, 1 - progress * 0.22);
+            img.style.transform = `translate3d(0, ${dy}px, 0) scale(${scale})`;
+            viewer.style.background = `rgba(8, 4, 18, ${(0.94 * (1 - progress * 0.72)).toFixed(2)})`;
+        });
+
+        function onEnd(e) {
+            if (!tracking || e.pointerId !== pointerId) return;
+            tracking = false;
+            if (!dragging) return;
+            dragging = false;
+            try { img.releasePointerCapture(pointerId); } catch (err) {}
+            viewer.classList.remove('is-dragging');
+
+            if (Math.abs(dy) >= 85) {
+                closePhotoViewer();
+            } else {
+                viewer.style.background = '';
+                img.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)';
+                img.style.transform = 'translate3d(0, 0, 0) scale(1)';
+            }
+        }
+
+        img.addEventListener('pointerup', onEnd);
+        img.addEventListener('pointercancel', onEnd);
+    }
+
     function avatar(r, cls, zoomable = false) {
         const a = el('div', cls, (r.name || '?').slice(0, 1).toUpperCase());
         if (r.photo_path) photoUrl(r.photo_path).then((u) => {
@@ -472,9 +617,9 @@ const Feed = (() => {
                 a.setAttribute('tabindex', '0');
                 a.setAttribute('aria-label', 'Открыть фото профиля');
                 const cap = [r.name ? (r.age ? `${r.name}, ${r.age}` : r.name) : '', r.city || ''].filter(Boolean).join(' · ');
-                a.addEventListener('click', (e) => { e.stopPropagation(); openPhotoViewer(u, cap); });
+                a.addEventListener('click', (e) => { e.stopPropagation(); openPhotoViewer(u, cap, a); });
                 a.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPhotoViewer(u, cap); }
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPhotoViewer(u, cap, a); }
                 });
             }
         }).catch(() => {});
@@ -492,9 +637,15 @@ const Feed = (() => {
     function renderStatus() {
         const s = st.status, box = $('slots');
         box.innerHTML = '';
+        const ico = el('span', 'slots-wave-ico');
+        ico.setAttribute('aria-hidden', 'true');
+        ico.innerHTML = SLOTS_WAVE_SVG;
         const bars = el('span', 'slots-bars');
         for (let i = 0; i < s.max; i++) bars.appendChild(el('span', 'slot-bar' + (i < s.used ? ' full' : '')));
-        box.append(el('span', 'slots-label', 'Слоты'), bars, el('span', 'slots-count', `${s.used}/${s.max}`));
+        const cnt = el('span', 'slots-count');
+        const usedNum = el('b', '', String(s.used));
+        cnt.append(usedNum, document.createTextNode('/' + s.max));
+        box.append(ico, bars, cnt);
         box.classList.toggle('is-full', s.used >= s.max);
         $('wavesBadge').hidden = true;
         document.dispatchEvent(new CustomEvent('wave:status', { detail: s }));
@@ -609,18 +760,35 @@ const Feed = (() => {
     }
 
     function attachSwipe(card) {
-        const stampLike = card.querySelector('.swipe-stamp-like');
-        const stampPass = card.querySelector('.swipe-stamp-pass');
+        const auraLike = card.querySelector('.swipe-aura-like');
+        const auraPass = card.querySelector('.swipe-aura-pass');
+        const badgeLike = card.querySelector('.swipe-badge-like');
+        const badgePass = card.querySelector('.swipe-badge-pass');
         let startX = 0, startY = 0, dx = 0, dy = 0, startTime = 0;
-        let tracking = false, dragging = false, pointerId = null;
+        let tracking = false, dragging = false, pointerId = null, readyDir = null;
+
+        function clearFeedback() {
+            readyDir = null;
+            if (auraLike) auraLike.style.opacity = '0';
+            if (auraPass) auraPass.style.opacity = '0';
+            if (badgeLike) {
+                badgeLike.style.opacity = '0';
+                badgeLike.style.transform = 'translate3d(-50%, -50%, 0) scale(0.55)';
+                badgeLike.classList.remove('is-ready', 'is-commit');
+            }
+            if (badgePass) {
+                badgePass.style.opacity = '0';
+                badgePass.style.transform = 'translate3d(-50%, -50%, 0) scale(0.55)';
+                badgePass.classList.remove('is-ready', 'is-commit');
+            }
+        }
 
         function resetCard() {
             card.classList.remove('dragging');
             card.classList.add('snap-back');
             card.style.transform = '';
             card.style.boxShadow = '';
-            if (stampLike) stampLike.style.opacity = '0';
-            if (stampPass) stampPass.style.opacity = '0';
+            clearFeedback();
             setTimeout(() => card.classList.remove('snap-back'), 300);
         }
 
@@ -634,6 +802,7 @@ const Feed = (() => {
             startY = e.clientY;
             dx = 0;
             dy = 0;
+            readyDir = null;
             startTime = Date.now();
             card.classList.remove('snap-back');
         });
@@ -655,19 +824,42 @@ const Feed = (() => {
             }
 
             e.preventDefault();
-            const rot = Math.max(-18, Math.min(18, dx * 0.055));
+            const rot = Math.max(-16, Math.min(16, dx * 0.05));
             const moveY = dy * 0.14;
             card.style.transform = `translate3d(${dx}px, ${moveY}px, 0) rotate(${rot}deg)`;
 
-            const progress = Math.min(1, Math.abs(dx) / 95);
+            const progress = Math.min(1, Math.abs(dx) / 96);
+            const eased = Math.pow(progress, 0.85);
+            const scale = 0.56 + eased * 0.5;
+            const shiftX = Math.max(-22, Math.min(22, dx * 0.14));
+            const isReady = progress >= 0.88;
+
             if (dx > 0) {
-                if (stampLike) stampLike.style.opacity = String(progress);
-                if (stampPass) stampPass.style.opacity = '0';
-                card.style.boxShadow = `0 0 0 2px rgba(181, 198, 128, ${(progress * 0.75).toFixed(2)}), 0 18px 40px rgba(0,0,0,0.45)`;
+                if (isReady && readyDir !== 'right') { readyDir = 'right'; TG.pick(); }
+                else if (!isReady && readyDir === 'right') readyDir = null;
+
+                if (auraLike) auraLike.style.opacity = String(eased);
+                if (auraPass) auraPass.style.opacity = '0';
+                if (badgeLike) {
+                    badgeLike.style.opacity = String(Math.min(1, eased * 1.15));
+                    badgeLike.style.transform = `translate3d(calc(-50% + ${shiftX}px), -50%, 0) scale(${scale.toFixed(3)}) rotate(${(-8 * (1 - eased)).toFixed(1)}deg)`;
+                    badgeLike.classList.toggle('is-ready', isReady);
+                }
+                if (badgePass) { badgePass.style.opacity = '0'; badgePass.classList.remove('is-ready'); }
+                card.style.boxShadow = `0 0 0 1.5px rgba(181, 198, 128, ${(eased * 0.72).toFixed(2)}), 0 18px 42px rgba(0,0,0,0.48), 0 0 36px rgba(181, 198, 128, ${(eased * 0.24).toFixed(2)})`;
             } else {
-                if (stampPass) stampPass.style.opacity = String(progress);
-                if (stampLike) stampLike.style.opacity = '0';
-                card.style.boxShadow = `0 0 0 2px rgba(255, 107, 107, ${(progress * 0.75).toFixed(2)}), 0 18px 40px rgba(0,0,0,0.45)`;
+                if (isReady && readyDir !== 'left') { readyDir = 'left'; TG.pick(); }
+                else if (!isReady && readyDir === 'left') readyDir = null;
+
+                if (auraPass) auraPass.style.opacity = String(eased);
+                if (auraLike) auraLike.style.opacity = '0';
+                if (badgePass) {
+                    badgePass.style.opacity = String(Math.min(1, eased * 1.15));
+                    badgePass.style.transform = `translate3d(calc(-50% + ${shiftX}px), -50%, 0) scale(${scale.toFixed(3)}) rotate(${(8 * (1 - eased)).toFixed(1)}deg)`;
+                    badgePass.classList.toggle('is-ready', isReady);
+                }
+                if (badgeLike) { badgeLike.style.opacity = '0'; badgeLike.classList.remove('is-ready'); }
+                card.style.boxShadow = `0 0 0 1.5px rgba(255, 107, 107, ${(eased * 0.68).toFixed(2)}), 0 18px 42px rgba(0,0,0,0.48), 0 0 36px rgba(255, 107, 107, ${(eased * 0.22).toFixed(2)})`;
             }
         });
 
@@ -680,13 +872,21 @@ const Feed = (() => {
 
             const elapsed = Math.max(1, Date.now() - startTime);
             const velocity = Math.abs(dx) / elapsed;
-            const triggered = Math.abs(dx) >= 95 || (velocity > 0.55 && Math.abs(dx) >= 48);
+            const triggered = Math.abs(dx) >= 92 || (velocity > 0.52 && Math.abs(dx) >= 46);
 
             if (triggered && dx > 0) {
                 card.classList.remove('dragging');
+                if (badgeLike) {
+                    badgeLike.style.opacity = '1';
+                    badgeLike.classList.add('is-ready', 'is-commit');
+                }
                 wave(null, resetCard);
             } else if (triggered && dx < 0) {
                 card.classList.remove('dragging');
+                if (badgePass) {
+                    badgePass.style.opacity = '1';
+                    badgePass.classList.add('is-ready', 'is-commit');
+                }
                 pass();
             } else {
                 resetCard();
@@ -707,9 +907,13 @@ const Feed = (() => {
         const card = el('article', 'deck-card');
         card.appendChild(avatar(r, 'deck-photo'));
 
-        const stampLike = el('div', 'swipe-stamp swipe-stamp-like', 'ЛАЙК');
-        const stampPass = el('div', 'swipe-stamp swipe-stamp-pass', 'ПРОПУСК');
-        card.append(stampLike, stampPass);
+        const auraLike = el('div', 'swipe-aura swipe-aura-like');
+        const auraPass = el('div', 'swipe-aura swipe-aura-pass');
+        const badgeLike = el('div', 'swipe-badge swipe-badge-like');
+        badgeLike.innerHTML = SWIPE_HEART_SVG;
+        const badgePass = el('div', 'swipe-badge swipe-badge-pass');
+        badgePass.innerHTML = SWIPE_PASS_SVG;
+        card.append(auraLike, auraPass, badgeLike, badgePass);
 
         const moreBtn = el('button', 'deck-more-btn');
         moreBtn.type = 'button';
@@ -759,12 +963,16 @@ const Feed = (() => {
         return new Promise((res) => {
             const c = document.querySelector('.deck-card');
             if (c) {
+                const badge = c.querySelector(dir === 'right' ? '.swipe-badge-like' : '.swipe-badge-pass');
+                const aura = c.querySelector(dir === 'right' ? '.swipe-aura-like' : '.swipe-aura-pass');
+                if (aura) aura.style.opacity = '1';
+                if (badge) { badge.style.opacity = '1'; badge.classList.add('is-ready', 'is-commit'); }
                 c.classList.remove('dragging', 'snap-back');
                 c.style.transform = '';
                 c.style.boxShadow = '';
                 c.classList.add('leave-' + dir);
             }
-            setTimeout(res, c ? 260 : 0);
+            setTimeout(res, c ? 280 : 0);
         });
     }
 
@@ -1184,6 +1392,7 @@ const Feed = (() => {
                 if (e.target === $('photoViewer') || e.target === $('photoViewerStage')) closePhotoViewer();
             });
             document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePhotoViewer(); });
+            initPhotoViewerDrag();
         }
         if ($('doneAvatar')) {
             $('doneAvatar').style.cursor = 'pointer';
@@ -1191,7 +1400,7 @@ const Feed = (() => {
                 const src = $('doneAvatar').src;
                 if (src && !$('doneAvatar').hidden) {
                     const cap = [profile.name ? (profile.age ? `${profile.name}, ${profile.age}` : profile.name) : '', profile.city || ''].filter(Boolean).join(' · ');
-                    openPhotoViewer(src, cap);
+                    openPhotoViewer(src, cap, $('doneAvatar'));
                 }
             });
         }

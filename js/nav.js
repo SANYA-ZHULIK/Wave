@@ -17,12 +17,7 @@ const Nav = (() => {
         { go: 'rules',    label: 'Правила пользования' }
     ];
     const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE, about: ABOUT, rules: RULES, settings: SETTINGS };
-    const NOTIF_ICONS = {
-        like: `<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
-        match: `<svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11.5c2.5-3.2 5.2-3.2 7.7 0s5.2 3.2 7.7 0 3.1-2.1 4.1-1"/><path d="M2.5 16.5c2.5-3.2 5.2-3.2 7.7 0s5.2 3.2 7.7 0 3.1-2.1 4.1-1" opacity=".6"/></svg>`,
-        ended: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg>`,
-        bell: `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`
-    };
+    const BELL_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
     const EMPTY_NOTIF_BELL_SVG = `
     <svg viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
@@ -113,11 +108,6 @@ const Nav = (() => {
         <circle cx="212" cy="148" r="2"   fill="#D9F99D" opacity="0.8" />
         <circle cx="256" cy="118" r="1.4" fill="#B5C680" opacity="0.5" />
     </svg>`;
-    const NOTIF = {
-        like:  ()  => ['like',  'Вас лайкнули', 'Посмотрите анкету сверху и ответьте взаимностью'],
-        match: (d) => ['match', 'Взаимно! Началась волна' + (d.name ? ' с ' + d.name : ''), 'Откройте «Волны» и напишите первым'],
-        ended: (d) => ['ended', 'Волна' + (d.name ? ' с ' + d.name : '') + ' завершена', 'Слот снова свободен для новых знакомств']
-    };
     let notifAsked = false;
 
     function el(tag, cls, text) {
@@ -125,12 +115,6 @@ const Nav = (() => {
         if (cls) e.className = cls;
         if (text !== undefined) e.textContent = text;
         return e;
-    }
-    function ago(ts) {
-        const m = Math.max(1, Math.round((Date.now() - new Date(ts)) / 60000));
-        if (m < 60) return m + ' мин назад';
-        if (m < 1440) return Math.round(m / 60) + ' ч назад';
-        return Math.round(m / 1440) + ' дн назад';
     }
 
     /* ---------- меню ---------- */
@@ -155,11 +139,10 @@ const Nav = (() => {
         if (profile.photo_url) { const im = new Image(); im.alt = ''; im.src = profile.photo_url; a.textContent = ''; a.appendChild(im); }
     }
     function updateBadges(s) {
-        document.querySelectorAll('.menu-btn .dot').forEach((d) => { d.hidden = !(s.incoming || s.unread); });
+        const incoming = s.incoming || 0;
+        document.querySelectorAll('.menu-btn .dot').forEach((d) => { d.hidden = !incoming; });
         $('drawerNav').querySelectorAll('.badge[data-badge]').forEach((b) => {
-            const n = b.dataset.badge === 'notifs'
-                ? Math.max(s.incoming || 0, s.unread || 0)
-                : (s[b.dataset.badge] || 0);
+            const n = b.dataset.badge === 'notifs' ? incoming : (s[b.dataset.badge] || 0);
             b.hidden = !n; b.textContent = n;
         });
     }
@@ -423,7 +406,7 @@ const Nav = (() => {
             }
             blacklistOpen = false;
             blockedList = [];
-            shown.clear();
+            incomingList = [];
             if (typeof Feed !== 'undefined' && Feed.resetSession) Feed.resetSession();
             if (typeof resetLocalAccount === 'function') resetLocalAccount();
             TG.ok();
@@ -535,17 +518,17 @@ const Nav = (() => {
         }
     }
 
-    /* ---------- уведомления ---------- */
+    /* ---------- уведомления (входящие симпатии) ---------- */
     function permissionBanner() {
         const u = TG.user();
         if (notifAsked || !tg || !tg.requestWriteAccess || !u || u.allows_write_to_pm) return null;
         const box = el('div', 'notif-banner');
         const head = el('div', 'notif-banner-head');
         const ico = el('span', 'notif-ico kind-bell');
-        ico.innerHTML = NOTIF_ICONS.bell;
+        ico.innerHTML = BELL_ICON_SVG;
         const txtWrap = el('div', 'notif-banner-body');
         txtWrap.append(
-            el('div', 'notif-title', 'Push-уведомления в Telegram'),
+            el('div', 'notif-title', 'Уведомления в Telegram-боте'),
             el('p', 'notif-banner-sub', 'Разрешите боту писать вам, чтобы сразу узнавать о новых лайках и взаимных волнах.')
         );
         head.append(ico, txtWrap);
@@ -555,31 +538,9 @@ const Nav = (() => {
         box.append(head, b);
         return box;
     }
-    function notifItem(n) {
-        const [kindKey, title, text] = (NOTIF[n.kind] || (() => ['bell', 'Уведомление', '']))(n.data || {});
-        const item = el('button', 'notif' + (n.is_read ? '' : ' unread')); item.type = 'button';
-        const ico = el('span', 'notif-ico kind-' + kindKey);
-        ico.innerHTML = NOTIF_ICONS[kindKey] || NOTIF_ICONS.bell;
-        const body = el('div', 'notif-body');
-        const top = el('div', 'notif-head');
-        top.append(el('div', 'notif-title', title), el('span', 'notif-time', ago(n.created_at)));
-        body.append(top, el('div', 'notif-text', text));
-        item.append(ico, body);
-        item.addEventListener('click', () => {
-            TG.tap();
-            if (n.kind === 'ended') show(FEED);
-            else if (n.kind === 'match') Feed.openWaves();
-            else { $('notifsBody').scrollTo({ top: 0, behavior: 'smooth' }); }
-        });
-        return item;
-    }
-    /* ---------- история уведомлений ---------- */
-    // shown — всё, что загружено за текущее посещение экрана. Новые добавляются к списку, а не заменяют его:
-    // так повторный запрос не затирает уже показанное. Подсветка «новое» хранится по первому показу.
-    const PAGE = 30;
-    const shown = new Map();
+
     let incomingList = [];
-    let notifLoading = false, notifAgain = false, hasMore = false, firstLoaded = false, lastStatus = null;
+    let notifLoading = false, notifAgain = false, firstLoaded = false, lastStatus = null;
 
     function ask(msg) {
         return new Promise((res) => {
@@ -587,77 +548,37 @@ const Nav = (() => {
             res(window.confirm(msg));
         });
     }
-    function dayLabel(ts) {
-        const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-        const diff = Math.round((day(new Date()) - day(new Date(ts))) / 86400000);
-        if (diff <= 0) return 'Сегодня';
-        if (diff === 1) return 'Вчера';
-        return new Date(ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-    }
+
     function renderNotifs(st) {
         lastStatus = st || lastStatus;
         const scr = $('screen-notifs');
         const body = $('notifsBody');
         body.innerHTML = '';
         const banner = permissionBanner(); if (banner) body.appendChild(banner);
-        // Входящие симпатии показываем прямо здесь с кнопками «Ответить взаимностью» / «Отказать»
-        const hasIncoming = incomingList.length > 0;
-        if (hasIncoming) {
+        if (incomingList.length > 0) {
+            if (scr) scr.classList.remove('is-empty');
             body.appendChild(el('div', 'sec-title', `Вас лайкнули · ${incomingList.length}`));
             incomingList.forEach((r) => {
                 if (typeof Feed !== 'undefined' && Feed.incomingCard) {
                     body.appendChild(Feed.incomingCard(r, () => loadNotifs()));
                 }
             });
-        }
-        const rows = [...shown.values()].sort((a, b) => b.id - a.id);
-        if (!rows.length) {
-            if (!hasIncoming && !banner) {
-                if (scr) scr.classList.add('is-empty');
-                const wrap = el('div', 'notif-empty-state');
-                const art = el('div', 'notif-empty-art');
-                art.innerHTML = EMPTY_NOTIF_BELL_SVG;
-                const title = el('h3', 'notif-empty-title', 'Пока тихо');
-                const desc = el('p', 'notif-empty-desc', 'Здесь будут новые лайки и взаимные волны.');
-                const cta = el('button', 'notif-empty-cta', 'Перейти к анкетам');
-                cta.type = 'button';
-                cta.addEventListener('click', () => { TG.tap(); show(FEED); });
-                wrap.append(art, title, desc, cta);
-                body.appendChild(wrap);
-                return;
-            }
-            if (scr) scr.classList.remove('is-empty');
-            body.appendChild(el('p', 'notif-history-empty', 'История уведомлений пуста'));
             return;
         }
-        if (scr) scr.classList.remove('is-empty');
-        let label = '';
-        let listEl = null;
-        rows.forEach((n) => {
-            const l = dayLabel(n.created_at);
-            if (l !== label) {
-                label = l;
-                body.appendChild(el('div', 'sec-title notif-day-title', l));
-                listEl = el('div', 'notif-list');
-                body.appendChild(listEl);
-            }
-            listEl.appendChild(notifItem(n));
-        });
-        if (hasMore) {
-            const more = el('button', 'notif-more-btn', 'Показать ещё'); more.type = 'button';
-            more.addEventListener('click', () => { TG.tap(); loadNotifs(true); });
-            body.appendChild(more);
-        }
-        if (rows.length) {
-            const clr = el('button', 'notif-clear-btn', 'Очистить историю'); clr.type = 'button';
-            clr.addEventListener('click', clearHistory);
-            body.appendChild(clr);
-        }
+        if (scr) scr.classList.add('is-empty');
+        const wrap = el('div', 'notif-empty-state');
+        const art = el('div', 'notif-empty-art');
+        art.innerHTML = EMPTY_NOTIF_BELL_SVG;
+        const title = el('h3', 'notif-empty-title', 'Пока тихо');
+        const desc = el('p', 'notif-empty-desc', 'Здесь будут новые лайки и взаимные волны.');
+        const cta = el('button', 'notif-empty-cta', 'Перейти к анкетам');
+        cta.type = 'button';
+        cta.addEventListener('click', () => { TG.tap(); show(FEED); });
+        wrap.append(art, title, desc, cta);
+        body.appendChild(wrap);
     }
 
-    // Загрузка идёт по очереди: если во время загрузки пришло ещё одно уведомление, делается повторный проход.
-    // older = true — подгрузить более старые. Показанные новые уведомления помечаются прочитанными (остаются в истории).
-    async function loadNotifs(older = false) {
+    async function loadNotifs() {
         const body = $('notifsBody');
         const waitMin = !firstLoaded ? new Promise((r) => setTimeout(r, 420)) : Promise.resolve();
         if (!dbOn()) {
@@ -669,25 +590,19 @@ const Nav = (() => {
         if (notifLoading) { notifAgain = true; return; }
         notifLoading = true;
         try {
-            let useOlder = older;
             do {
                 notifAgain = false;
-                const args = useOlder ? { p_limit: PAGE, p_before: Math.min(...shown.keys()) } : { p_limit: PAGE };
-                const [rows, st, inc] = await Promise.all([
-                    Supa.rpc('my_notifications', args),
+                const [st, inc] = await Promise.all([
                     Supa.rpc('wave_status'),
                     Supa.rpc('my_incoming').catch(() => []),
                     waitMin
                 ]);
-                rows.forEach((n) => { if (!shown.has(n.id)) shown.set(n.id, n); });
                 incomingList = Array.isArray(inc) ? inc : [];
-                if (useOlder || !firstLoaded) hasMore = rows.length === PAGE;
                 firstLoaded = true;
                 renderNotifs(st);
-                const fresh = rows.filter((n) => !n.is_read).map((n) => n.id);
-                if (fresh.length) await Supa.rpc('mark_notifications_read', { p_ids: fresh });
+                // Очищаем уже ненужные временные записи в таблице notifications, чтобы не копить мусор в БД
+                Supa.rpc('clear_notifications').catch(() => {});
                 Feed.refreshStatus();
-                useOlder = false;
             } while (notifAgain);
         } catch (e) {
             await waitMin;
@@ -698,27 +613,12 @@ const Nav = (() => {
             body.appendChild(el('p', 'feed-empty', 'Не удалось загрузить уведомления' + (DEBUG ? ' (' + e.message + ')' : '')));
         } finally { notifLoading = false; }
     }
-    async function clearHistory() {
-        TG.tap();
-        if (!(await ask('Удалить всю историю уведомлений? Это действие нельзя отменить.'))) return;
-        try {
-            if (dbOn()) await Supa.rpc('clear_notifications');
-            shown.clear(); hasMore = false;
-            if (step === NOTIFS) renderNotifs(lastStatus);
-            if (typeof Feed !== 'undefined') {
-                Feed.refreshStatus();
-                Feed.toast('История уведомлений очищена');
-            }
-        } catch (e) {
-            console.error('Clear error:', e);
-            if (typeof Feed !== 'undefined') Feed.toast('Не удалось очистить историю');
-        }
-    }
+
     function openNotifs() {
         TG.tap(); show(NOTIFS);
         const scr = $('screen-notifs');
         if (scr) scr.classList.remove('is-empty');
-        shown.clear(); incomingList = []; hasMore = false; firstLoaded = false;
+        incomingList = []; firstLoaded = false;
         const body = $('notifsBody');
         body.innerHTML = ''; body.appendChild(waveLoader('Загружаем уведомления…'));
         return loadNotifs();
@@ -737,7 +637,6 @@ const Nav = (() => {
         if ($('setBioRow')) $('setBioRow').addEventListener('click', onSetBio);
         if ($('setResetPassesBtn')) $('setResetPassesBtn').addEventListener('click', onResetPasses);
         if ($('setHapticRow')) $('setHapticRow').addEventListener('click', onSetHaptic);
-        if ($('setClearNotifsBtn')) $('setClearNotifsBtn').addEventListener('click', clearHistory);
         if ($('setRefreshUsernameBtn')) $('setRefreshUsernameBtn').addEventListener('click', onRefreshUsername);
         if ($('setBlacklistToggleBtn')) $('setBlacklistToggleBtn').addEventListener('click', onToggleBlacklist);
         if ($('setSupportBtn')) $('setSupportBtn').addEventListener('click', onOpenSupport);
