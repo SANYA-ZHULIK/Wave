@@ -4,6 +4,7 @@
    и от feed.js (Feed)
 ========================================= */
 const Nav = (() => {
+    const SUPPORT_TG_URL = 'https://t.me/wave_support'; // Замените на ваш @username поддержки или бота
     const MENU = [
         { go: 'feed',     label: 'Анкеты' },
         { go: 'waves',    label: 'Волны', badge: 'incoming' },
@@ -146,11 +147,200 @@ const Nav = (() => {
                 : 'Ваша анкета видна другим пользователям в ленте подбора.';
         }
 
+        const bioToggle = $('setBioToggle');
+        if (bioToggle) {
+            const onlyBio = !!prefs.onlyWithBio;
+            bioToggle.classList.toggle('on', onlyBio);
+            bioToggle.setAttribute('aria-checked', onlyBio ? 'true' : 'false');
+        }
+        const bioNote = $('setBioNote');
+        if (bioNote) {
+            bioNote.textContent = prefs.onlyWithBio
+                ? 'В ленте показываются только анкеты с описанием «О себе»'
+                : 'Скрывать из ленты анкеты без описания';
+        }
+
         const hapticToggle = $('setHapticToggle');
         if (hapticToggle) {
             const hOn = typeof TG.hapticsOn === 'function' ? TG.hapticsOn() : true;
             hapticToggle.classList.toggle('on', hOn);
             hapticToggle.setAttribute('aria-checked', hOn ? 'true' : 'false');
+        }
+
+        renderUsernameSetting();
+        if (blacklistOpen) loadBlacklist();
+    }
+
+    let blacklistOpen = false;
+    let blockedList = [];
+
+    function renderUsernameSetting() {
+        const valEl = $('setUsernameVal');
+        const subEl = $('setUsernameSub');
+        if (!valEl) return;
+        const u = TG.user();
+        const uname = (u && u.username) || profile.tg_username || '';
+        if (uname) {
+            valEl.textContent = uname;
+            valEl.classList.remove('is-empty');
+            if (subEl) subEl.textContent = 'Собеседники смогут перейти по нему в чат после взаимной волны';
+        } else {
+            valEl.textContent = 'Не задан в Telegram';
+            valEl.classList.add('is-empty');
+            if (subEl) subEl.textContent = 'Без @username собеседник не сможет написать вам после мэтча. Задайте его в настройках Telegram и нажмите «Обновить».';
+        }
+    }
+
+    async function onRefreshUsername() {
+        TG.tap();
+        const btn = $('setRefreshUsernameBtn');
+        if (btn) btn.disabled = true;
+        try {
+            const u = TG.user();
+            const uname = (u && u.username) || '';
+            if (!uname) {
+                if (typeof Feed !== 'undefined') Feed.toast('Username не найден в Telegram — задайте его в настройках профиля Telegram', 4500);
+                renderUsernameSetting();
+                return;
+            }
+            profile.tg_username = uname;
+            saveProfile();
+            if (dbOn()) await Supa.setUsername(uname);
+            renderUsernameSetting();
+            if (typeof Feed !== 'undefined') Feed.toast('Username обновлён: @' + uname);
+        } catch (e) {
+            console.error('Refresh username error:', e);
+            if (typeof Feed !== 'undefined') Feed.toast('Не удалось обновить username');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    function onSetBio() {
+        TG.pick();
+        const prefs = typeof Feed !== 'undefined' && Feed.getSearchPrefs ? Feed.getSearchPrefs() : { onlyWithBio: false };
+        const onlyWithBio = !prefs.onlyWithBio;
+        if (typeof Feed !== 'undefined' && Feed.setSearchPrefs) {
+            Feed.setSearchPrefs({ onlyWithBio });
+            Feed.toast(onlyWithBio ? 'Показываем только анкеты с разделом «О себе»' : 'Показываем все анкеты');
+        }
+        renderSettings();
+    }
+
+    function renderBlacklist() {
+        const listEl = $('setBlacklistList');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        if (!blockedList.length) {
+            listEl.appendChild(el('div', 'set-bl-empty', 'Чёрный список пуст'));
+            return;
+        }
+        blockedList.forEach((b) => {
+            const row = el('div', 'set-bl-item');
+            const info = el('div', 'set-bl-info');
+            const nameText = b.name ? (b.age ? `${b.name}, ${b.age}` : b.name) : 'Пользователь';
+            info.appendChild(el('div', 'set-bl-name', nameText));
+            if (b.city) info.appendChild(el('div', 'set-bl-city', b.city));
+            const btn = el('button', 'set-bl-unblock', 'Разблокировать');
+            btn.type = 'button';
+            btn.addEventListener('click', () => onUnblockUser(b));
+            row.append(info, btn);
+            listEl.appendChild(row);
+        });
+    }
+
+    async function loadBlacklist() {
+        const listEl = $('setBlacklistList');
+        if (listEl) {
+            listEl.innerHTML = '';
+            listEl.appendChild(el('div', 'set-bl-empty', 'Загрузка списка…'));
+        }
+        const local = typeof Feed !== 'undefined' && Feed.getLocalBlocked ? Feed.getLocalBlocked() : [];
+        if (dbOn() && typeof Supa.getBlockedUsers === 'function') {
+            try {
+                const rows = await Supa.getBlockedUsers();
+                if (Array.isArray(rows)) {
+                    const map = new Map();
+                    rows.forEach((r) => map.set(String(r.id), r));
+                    local.forEach((r) => { if (!map.has(String(r.id))) map.set(String(r.id), r); });
+                    blockedList = [...map.values()];
+                    renderBlacklist();
+                    return;
+                }
+            } catch (e) {
+                console.warn('Blacklist RPC fallback:', e);
+            }
+        }
+        blockedList = local;
+        renderBlacklist();
+    }
+
+    function onToggleBlacklist() {
+        TG.tap();
+        blacklistOpen = !blacklistOpen;
+        const wrap = $('setBlacklistWrap');
+        const btn = $('setBlacklistToggleBtn');
+        if (wrap) wrap.hidden = !blacklistOpen;
+        if (btn) btn.textContent = blacklistOpen ? 'Скрыть' : 'Показать';
+        if (blacklistOpen) loadBlacklist();
+    }
+
+    async function onUnblockUser(b) {
+        TG.tap();
+        if (!(await ask(`Разблокировать ${b.name || 'пользователя'}?`))) return;
+        try {
+            if (dbOn() && typeof Supa.unblockUser === 'function') {
+                await Supa.unblockUser(b.id).catch((e) => console.error('Unblock error:', e));
+            }
+            if (typeof Feed !== 'undefined' && Feed.unblockLocal) {
+                Feed.unblockLocal(b.id);
+                Feed.onCityChanged();
+            }
+            blockedList = blockedList.filter((item) => String(item.id) !== String(b.id));
+            renderBlacklist();
+            if (typeof Feed !== 'undefined') Feed.toast('Пользователь разблокирован');
+        } catch (e) {
+            console.error('Unblock error:', e);
+            if (typeof Feed !== 'undefined') Feed.toast('Не удалось разблокировать пользователя');
+        }
+    }
+
+    function onOpenSupport() {
+        TG.tap();
+        if (tg && tg.openTelegramLink) {
+            tg.openTelegramLink(SUPPORT_TG_URL);
+        } else {
+            const a = document.createElement('a');
+            a.href = SUPPORT_TG_URL;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.click();
+        }
+    }
+
+    async function onDeleteAccount() {
+        TG.tap();
+        if (!(await ask('Вы уверены, что хотите удалить анкету? Все активные волны, лайки, уведомления и фото будут удалены навсегда.'))) return;
+        if (!(await ask('Подтвердите окончательное удаление профиля Wave. Это действие нельзя отменить.'))) return;
+        const btn = $('setDeleteAccountBtn');
+        if (btn) btn.disabled = true;
+        try {
+            if (dbOn() && typeof Supa.deleteAccount === 'function') {
+                await Supa.deleteAccount();
+            }
+            blacklistOpen = false;
+            blockedList = [];
+            shown.clear();
+            if (typeof Feed !== 'undefined' && Feed.resetSession) Feed.resetSession();
+            if (typeof resetLocalAccount === 'function') resetLocalAccount();
+            TG.ok();
+            if (typeof Feed !== 'undefined') Feed.toast('Ваша анкета удалена', 4000);
+        } catch (e) {
+            console.error('Delete account error:', e);
+            TG.fail();
+            if (typeof Feed !== 'undefined') Feed.toast('Не удалось удалить анкету' + (DEBUG ? ' (' + e.message + ')' : ''));
+        } finally {
+            if (btn) btn.disabled = false;
         }
     }
 
@@ -425,9 +615,14 @@ const Nav = (() => {
         if ($('setGeoRow')) $('setGeoRow').addEventListener('click', onSetGeo);
         if ($('setAgeChips')) $('setAgeChips').addEventListener('click', onSetAge);
         if ($('setVisRow')) $('setVisRow').addEventListener('click', onSetVis);
+        if ($('setBioRow')) $('setBioRow').addEventListener('click', onSetBio);
         if ($('setResetPassesBtn')) $('setResetPassesBtn').addEventListener('click', onResetPasses);
         if ($('setHapticRow')) $('setHapticRow').addEventListener('click', onSetHaptic);
         if ($('setClearNotifsBtn')) $('setClearNotifsBtn').addEventListener('click', clearHistory);
+        if ($('setRefreshUsernameBtn')) $('setRefreshUsernameBtn').addEventListener('click', onRefreshUsername);
+        if ($('setBlacklistToggleBtn')) $('setBlacklistToggleBtn').addEventListener('click', onToggleBlacklist);
+        if ($('setSupportBtn')) $('setSupportBtn').addEventListener('click', onOpenSupport);
+        if ($('setDeleteAccountBtn')) $('setDeleteAccountBtn').addEventListener('click', onDeleteAccount);
         if ($('setChangeCityBtn')) $('setChangeCityBtn').addEventListener('click', () => {
             TG.tap();
             if (typeof changeCityFromFeed === 'function') changeCityFromFeed(SETTINGS);

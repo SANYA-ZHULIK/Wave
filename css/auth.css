@@ -332,10 +332,73 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     position: absolute; inset: 0; border-radius: 26px; overflow: hidden;
     background: linear-gradient(135deg, #7C3AED, #4C1D95);
     animation: cardIn 0.3s ease; transition: transform 0.26s ease, opacity 0.26s ease;
+    touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab;
 }
-.deck-card.leave-left  { transform: translateX(-120%) rotate(-12deg); opacity: 0; }
-.deck-card.leave-right { transform: translateX(120%) rotate(12deg);   opacity: 0; }
+.deck-card.dragging {
+    transition: none;
+    cursor: grabbing;
+}
+.deck-card.snap-back {
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease;
+}
+.deck-card.leave-left  { transform: translateX(-135%) rotate(-16deg) !important; opacity: 0; }
+.deck-card.leave-right { transform: translateX(135%) rotate(16deg) !important;   opacity: 0; }
 @keyframes cardIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+.swipe-stamp {
+    position: absolute;
+    top: 26px;
+    z-index: 6;
+    padding: 7px 14px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+    opacity: 0;
+    pointer-events: none;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: opacity 0.12s ease;
+}
+.deck-card.dragging .swipe-stamp { transition: none; }
+.swipe-stamp-like {
+    left: 20px;
+    color: #B5C680;
+    border: 2.5px solid #B5C680;
+    background: rgba(12, 6, 27, 0.52);
+    transform: rotate(-10deg);
+    box-shadow: 0 0 20px rgba(181, 198, 128, 0.32);
+}
+.swipe-stamp-pass {
+    right: 20px;
+    color: #ff6b6b;
+    border: 2.5px solid #ff6b6b;
+    background: rgba(12, 6, 27, 0.52);
+    transform: rotate(10deg);
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.32);
+}
+
+.deck-block-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(12, 6, 27, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: rgba(255, 255, 255, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s, color 0.2s;
+}
+.deck-block-btn svg { width: 17px; height: 17px; }
+.deck-block-btn:active { transform: scale(0.92); background: rgba(255, 107, 107, 0.28); color: #ff6b6b; }
 
 .deck-photo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 120px; font-weight: 800; color: rgba(255,255,255,0.35); }
 .deck-photo img { width: 100%; height: 100%; object-fit: cover; }
@@ -450,8 +513,25 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 }
 .card-ava img { width: 100%; height: 100%; object-fit: cover; }
 .card-body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 8px; }
-.card-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 16px; }
+.card-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 16px; }
 .card-city { font-size: 12px; opacity: 0.55; }
+.card-block-btn {
+    margin-left: auto;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.15s, color 0.2s, background 0.2s;
+}
+.card-block-btn svg { width: 14px; height: 14px; }
+.card-block-btn:active { transform: scale(0.9); color: #ff6b6b; background: rgba(255, 107, 107, 0.16); }
 .card .tags, .deck-info .tags { justify-content: flex-start; max-width: none; gap: 6px; }
 .card .tag, .deck-info .tag { font-size: 12px; padding: 4px 10px; background: rgba(255,255,255,0.09); color: rgba(255,255,255,0.78); }
 .card .tag.shared, .deck-info .tag.shared { background: rgba(181,198,128,0.22); color: #B5C680; }
@@ -1303,4 +1383,109 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     transform: translateX(22px);
     background: #B5C680;
     box-shadow: 0 0 10px rgba(181, 198, 128, 0.65);
+}
+
+.set-row-center {
+    align-items: center;
+}
+
+.set-username-at {
+    font-size: 16px;
+    font-weight: 800;
+    color: #B5C680;
+    flex-shrink: 0;
+}
+
+.set-city-name.is-empty {
+    color: rgba(255, 255, 255, 0.48);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.set-blacklist-wrap {
+    margin-top: 2px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.set-blacklist-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.set-bl-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.set-bl-info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.set-bl-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.set-bl-city {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.48);
+}
+
+.set-bl-unblock {
+    flex-shrink: 0;
+    padding: 6px 11px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s;
+}
+
+.set-bl-unblock:active {
+    transform: scale(0.95);
+    background: rgba(181, 198, 128, 0.2);
+    color: #B5C680;
+}
+
+.set-bl-empty {
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.48);
+    padding: 10px 4px 4px;
+}
+
+.set-card-danger {
+    border-color: rgba(255, 107, 107, 0.28) !important;
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.08), rgba(18, 10, 36, 0.78)) !important;
+}
+
+.set-danger-btn {
+    flex: none;
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 14px;
+    font-size: 13.5px;
+}
+
+.set-danger-btn:disabled {
+    opacity: 0.5;
 }

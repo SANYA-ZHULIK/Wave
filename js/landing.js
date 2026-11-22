@@ -19,7 +19,7 @@ const INTENTS = {
     travel: 'Путешествия', events: 'Мероприятия', hobby: 'Хобби'
 };
 
-const profile = { name: '', age: 22, gender: '', looking: '', city: '', intents: [], photo_url: '', photo_path: '', bio: '' };
+const profile = { name: '', age: 22, gender: '', looking: '', city: '', intents: [], photo_url: '', photo_path: '', bio: '', tg_username: '' };
 let step = 0;
 let cityReturnStep = null; // Куда вернуть после быстрой смены города (FEED или SETTINGS)
 
@@ -466,7 +466,8 @@ function applyProfile(p) {
         name: p.name || '', age: p.age || 22, gender: p.gender || '', looking: p.looking || '',
         city: p.city || '', intents: Array.isArray(p.intents) ? p.intents : [],
         photo_path: p.photo_path || '',
-        photo_url: (p.photo_url || '').startsWith('data:') ? p.photo_url : '', bio: p.bio || ''
+        photo_url: (p.photo_url || '').startsWith('data:') ? p.photo_url : '', bio: p.bio || '',
+        tg_username: p.tg_username || ''
     });
     $('nameInput').value = profile.name;
     setWheel(profile.age);
@@ -480,6 +481,19 @@ function applyProfile(p) {
     if (profile.photo_path && !profile.photo_url && dbOn()) {
         refreshPhoto();
     }
+}
+function resetLocalAccount() {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('wave_search_prefs');
+        localStorage.removeItem('wave_blocked_local');
+        localStorage.removeItem('wave_wa');
+    } catch (e) {}
+    applyProfile({});
+    const u = TG.user();
+    if (u && u.first_name) $('nameInput').value = u.first_name.slice(0, 20);
+    if (typeof Nav !== 'undefined') Nav.renderDrawer();
+    show(0);
 }
 function editProfile() { 
     applyProfile(profile); 

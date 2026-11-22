@@ -135,17 +135,59 @@ function pickToastIcon(msg) {
     return TOAST_ICONS.info;
 }
 
+const BLOCK_ICON_SVG = `
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" />
+    <line x1="5.6" y1="5.6" x2="18.4" y2="18.4" />
+</svg>`;
+
 const Feed = (() => {
     const PREFS_KEY = 'wave_search_prefs';
-    const prefs = { ageMode: 'peer', sameCity: false, isHidden: false };
+    const BLOCKED_KEY = 'wave_blocked_local';
+    const prefs = { ageMode: 'peer', sameCity: false, isHidden: false, onlyWithBio: false };
     try {
         const savedPrefs = JSON.parse(localStorage.getItem(PREFS_KEY));
         if (savedPrefs && typeof savedPrefs === 'object') {
             if (savedPrefs.ageMode) prefs.ageMode = savedPrefs.ageMode;
             if (typeof savedPrefs.sameCity === 'boolean') prefs.sameCity = savedPrefs.sameCity;
             if (typeof savedPrefs.isHidden === 'boolean') prefs.isHidden = savedPrefs.isHidden;
+            if (typeof savedPrefs.onlyWithBio === 'boolean') prefs.onlyWithBio = savedPrefs.onlyWithBio;
         }
     } catch (e) {}
+
+    let localBlocked = [];
+    try {
+        const sb = JSON.parse(localStorage.getItem(BLOCKED_KEY));
+        if (Array.isArray(sb)) localBlocked = sb;
+    } catch (e) {}
+
+    function saveBlockedLocal() {
+        try { localStorage.setItem(BLOCKED_KEY, JSON.stringify(localBlocked)); } catch (e) {}
+    }
+    function isBlockedLocal(id) {
+        return localBlocked.some((b) => String(b.id) === String(id));
+    }
+    function addBlockedLocal(person) {
+        if (!person || person.id === undefined || person.id === null) return;
+        if (!isBlockedLocal(person.id)) {
+            localBlocked.unshift({
+                id: person.id,
+                name: person.name || 'Пользователь',
+                age: person.age || null,
+                city: person.city || '',
+                photo_path: person.photo_path || '',
+                blocked_at: new Date().toISOString()
+            });
+            saveBlockedLocal();
+        }
+    }
+    function unblockLocal(id) {
+        localBlocked = localBlocked.filter((b) => String(b.id) !== String(id));
+        saveBlockedLocal();
+    }
+    function getLocalBlocked() {
+        return localBlocked.slice();
+    }
 
     function savePrefs() {
         try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
@@ -158,6 +200,13 @@ const Feed = (() => {
         if (prefs.ageMode === '25-34') return a >= 25 && a <= 34;
         if (prefs.ageMode === 'any')   return a >= 18;
         return a >= myAge - 5 && a <= myAge + 5; // 'peer' (±5 лет)
+    }
+
+    function matchCardPrefs(r) {
+        if (isBlockedLocal(r.id)) return false;
+        if (!matchAgePref(r.age)) return false;
+        if (prefs.onlyWithBio && !(r.bio && r.bio.trim().length > 0)) return false;
+        return true;
     }
 
     const st = {
@@ -248,7 +297,7 @@ const Feed = (() => {
                 if (gen !== st.gen) return;
                 const have = new Set(st.queue.map((r) => r.id));
                 if (st.cur) have.add(st.cur.id);
-                rows.forEach((r) => { if (!have.has(r.id) && matchAgePref(r.age)) st.queue.push(r); });
+                rows.forEach((r) => { if (!have.has(r.id) && matchCardPrefs(r)) st.queue.push(r); });
                 if (rows.length < 20) st.exhausted = true;
             }
         } catch (e) {
@@ -329,6 +378,95 @@ const Feed = (() => {
         deck.appendChild(wrap);
     }
 
+    function attachSwipe(card) {
+        const stampLike = card.querySelector('.swipe-stamp-like');
+        const stampPass = card.querySelector('.swipe-stamp-pass');
+        let startX = 0, startY = 0, dx = 0, dy = 0, startTime = 0;
+        let tracking = false, dragging = false, pointerId = null;
+
+        function resetCard() {
+            card.classList.remove('dragging');
+            card.classList.add('snap-back');
+            card.style.transform = '';
+            card.style.boxShadow = '';
+            if (stampLike) stampLike.style.opacity = '0';
+            if (stampPass) stampPass.style.opacity = '0';
+            setTimeout(() => card.classList.remove('snap-back'), 300);
+        }
+
+        card.addEventListener('pointerdown', (e) => {
+            if (st.busy || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            if (e.target.closest('button, a, input, textarea')) return;
+            tracking = true;
+            dragging = false;
+            pointerId = e.pointerId;
+            startX = e.clientX;
+            startY = e.clientY;
+            dx = 0;
+            dy = 0;
+            startTime = Date.now();
+            card.classList.remove('snap-back');
+        });
+
+        card.addEventListener('pointermove', (e) => {
+            if (!tracking || e.pointerId !== pointerId) return;
+            dx = e.clientX - startX;
+            dy = e.clientY - startY;
+
+            if (!dragging) {
+                if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+                if (Math.abs(dy) > Math.abs(dx) * 1.25) {
+                    tracking = false;
+                    return;
+                }
+                dragging = true;
+                card.classList.add('dragging');
+                try { card.setPointerCapture(pointerId); } catch (err) {}
+            }
+
+            e.preventDefault();
+            const rot = Math.max(-18, Math.min(18, dx * 0.055));
+            const moveY = dy * 0.14;
+            card.style.transform = `translate3d(${dx}px, ${moveY}px, 0) rotate(${rot}deg)`;
+
+            const progress = Math.min(1, Math.abs(dx) / 95);
+            if (dx > 0) {
+                if (stampLike) stampLike.style.opacity = String(progress);
+                if (stampPass) stampPass.style.opacity = '0';
+                card.style.boxShadow = `0 0 0 2px rgba(181, 198, 128, ${(progress * 0.75).toFixed(2)}), 0 18px 40px rgba(0,0,0,0.45)`;
+            } else {
+                if (stampPass) stampPass.style.opacity = String(progress);
+                if (stampLike) stampLike.style.opacity = '0';
+                card.style.boxShadow = `0 0 0 2px rgba(255, 107, 107, ${(progress * 0.75).toFixed(2)}), 0 18px 40px rgba(0,0,0,0.45)`;
+            }
+        });
+
+        function onEnd(e) {
+            if (!tracking || e.pointerId !== pointerId) return;
+            tracking = false;
+            if (!dragging) return;
+            dragging = false;
+            try { card.releasePointerCapture(pointerId); } catch (err) {}
+
+            const elapsed = Math.max(1, Date.now() - startTime);
+            const velocity = Math.abs(dx) / elapsed;
+            const triggered = Math.abs(dx) >= 95 || (velocity > 0.55 && Math.abs(dx) >= 48);
+
+            if (triggered && dx > 0) {
+                card.classList.remove('dragging');
+                wave(null, resetCard);
+            } else if (triggered && dx < 0) {
+                card.classList.remove('dragging');
+                pass();
+            } else {
+                resetCard();
+            }
+        }
+
+        card.addEventListener('pointerup', onEnd);
+        card.addEventListener('pointercancel', onEnd);
+    }
+
     function renderDeck() {
         const deck = $('deck'), r = st.cur;
         const actions = document.querySelector('#screen-feed .deck-actions');
@@ -340,6 +478,22 @@ const Feed = (() => {
         }
         const card = el('article', 'deck-card');
         card.appendChild(avatar(r, 'deck-photo'));
+
+        const stampLike = el('div', 'swipe-stamp swipe-stamp-like', 'ЛАЙК');
+        const stampPass = el('div', 'swipe-stamp swipe-stamp-pass', 'ПРОПУСК');
+        card.append(stampLike, stampPass);
+
+        const blockBtn = el('button', 'deck-block-btn');
+        blockBtn.type = 'button';
+        blockBtn.setAttribute('aria-label', 'Заблокировать пользователя');
+        blockBtn.title = 'Заблокировать';
+        blockBtn.innerHTML = BLOCK_ICON_SVG;
+        blockBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            blockPerson(r, false);
+        });
+        card.appendChild(blockBtn);
+
         const info = el('div', 'deck-info');
         info.append(el('div', 'deck-name', `${r.name}, ${r.age}`), el('div', 'deck-city', (r.city || '') + (r.distance_km ? ' · ~' + r.distance_km + ' км от вас' : '')), tagsOf(r));
         if (r.bio) info.appendChild(el('p', 'deck-bio', r.bio));
@@ -352,12 +506,18 @@ const Feed = (() => {
             info.appendChild(h);
         }
         card.appendChild(info);
+        attachSwipe(card);
         deck.appendChild(card);
     }
     function leave(dir) {
         return new Promise((res) => {
             const c = document.querySelector('.deck-card');
-            if (c) c.classList.add('leave-' + dir);
+            if (c) {
+                c.classList.remove('dragging', 'snap-back');
+                c.style.transform = '';
+                c.style.boxShadow = '';
+                c.classList.add('leave-' + dir);
+            }
             setTimeout(res, c ? 260 : 0);
         });
     }
@@ -369,7 +529,7 @@ const Feed = (() => {
         Supa.rpc('pass_profile', { p_target: st.cur.id }).catch((e) => console.error('Pass error:', e));
         await leave('left'); next(); st.busy = false;
     }
-    async function wave(msg) {
+    async function wave(msg, onFail) {
         if (!st.cur || st.busy) return;
         st.busy = true;
         try {
@@ -381,15 +541,41 @@ const Feed = (() => {
                 liked_target_full: 'Взаимно! Но у человека пока нет свободного слота — волна начнётся, когда он его освободит',
                 exists: ''
             }[res.result];
-            if (text === undefined) toast('Не получилось отправить лайк');
-            else {
+            if (text === undefined) {
+                toast('Не получилось отправить лайк');
+                if (onFail) onFail();
+            } else {
                 if (text) { TG.ok(); toast(text, res.result === 'sent' ? 3000 : 5500); }
                 await leave('right'); next(); refreshStatus();
             }
         } catch (e) {
             console.error('Wave error:', e); TG.fail(); toast('Не удалось отправить лайк' + dbg(e));
+            if (onFail) onFail();
         }
         st.busy = false;
+    }
+    async function blockPerson(r, fromWaves) {
+        if (!r || st.busy) return;
+        TG.tap();
+        const ok = await ask(`Заблокировать ${r.name}? Вы больше не увидите друг друга в ленте и волнах.`);
+        if (!ok) return;
+        st.busy = true;
+        try {
+            addBlockedLocal(r);
+            if (dbOn() && typeof Supa.blockUser === 'function') {
+                await Supa.blockUser(r.id).catch((e) => console.error('Block error:', e));
+            }
+            toast(`${r.name} добавлен(а) в чёрный список`);
+            if (fromWaves) {
+                loadWaves();
+            } else {
+                await leave('left');
+                next();
+            }
+            refreshStatus();
+        } finally {
+            st.busy = false;
+        }
     }
 
     /* ---------- окно сообщения ---------- */
@@ -448,12 +634,16 @@ const Feed = (() => {
         if (typeof next.isHidden === 'boolean') {
             prefs.isHidden = next.isHidden;
         }
+        if (typeof next.onlyWithBio === 'boolean' && next.onlyWithBio !== prefs.onlyWithBio) {
+            prefs.onlyWithBio = next.onlyWithBio;
+            reload = true;
+        }
         savePrefs();
         buildChips();
         if (reload) resetDeck();
     }
     function getSearchPrefs() {
-        return { ageMode: prefs.ageMode, sameCity: st.sameCity, isHidden: !!prefs.isHidden };
+        return { ageMode: prefs.ageMode, sameCity: st.sameCity, isHidden: !!prefs.isHidden, onlyWithBio: !!prefs.onlyWithBio };
     }
 
     /* ---------- экран «Волны» ---------- */
@@ -467,6 +657,13 @@ const Feed = (() => {
         const body = el('div', 'card-body');
         const title = el('div', 'card-title');
         title.append(el('b', '', `${r.name}, ${r.age}`), el('span', 'card-city', r.city || ''));
+        const blk = el('button', 'card-block-btn');
+        blk.type = 'button';
+        blk.setAttribute('aria-label', 'Заблокировать');
+        blk.title = 'Заблокировать';
+        blk.innerHTML = BLOCK_ICON_SVG;
+        blk.addEventListener('click', () => blockPerson(r, true));
+        title.appendChild(blk);
         body.appendChild(title);
         card.appendChild(body);
         return { card, body };
@@ -593,6 +790,15 @@ const Feed = (() => {
         if (dbOn()) { refreshStatus(); askNotifyPermission(); startRealtime(); }
         if (!st.cur && !st.queue.length) { st.exhausted = false; loadQueue(); } else renderDeck();
     }
+    function resetSession() {
+        localBlocked = [];
+        Object.assign(prefs, { ageMode: 'peer', sameCity: false, isHidden: false, onlyWithBio: false });
+        st.queue = []; st.cur = null; st.intent = null; st.sameCity = false; st.lastZone = null;
+        st.loading = false; st.busy = false; st.exhausted = false; st.err = ''; st.gen++;
+        st.nameSent = false; st.rtStarted = false;
+        st.status = { used: 0, max: 3, incoming: 0, unread: 0 };
+        urlCache.clear();
+    }
     function init() {
         $('feedWaves').addEventListener('click', openWaves);
         $('slots').addEventListener('click', explainSlots);
@@ -605,7 +811,7 @@ const Feed = (() => {
         setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }
     init();
-    return { open, openWaves, toast, refreshStatus, onCityChanged, setSearchPrefs, getSearchPrefs };
+    return { open, openWaves, toast, refreshStatus, onCityChanged, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession };
 })();
 
 // Если лента уже показана при загрузке (вход в приложение с готовым профилем) — запускаем её

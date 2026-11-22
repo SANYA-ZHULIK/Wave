@@ -73,7 +73,7 @@ const Supa = (() => {
         enabled,
         async loadProfile() {
             const s = await auth();
-            const res = await rest(`profiles?tg_id=eq.${s.tg_id}&select=name,age,gender,looking,city,intents,bio,photo_path,is_hidden`);
+            const res = await rest(`profiles?tg_id=eq.${s.tg_id}&select=name,age,gender,looking,city,intents,bio,photo_path,is_hidden,tg_username`);
             const rows = await res.json();
             return rows[0] || null;
         },
@@ -170,6 +170,39 @@ const Supa = (() => {
                 headers: { Prefer: 'return=minimal' },
                 body: JSON.stringify({ is_hidden: !!isHidden, updated_at: new Date().toISOString() })
             }).catch(() => {});
+        },
+        async blockUser(targetId) {
+            await this.rpc('block_user', { p_target: targetId });
+        },
+        async unblockUser(targetId) {
+            await this.rpc('unblock_user', { p_target: targetId });
+        },
+        async getBlockedUsers() {
+            return await this.rpc('my_blocked_users');
+        },
+        async deleteAccount() {
+            const s = await auth();
+            // Удаляем аватар из приватного хранилища (если есть)
+            try {
+                await fetch(`${SUPA_URL}/storage/v1/object/avatars/${s.tg_id}/avatar.jpg`, {
+                    method: 'DELETE',
+                    headers: { apikey: SUPA_ANON, Authorization: `Bearer ${s.token}` }
+                });
+            } catch (e) {}
+            try {
+                await this.rpc('delete_my_account');
+            } catch (e) {
+                // Фолбэк, если RPC ещё не создана
+                await rest(`profiles?tg_id=eq.${s.tg_id}`, {
+                    method: 'DELETE',
+                    headers: { Prefer: 'return=minimal' }
+                });
+            }
+            if (rt && rt.client) {
+                try { rt.client.removeChannel(rt.channel); } catch (e) {}
+                rt = null;
+            }
+            session = null;
         }
     };
 })();
