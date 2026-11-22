@@ -7,8 +7,8 @@ const Nav = (() => {
     const SUPPORT_TG_URL = 'https://t.me/zhul1nsky'; // Замените на ваш @username поддержки или бота
     const MENU = [
         { go: 'feed',     label: 'Анкеты' },
-        { go: 'waves',    label: 'Волны', badge: 'incoming' },
-        { go: 'notifs',   label: 'Уведомления', badge: 'unread' },
+        { go: 'waves',    label: 'Волны' },
+        { go: 'notifs',   label: 'Уведомления', badge: 'notifs' },
         { go: 'profile',  label: 'Мой профиль' },
         { go: 'edit',     label: 'Изменить анкету' },
         { go: 'settings', label: 'Настройки' },
@@ -113,9 +113,8 @@ const Nav = (() => {
         <circle cx="212" cy="148" r="2"   fill="#D9F99D" opacity="0.8" />
         <circle cx="256" cy="118" r="1.4" fill="#B5C680" opacity="0.5" />
     </svg>`;
-    const ARROW_RIGHT_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>`;
     const NOTIF = {
-        like:  ()  => ['like',  'Вас лайкнули', 'Загляните в «Волны» — возможно, это взаимно'],
+        like:  ()  => ['like',  'Вас лайкнули', 'Посмотрите анкету сверху и ответьте взаимностью'],
         match: (d) => ['match', 'Взаимно! Началась волна' + (d.name ? ' с ' + d.name : ''), 'Откройте «Волны» и напишите первым'],
         ended: (d) => ['ended', 'Волна' + (d.name ? ' с ' + d.name : '') + ' завершена', 'Слот снова свободен для новых знакомств']
     };
@@ -158,7 +157,10 @@ const Nav = (() => {
     function updateBadges(s) {
         document.querySelectorAll('.menu-btn .dot').forEach((d) => { d.hidden = !(s.incoming || s.unread); });
         $('drawerNav').querySelectorAll('.badge[data-badge]').forEach((b) => {
-            const n = s[b.dataset.badge] || 0; b.hidden = !n; b.textContent = n;
+            const n = b.dataset.badge === 'notifs'
+                ? (s.incoming || 0) + (s.unread || 0)
+                : (s[b.dataset.badge] || 0);
+            b.hidden = !n; b.textContent = n;
         });
     }
     function openDrawer() {
@@ -564,7 +566,12 @@ const Nav = (() => {
         body.append(top, el('div', 'notif-text', text));
         const arr = el('span', 'notif-chevron', '›');
         item.append(ico, body, arr);
-        item.addEventListener('click', () => { TG.tap(); if (n.kind === 'ended') show(FEED); else Feed.openWaves(); });
+        item.addEventListener('click', () => {
+            TG.tap();
+            if (n.kind === 'ended') show(FEED);
+            else if (n.kind === 'match') Feed.openWaves();
+            else { $('notifsBody').scrollTo({ top: 0, behavior: 'smooth' }); }
+        });
         return item;
     }
     /* ---------- история уведомлений ---------- */
@@ -572,6 +579,7 @@ const Nav = (() => {
     // так повторный запрос не затирает уже показанное. Подсветка «новое» хранится по первому показу.
     const PAGE = 30;
     const shown = new Map();
+    let incomingList = [];
     let notifLoading = false, notifAgain = false, hasMore = false, firstLoaded = false, lastStatus = null;
 
     function ask(msg) {
@@ -587,46 +595,33 @@ const Nav = (() => {
         if (diff === 1) return 'Вчера';
         return new Date(ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
     }
-    function pendingLikesCard(n) {
-        const card = el('button', 'notif unread notif-pending'); card.type = 'button';
-        const ico = el('span', 'notif-ico kind-like');
-        ico.innerHTML = NOTIF_ICONS.like;
-        const body = el('div', 'notif-body');
-        const top = el('div', 'notif-head');
-        top.append(el('div', 'notif-title', 'Вас лайкнули · ' + n), el('span', 'notif-pill-new', 'Ждут ответа'));
-        body.append(top, el('div', 'notif-text', 'Откройте раздел «Волны», чтобы посмотреть анкеты и ответить взаимностью'));
-        const arr = el('span', 'notif-chevron', '›');
-        card.append(ico, body, arr);
-        card.addEventListener('click', () => Feed.openWaves());
-        return card;
-    }
     function renderNotifs(st) {
         lastStatus = st || lastStatus;
         const scr = $('screen-notifs');
         const body = $('notifsBody');
         body.innerHTML = '';
         const banner = permissionBanner(); if (banner) body.appendChild(banner);
-        // лайки, ждущие ответа, остаются в «Волнах» — напоминаем о них здесь, чтобы точка в меню была понятна
-        const waiting = lastStatus && lastStatus.incoming > 0;
-        if (waiting) {
-            body.appendChild(el('div', 'sec-title', 'Новые симпатии'));
-            body.appendChild(pendingLikesCard(lastStatus.incoming));
+        // Входящие симпатии показываем прямо здесь с кнопками «Ответить взаимностью» / «Отказать»
+        const hasIncoming = incomingList.length > 0;
+        if (hasIncoming) {
+            body.appendChild(el('div', 'sec-title', `Вас лайкнули · ${incomingList.length}`));
+            incomingList.forEach((r) => {
+                if (typeof Feed !== 'undefined' && Feed.incomingCard) {
+                    body.appendChild(Feed.incomingCard(r, () => loadNotifs()));
+                }
+            });
         }
         const rows = [...shown.values()].sort((a, b) => b.id - a.id);
         if (!rows.length) {
-            if (!waiting && !banner) {
+            if (!hasIncoming && !banner) {
                 if (scr) scr.classList.add('is-empty');
                 const wrap = el('div', 'notif-empty-state');
                 const art = el('div', 'notif-empty-art');
                 art.innerHTML = EMPTY_NOTIF_BELL_SVG;
                 const title = el('h3', 'notif-empty-title', 'Пока тихо');
                 const desc = el('p', 'notif-empty-desc', 'Здесь будут новые лайки и взаимные волны.');
-                const cta = el('button', 'notif-empty-cta');
+                const cta = el('button', 'notif-empty-cta', 'Перейти к анкетам');
                 cta.type = 'button';
-                cta.append(el('span', '', 'Перейти к анкетам'));
-                const arr = el('span', 'notif-empty-cta-ico');
-                arr.innerHTML = ARROW_RIGHT_SVG;
-                cta.appendChild(arr);
                 cta.addEventListener('click', () => { TG.tap(); show(FEED); });
                 wrap.append(art, title, desc, cta);
                 body.appendChild(wrap);
@@ -666,6 +661,7 @@ const Nav = (() => {
         const waitMin = !firstLoaded ? new Promise((r) => setTimeout(r, 420)) : Promise.resolve();
         if (!dbOn()) {
             await waitMin;
+            incomingList = [];
             renderNotifs(lastStatus);
             return;
         }
@@ -676,8 +672,14 @@ const Nav = (() => {
             do {
                 notifAgain = false;
                 const args = useOlder ? { p_limit: PAGE, p_before: Math.min(...shown.keys()) } : { p_limit: PAGE };
-                const [rows, st] = await Promise.all([Supa.rpc('my_notifications', args), Supa.rpc('wave_status'), waitMin]);
+                const [rows, st, inc] = await Promise.all([
+                    Supa.rpc('my_notifications', args),
+                    Supa.rpc('wave_status'),
+                    Supa.rpc('my_incoming').catch(() => []),
+                    waitMin
+                ]);
                 rows.forEach((n) => { if (!shown.has(n.id)) shown.set(n.id, n); });
+                incomingList = Array.isArray(inc) ? inc : [];
                 if (useOlder || !firstLoaded) hasMore = rows.length === PAGE;
                 firstLoaded = true;
                 renderNotifs(st);
@@ -715,7 +717,7 @@ const Nav = (() => {
         TG.tap(); show(NOTIFS);
         const scr = $('screen-notifs');
         if (scr) scr.classList.remove('is-empty');
-        shown.clear(); hasMore = false; firstLoaded = false;
+        shown.clear(); incomingList = []; hasMore = false; firstLoaded = false;
         const body = $('notifsBody');
         body.innerHTML = ''; body.appendChild(waveLoader('Загружаем уведомления…'));
         return loadNotifs();
@@ -749,5 +751,5 @@ const Nav = (() => {
         document.addEventListener('wave:notification', () => { if (step === NOTIFS) loadNotifs(); });
     }
     init();
-    return { renderDrawer, openNotifs, go, renderSettings };
+    return { renderDrawer, openNotifs, reloadNotifs: loadNotifs, go, renderSettings };
 })();

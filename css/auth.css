@@ -1669,14 +1669,17 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 }
 .report-submit-btn:disabled { opacity: 0.5; }
 
-/* Пустой экран уведомлений («Пока тихо») */
+/* Пустые экраны уведомлений («Пока тихо») и волн («Пока волн нет») */
 #screen-notifs.is-empty .profile-bg-top,
-#screen-notifs.is-empty .profile-bg-mid {
+#screen-notifs.is-empty .profile-bg-mid,
+#screen-waves.is-empty .profile-bg-top,
+#screen-waves.is-empty .profile-bg-mid {
     opacity: 0;
     transition: opacity 0.25s ease;
 }
 
-#screen-notifs .notif-bg-bottom {
+#screen-notifs .notif-bg-bottom,
+#screen-waves .notif-bg-bottom {
     height: 128px;
 }
 
@@ -1717,11 +1720,19 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     margin-bottom: 12px;
 }
 
+.waves-empty-slots {
+    font-size: 14px;
+    font-weight: 600;
+    color: #B5C680;
+    margin-top: -6px;
+    margin-bottom: 14px;
+}
+
 .notif-empty-desc {
     font-size: 14px;
     line-height: 1.5;
     color: rgba(255, 255, 255, 0.56);
-    max-width: 290px;
+    max-width: 300px;
     margin-bottom: 28px;
 }
 
@@ -1748,17 +1759,4 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     transform: scale(0.96);
     background: #c5d68f;
     box-shadow: 0 4px 16px rgba(181, 198, 128, 0.36);
-}
-
-.notif-empty-cta-ico {
-    width: 18px;
-    height: 18px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.notif-empty-cta-ico svg {
-    width: 100%;
-    height: 100%;
 }

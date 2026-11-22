@@ -147,6 +147,100 @@ const MSG_ICON_SVG = `
     <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
 </svg>`;
 
+const EMPTY_WAVES_SLOTS_SVG = `
+<svg viewBox="0 0 300 185" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+        <filter id="wsGlow" x="-35%" y="-35%" width="170%" height="170%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
+            <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+        <filter id="wsSoft" x="-45%" y="-45%" width="190%" height="190%">
+            <feGaussianBlur stdDeviation="18" />
+        </filter>
+        <linearGradient id="wsSlotBorder" x1="68" y1="92" x2="232" y2="92" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#A855F7" />
+            <stop offset="50%" stop-color="#C084FC" />
+            <stop offset="100%" stop-color="#D9F99D" />
+        </linearGradient>
+        <linearGradient id="wsBarGrad" x1="80" y1="0" x2="175" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#9333EA" />
+            <stop offset="55%" stop-color="#C084FC" />
+            <stop offset="100%" stop-color="#D9F99D" />
+        </linearGradient>
+        <linearGradient id="wsBarShort" x1="80" y1="0" x2="122" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#9333EA" />
+            <stop offset="100%" stop-color="#E9D5FF" />
+        </linearGradient>
+        <linearGradient id="wsWaveGrad" x1="18" y1="96" x2="282" y2="96" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7C3AED" stop-opacity="0" />
+            <stop offset="22%" stop-color="#A855F7" stop-opacity="0.9" />
+            <stop offset="52%" stop-color="#C084FC" stop-opacity="0.6" />
+            <stop offset="78%" stop-color="#D9F99D" stop-opacity="0.9" />
+            <stop offset="100%" stop-color="#B5C680" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient id="wsWaveDim" x1="20" y1="100" x2="280" y2="96" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7C3AED" stop-opacity="0" />
+            <stop offset="30%" stop-color="#9333EA" stop-opacity="0.34" />
+            <stop offset="70%" stop-color="#B5C680" stop-opacity="0.34" />
+            <stop offset="100%" stop-color="#B5C680" stop-opacity="0" />
+        </linearGradient>
+        <linearGradient id="wsHeartGrad" x1="132" y1="78" x2="168" y2="112" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#E9D5FF" />
+            <stop offset="55%" stop-color="#F5D0FE" />
+            <stop offset="100%" stop-color="#D9F99D" />
+        </linearGradient>
+    </defs>
+
+    <!-- Фоновое неоновое свечение -->
+    <ellipse cx="118" cy="92" rx="64" ry="44" fill="#7C3AED" fill-opacity="0.26" filter="url(#wsSoft)" />
+    <ellipse cx="184" cy="96" rx="62" ry="42" fill="#B5C680" fill-opacity="0.2" filter="url(#wsSoft)" />
+
+    <!-- Волны за слотами -->
+    <path d="M18 98 C 52 124, 80 76, 122 96 C 166 116, 198 76, 232 104 C 254 120, 268 86, 286 96"
+          stroke="url(#wsWaveDim)" stroke-width="1.5" stroke-linecap="round" />
+    <path d="M16 100 C 44 124, 62 108, 82 78 C 98 54, 114 78, 134 94 C 154 110, 174 84, 194 108 C 210 128, 224 122, 238 92 C 252 64, 268 74, 286 88"
+          stroke="url(#wsWaveGrad)" stroke-width="2.2" stroke-linecap="round" filter="url(#wsGlow)" />
+
+    <!-- Слот 1 (верхний) -->
+    <rect x="68" y="34" width="164" height="28" rx="14"
+          fill="rgba(18, 10, 36, 0.56)" stroke="url(#wsSlotBorder)" stroke-width="1.7" stroke-dasharray="6 4.5" opacity="0.9" />
+    <rect x="78" y="43" width="144" height="10" rx="5" fill="rgba(255, 255, 255, 0.08)" />
+    <rect x="78" y="43" width="92" height="10" rx="5" fill="url(#wsBarGrad)" filter="url(#wsGlow)" />
+
+    <!-- Слот 2 (средний с неоновым сердцем) -->
+    <rect x="68" y="78" width="164" height="28" rx="14"
+          fill="rgba(18, 10, 36, 0.56)" stroke="url(#wsSlotBorder)" stroke-width="1.7" stroke-dasharray="6 4.5" opacity="0.9" />
+    <rect x="78" y="87" width="144" height="10" rx="5" fill="rgba(255, 255, 255, 0.08)" />
+    <rect x="78" y="87" width="40" height="10" rx="5" fill="url(#wsBarShort)" filter="url(#wsGlow)" />
+
+    <!-- Слот 3 (нижний) -->
+    <rect x="68" y="122" width="164" height="28" rx="14"
+          fill="rgba(18, 10, 36, 0.56)" stroke="url(#wsSlotBorder)" stroke-width="1.7" stroke-dasharray="6 4.5" opacity="0.9" />
+    <rect x="78" y="131" width="144" height="10" rx="5" fill="rgba(255, 255, 255, 0.08)" />
+    <rect x="78" y="131" width="92" height="10" rx="5" fill="url(#wsBarGrad)" filter="url(#wsGlow)" />
+
+    <!-- Центральное светящееся сердце -->
+    <path d="M150 109.5
+             C 150 109.5, 130 97.5, 130 85.2
+             C 130 79.2, 134.8 75, 140.4 75
+             C 144.4 75, 147.8 77.2, 150 80.5
+             C 152.2 77.2, 155.6 75, 159.6 75
+             C 165.2 75, 170 79.2, 170 85.2
+             C 170 97.5, 150 109.5, 150 109.5 Z"
+          fill="rgba(18, 10, 36, 0.78)" stroke="url(#wsHeartGrad)" stroke-width="2.6" stroke-linejoin="round" filter="url(#wsGlow)" />
+
+    <!-- Звёздочки и искры -->
+    <path d="M52 122 L54 127.5 L59.5 129.5 L54 131.5 L52 137 L50 131.5 L44.5 129.5 L50 127.5 Z" fill="#A855F7" opacity="0.9" filter="url(#wsGlow)" />
+    <path d="M248 58 L249.6 62.2 L253.8 63.8 L249.6 65.4 L248 69.6 L246.4 65.4 L242.2 63.8 L246.4 62.2 Z" fill="#D9F99D" opacity="0.88" filter="url(#wsGlow)" />
+    <circle cx="58"  cy="50"  r="2"   fill="#C084FC" opacity="0.72" />
+    <circle cx="38"  cy="82"  r="1.4" fill="#E9D5FF" opacity="0.52" />
+    <circle cx="246" cy="134" r="2"   fill="#D9F99D" opacity="0.78" />
+    <circle cx="212" cy="24"  r="1.4" fill="#B5C680" opacity="0.55" />
+</svg>`;
+
 const Feed = (() => {
     const PREFS_KEY = 'wave_search_prefs';
     const BLOCKED_KEY = 'wave_blocked_local';
@@ -369,8 +463,7 @@ const Feed = (() => {
         for (let i = 0; i < s.max; i++) bars.appendChild(el('span', 'slot-bar' + (i < s.used ? ' full' : '')));
         box.append(el('span', 'slots-label', 'Слоты'), bars, el('span', 'slots-count', `${s.used}/${s.max}`));
         box.classList.toggle('is-full', s.used >= s.max);
-        $('wavesBadge').hidden = !s.incoming;
-        $('wavesBadge').textContent = s.incoming;
+        $('wavesBadge').hidden = true;
         document.dispatchEvent(new CustomEvent('wave:status', { detail: s }));
     }
     async function refreshStatus() {
@@ -760,7 +853,8 @@ const Feed = (() => {
             }
             toast(`${r.name} добавлен(а) в чёрный список`);
             if (fromWaves) {
-                loadWaves();
+                if (step === WAVES) loadWaves();
+                if (step === NOTIFS && typeof Nav !== 'undefined' && Nav.reloadNotifs) Nav.reloadNotifs();
             } else {
                 await leave('left');
                 next();
@@ -860,15 +954,15 @@ const Feed = (() => {
         card.appendChild(body);
         return { card, body };
     }
-    function incomingCard(r) {
+    function incomingCard(r, onDone) {
         const { card, body } = personCard(r);
         body.appendChild(tagsOf(r));
         if (r.message) body.appendChild(el('p', 'w-msg', '«' + r.message + '»'));
         const btns = el('div', 'w-btns');
         const ok = el('button', 'w-btn ok', 'Ответить взаимностью');
         const no = el('button', 'w-btn', 'Отказать');
-        ok.addEventListener('click', () => respond(r.wave_id, true));
-        no.addEventListener('click', () => respond(r.wave_id, false));
+        ok.addEventListener('click', () => respond(r.wave_id, true, onDone));
+        no.addEventListener('click', () => respond(r.wave_id, false, onDone));
         btns.append(ok, no); body.appendChild(btns);
         return card;
     }
@@ -891,35 +985,63 @@ const Feed = (() => {
         btns.appendChild(end); body.appendChild(btns);
         return card;
     }
-    function renderWaves(inc, mat) {
+    function renderWaves(mat) {
+        const scr = $('screen-waves');
         const body = $('wavesBody'), s = st.status;
         body.innerHTML = '';
+        if (!mat.length) {
+            if (scr) scr.classList.add('is-empty');
+            const wrap = el('div', 'notif-empty-state');
+            const art = el('div', 'notif-empty-art');
+            art.innerHTML = EMPTY_WAVES_SLOTS_SVG;
+            const title = el('h3', 'notif-empty-title', 'Пока волн нет');
+            const slotsInfo = el('div', 'waves-empty-slots', `Слоты свободны — ${s.used} из ${s.max}`);
+            const desc = el('p', 'notif-empty-desc');
+            desc.append(
+                document.createTextNode('Здесь появятся люди, с которыми совпадут лайки.'),
+                document.createElement('br'),
+                document.createTextNode('Завершите волну — и слот освободится.')
+            );
+            const cta = el('button', 'notif-empty-cta', 'Найти людей в ленте');
+            cta.type = 'button';
+            cta.addEventListener('click', () => { TG.tap(); show(FEED); });
+            wrap.append(art, title, slotsInfo, desc, cta);
+            body.appendChild(wrap);
+            return;
+        }
+        if (scr) scr.classList.remove('is-empty');
         body.appendChild(el('div', 'sec-title', `Активные волны · слоты ${s.used}/${s.max}`));
         body.appendChild(el('p', 'sec-note', 'Волна начинается, когда лайк взаимный, и занимает один слот у вас обоих. Завершите волну — слот освободится.'));
         mat.forEach((r) => body.appendChild(activeCard(r)));
         for (let i = mat.length; i < s.max; i++) body.appendChild(el('div', 'slot-empty', 'Свободный слот — ищите кого-нибудь в ленте'));
-        body.appendChild(el('div', 'sec-title', `Вас лайкнули · ${inc.length}`));
-        if (!inc.length) body.appendChild(el('p', 'sec-note', 'Пока никто не лайкнул'));
-        inc.forEach((r) => body.appendChild(incomingCard(r)));
     }
     async function loadWaves(withDelay = false) {
         const waitMin = withDelay ? new Promise((r) => setTimeout(r, 420)) : Promise.resolve();
+        if (!dbOn()) {
+            await waitMin;
+            renderWaves([]);
+            return;
+        }
         try {
-            const [status, inc, mat] = await Promise.all([Supa.rpc('wave_status'), Supa.rpc('my_incoming'), Supa.rpc('my_matches'), waitMin]);
-            st.status = status; renderStatus(); renderWaves(inc, mat);
+            const [status, mat] = await Promise.all([Supa.rpc('wave_status'), Supa.rpc('my_matches'), waitMin]);
+            st.status = status; renderStatus(); renderWaves(mat);
         } catch (e) {
             await waitMin;
             console.error('Waves error:', e);
+            const scr = $('screen-waves');
+            if (scr) scr.classList.remove('is-empty');
             const b = $('wavesBody'); b.innerHTML = '';
             b.appendChild(el('p', 'feed-empty', 'Не удалось загрузить' + dbg(e)));
         }
     }
     function openWaves() {
         TG.tap(); show(WAVES);
+        const scr = $('screen-waves');
+        if (scr) scr.classList.remove('is-empty');
         $('wavesBody').innerHTML = ''; $('wavesBody').appendChild(waveLoader('Загружаем волны…'));
         loadWaves(true);
     }
-    async function respond(id, accept) {
+    async function respond(id, accept, onDone) {
         try {
             const res = await Supa.rpc('respond_wave', { p_wave_id: id, p_accept: accept });
             if (res.result === 'matched') TG.ok();
@@ -931,7 +1053,9 @@ const Feed = (() => {
                 gone: 'Этот лайк уже неактуален'
             }[res.result] || 'Готово', 4500);
         } catch (e) { console.error('Respond error:', e); toast('Не получилось ответить' + dbg(e)); }
-        loadWaves();
+        if (typeof onDone === 'function') onDone();
+        if (step === WAVES) loadWaves();
+        refreshStatus();
     }
     async function endWave(r) {
         if (!(await ask(`Завершить волну с ${r.name}? Слот освободится у вас обоих, вернуть волну будет нельзя.`))) return;
@@ -1026,7 +1150,7 @@ const Feed = (() => {
         setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }
     init();
-    return { open, openWaves, toast, refreshStatus, onCityChanged, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession };
+    return { open, openWaves, toast, refreshStatus, onCityChanged, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession, incomingCard };
 })();
 
 // Если лента уже показана при загрузке (вход в приложение с готовым профилем) — запускаем её
