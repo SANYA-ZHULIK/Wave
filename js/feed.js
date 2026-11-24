@@ -148,7 +148,7 @@ const MSG_ICON_SVG = `
 </svg>`;
 
 const EMPTY_WAVES_SLOTS_SVG = `
-<svg viewBox="0 0 300 185" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<svg viewBox="0 0 300 190" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <defs>
         <filter id="wsGlow" x="-35%" y="-35%" width="170%" height="170%">
             <feGaussianBlur stdDeviation="5" result="blur" />
@@ -194,51 +194,53 @@ const EMPTY_WAVES_SLOTS_SVG = `
         </linearGradient>
     </defs>
 
-    <!-- Фоновое неоновое свечение -->
-    <ellipse cx="118" cy="92" rx="64" ry="44" fill="#7C3AED" fill-opacity="0.26" filter="url(#wsSoft)" />
-    <ellipse cx="184" cy="96" rx="62" ry="42" fill="#B5C680" fill-opacity="0.2" filter="url(#wsSoft)" />
+    <g transform="translate(0 2)">
+        <!-- Фоновое неоновое свечение -->
+        <ellipse cx="118" cy="92" rx="64" ry="44" fill="#7C3AED" fill-opacity="0.26" filter="url(#wsSoft)" />
+        <ellipse cx="184" cy="96" rx="62" ry="42" fill="#B5C680" fill-opacity="0.2" filter="url(#wsSoft)" />
 
-    <!-- Волны за слотами -->
-    <path d="M18 98 C 52 124, 80 76, 122 96 C 166 116, 198 76, 232 104 C 254 120, 268 86, 286 96"
-          stroke="url(#wsWaveDim)" stroke-width="1.5" stroke-linecap="round" />
-    <path d="M16 100 C 44 124, 62 108, 82 78 C 98 54, 114 78, 134 94 C 154 110, 174 84, 194 108 C 210 128, 224 122, 238 92 C 252 64, 268 74, 286 88"
-          stroke="url(#wsWaveGrad)" stroke-width="2.2" stroke-linecap="round" filter="url(#wsGlow)" />
+        <!-- Волны за слотами -->
+        <path d="M18 98 C 52 124, 80 76, 122 96 C 166 116, 198 76, 232 104 C 254 120, 268 86, 286 96"
+              stroke="url(#wsWaveDim)" stroke-width="1.5" stroke-linecap="round" />
+        <path d="M16 100 C 44 124, 62 108, 82 78 C 98 54, 114 78, 134 94 C 154 110, 174 84, 194 108 C 210 128, 224 122, 238 92 C 252 64, 268 74, 286 88"
+              stroke="url(#wsWaveGrad)" stroke-width="2.2" stroke-linecap="round" filter="url(#wsGlow)" />
 
-    <!-- Слот 1 (верхний) -->
-    <rect x="68" y="34" width="164" height="28" rx="14"
-          fill="rgba(18, 10, 36, 0.56)" stroke="url(#wsSlotBorder)" stroke-width="1.7" stroke-dasharray="6 4.5" opacity="0.9" />
-    <rect x="78" y="43" width="144" height="10" rx="5" fill="rgba(255, 255, 255, 0.08)" />
-    <rect x="78" y="43" width="92" height="10" rx="5" fill="url(#wsBarGrad)" filter="url(#wsGlow)" />
+        <!-- Слот 1 (верхний) -->
+        <rect x="68" y="34" width="164" height="28" rx="14"
+              fill="rgba(18, 10, 36, 0.56)" stroke="url(#wsSlotBorder)" stroke-width="1.7" stroke-dasharray="6 4.5" opacity="0.9" />
+        <rect x="78" y="43" width="144" height="10" rx="5" fill="rgba(255, 255, 255, 0.08)" />
+        <rect x="78" y="43" width="92" height="10" rx="5" fill="url(#wsBarGrad)" filter="url(#wsGlow)" />
 
-    <!-- Слот 2 (средний с неоновым сердцем) -->
-    <rect x="68" y="78" width="164" height="28" rx="14"
-          fill="rgba(18, 10, 36, 0.56)" stroke="url(#wsSlotBorder)" stroke-width="1.7" stroke-dasharray="6 4.5" opacity="0.9" />
-    <rect x="78" y="87" width="144" height="10" rx="5" fill="rgba(255, 255, 255, 0.08)" />
-    <rect x="78" y="87" width="40" height="10" rx="5" fill="url(#wsBarShort)" filter="url(#wsGlow)" />
+        <!-- Слот 2 (средний с неоновым сердцем) -->
+        <rect x="68" y="78" width="164" height="28" rx="14"
+              fill="rgba(18, 10, 36, 0.56)" stroke="url(#wsSlotBorder)" stroke-width="1.7" stroke-dasharray="6 4.5" opacity="0.9" />
+        <rect x="78" y="87" width="144" height="10" rx="5" fill="rgba(255, 255, 255, 0.08)" />
+        <rect x="78" y="87" width="40" height="10" rx="5" fill="url(#wsBarShort)" filter="url(#wsGlow)" />
 
-    <!-- Слот 3 (нижний) -->
-    <rect x="68" y="122" width="164" height="28" rx="14"
-          fill="rgba(18, 10, 36, 0.56)" stroke="url(#wsSlotBorder)" stroke-width="1.7" stroke-dasharray="6 4.5" opacity="0.9" />
-    <rect x="78" y="131" width="144" height="10" rx="5" fill="rgba(255, 255, 255, 0.08)" />
-    <rect x="78" y="131" width="92" height="10" rx="5" fill="url(#wsBarGrad)" filter="url(#wsGlow)" />
+        <!-- Слот 3 (нижний) -->
+        <rect x="68" y="122" width="164" height="28" rx="14"
+              fill="rgba(18, 10, 36, 0.56)" stroke="url(#wsSlotBorder)" stroke-width="1.7" stroke-dasharray="6 4.5" opacity="0.9" />
+        <rect x="78" y="131" width="144" height="10" rx="5" fill="rgba(255, 255, 255, 0.08)" />
+        <rect x="78" y="131" width="92" height="10" rx="5" fill="url(#wsBarGrad)" filter="url(#wsGlow)" />
 
-    <!-- Центральное светящееся сердце -->
-    <path d="M150 109.5
-             C 150 109.5, 130 97.5, 130 85.2
-             C 130 79.2, 134.8 75, 140.4 75
-             C 144.4 75, 147.8 77.2, 150 80.5
-             C 152.2 77.2, 155.6 75, 159.6 75
-             C 165.2 75, 170 79.2, 170 85.2
-             C 170 97.5, 150 109.5, 150 109.5 Z"
-          fill="rgba(18, 10, 36, 0.78)" stroke="url(#wsHeartGrad)" stroke-width="2.6" stroke-linejoin="round" filter="url(#wsGlow)" />
+        <!-- Центральное светящееся сердце -->
+        <path d="M150 109.5
+                 C 150 109.5, 130 97.5, 130 85.2
+                 C 130 79.2, 134.8 75, 140.4 75
+                 C 144.4 75, 147.8 77.2, 150 80.5
+                 C 152.2 77.2, 155.6 75, 159.6 75
+                 C 165.2 75, 170 79.2, 170 85.2
+                 C 170 97.5, 150 109.5, 150 109.5 Z"
+              fill="rgba(18, 10, 36, 0.78)" stroke="url(#wsHeartGrad)" stroke-width="2.6" stroke-linejoin="round" filter="url(#wsGlow)" />
 
-    <!-- Звёздочки и искры -->
-    <path d="M52 122 L54 127.5 L59.5 129.5 L54 131.5 L52 137 L50 131.5 L44.5 129.5 L50 127.5 Z" fill="#A855F7" opacity="0.9" filter="url(#wsGlow)" />
-    <path d="M248 58 L249.6 62.2 L253.8 63.8 L249.6 65.4 L248 69.6 L246.4 65.4 L242.2 63.8 L246.4 62.2 Z" fill="#D9F99D" opacity="0.88" filter="url(#wsGlow)" />
-    <circle cx="58"  cy="50"  r="2"   fill="#C084FC" opacity="0.72" />
-    <circle cx="38"  cy="82"  r="1.4" fill="#E9D5FF" opacity="0.52" />
-    <circle cx="246" cy="134" r="2"   fill="#D9F99D" opacity="0.78" />
-    <circle cx="212" cy="24"  r="1.4" fill="#B5C680" opacity="0.55" />
+        <!-- Звёздочки и искры -->
+        <path d="M52 122 L54 127.5 L59.5 129.5 L54 131.5 L52 137 L50 131.5 L44.5 129.5 L50 127.5 Z" fill="#A855F7" opacity="0.9" filter="url(#wsGlow)" />
+        <path d="M248 58 L249.6 62.2 L253.8 63.8 L249.6 65.4 L248 69.6 L246.4 65.4 L242.2 63.8 L246.4 62.2 Z" fill="#D9F99D" opacity="0.88" filter="url(#wsGlow)" />
+        <circle cx="58"  cy="50"  r="2"   fill="#C084FC" opacity="0.72" />
+        <circle cx="38"  cy="82"  r="1.4" fill="#E9D5FF" opacity="0.52" />
+        <circle cx="246" cy="134" r="2"   fill="#D9F99D" opacity="0.78" />
+        <circle cx="212" cy="24"  r="1.4" fill="#B5C680" opacity="0.55" />
+    </g>
 </svg>`;
 
 const Feed = (() => {

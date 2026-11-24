@@ -19,7 +19,7 @@ const Nav = (() => {
     const SCREEN_OF = { feed: FEED, waves: WAVES, notifs: NOTIFS, profile: DONE, about: ABOUT, rules: RULES, settings: SETTINGS };
     const BELL_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
     const EMPTY_NOTIF_BELL_SVG = `
-    <svg viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <svg viewBox="0 0 300 190" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
             <filter id="nbGlow" x="-35%" y="-35%" width="170%" height="170%">
                 <feGaussianBlur stdDeviation="5.5" result="blur" />
@@ -56,57 +56,59 @@ const Nav = (() => {
             </linearGradient>
         </defs>
 
-        <!-- Мягкое неоновое свечение за колокольчиком -->
-        <ellipse cx="122" cy="100" rx="58" ry="44" fill="#7C3AED" fill-opacity="0.28" filter="url(#nbSoft)" />
-        <ellipse cx="176" cy="108" rx="54" ry="40" fill="#B5C680" fill-opacity="0.22" filter="url(#nbSoft)" />
+        <g transform="translate(0 -4)">
+            <!-- Мягкое неоновое свечение за колокольчиком -->
+            <ellipse cx="122" cy="100" rx="58" ry="44" fill="#7C3AED" fill-opacity="0.28" filter="url(#nbSoft)" />
+            <ellipse cx="176" cy="108" rx="54" ry="40" fill="#B5C680" fill-opacity="0.22" filter="url(#nbSoft)" />
 
-        <!-- Фоновые волны -->
-        <path d="M18 112 C 48 134, 72 90, 108 108 C 146 126, 178 86, 214 114 C 244 136, 262 96, 286 106"
-              stroke="url(#nbWaveDim)" stroke-width="1.6" stroke-linecap="round" />
-        <path d="M16 104 C 42 128, 60 124, 82 94 C 98 72, 114 82, 128 102"
-              stroke="url(#nbWaveGrad)" stroke-width="2.4" stroke-linecap="round" filter="url(#nbGlow)" />
-        <path d="M174 110 C 194 138, 214 142, 232 104 C 248 72, 266 78, 286 96"
-              stroke="url(#nbWaveGrad)" stroke-width="2.4" stroke-linecap="round" filter="url(#nbGlow)" />
+            <!-- Фоновые волны -->
+            <path d="M18 112 C 48 134, 72 90, 108 108 C 146 126, 178 86, 214 114 C 244 136, 262 96, 286 106"
+                  stroke="url(#nbWaveDim)" stroke-width="1.6" stroke-linecap="round" />
+            <path d="M16 104 C 42 128, 60 124, 82 94 C 98 72, 114 82, 128 102"
+                  stroke="url(#nbWaveGrad)" stroke-width="2.4" stroke-linecap="round" filter="url(#nbGlow)" />
+            <path d="M174 110 C 194 138, 214 142, 232 104 C 248 72, 266 78, 286 96"
+                  stroke="url(#nbWaveGrad)" stroke-width="2.4" stroke-linecap="round" filter="url(#nbGlow)" />
 
-        <!-- Наклонённый неоновый колокольчик -->
-        <g transform="rotate(14 150 100)">
-            <!-- Дуги звонка слева -->
-            <path d="M96 68 C 91 79, 91 91, 95 102" stroke="#C084FC" stroke-width="2.2" stroke-linecap="round" opacity="0.82" filter="url(#nbGlow)" />
-            <path d="M84 62 C 77 77, 77 95, 83 110" stroke="#A855F7" stroke-width="2" stroke-linecap="round" opacity="0.52" />
-            <!-- Дуги звонка справа -->
-            <path d="M204 68 C 209 79, 209 91, 205 102" stroke="#D9F99D" stroke-width="2.2" stroke-linecap="round" opacity="0.85" filter="url(#nbGlow)" />
-            <path d="M216 62 C 223 77, 223 95, 217 110" stroke="#B5C680" stroke-width="2" stroke-linecap="round" opacity="0.52" />
+            <!-- Наклонённый неоновый колокольчик -->
+            <g transform="rotate(14 150 100)">
+                <!-- Дуги звонка слева -->
+                <path d="M96 68 C 91 79, 91 91, 95 102" stroke="#C084FC" stroke-width="2.2" stroke-linecap="round" opacity="0.82" filter="url(#nbGlow)" />
+                <path d="M84 62 C 77 77, 77 95, 83 110" stroke="#A855F7" stroke-width="2" stroke-linecap="round" opacity="0.52" />
+                <!-- Дуги звонка справа -->
+                <path d="M204 68 C 209 79, 209 91, 205 102" stroke="#D9F99D" stroke-width="2.2" stroke-linecap="round" opacity="0.85" filter="url(#nbGlow)" />
+                <path d="M216 62 C 223 77, 223 95, 217 110" stroke="#B5C680" stroke-width="2" stroke-linecap="round" opacity="0.52" />
 
-            <!-- Верхнее колечко -->
-            <path d="M142 50 A 8 8 0 0 1 158 50" stroke="url(#nbBellStroke)" stroke-width="2.6" stroke-linecap="round" filter="url(#nbGlow)" />
-            <!-- Купол колокольчика -->
-            <path d="M150 51
-                     C 127 51, 112 69, 112 94
-                     L 112 110
-                     C 112 121, 104 128, 99 133
-                     C 97 135, 98 139, 102 139
-                     L 198 139
-                     C 202 139, 203 135, 201 133
-                     C 196 128, 188 121, 188 110
-                     L 188 94
-                     C 188 69, 173 51, 150 51 Z"
-                  fill="url(#nbBellFill)" stroke="url(#nbBellStroke)" stroke-width="3" stroke-linejoin="round" filter="url(#nbGlow)" />
-            <!-- Внутренний блик -->
-            <path d="M126 84 C 127 72, 134 64, 143 61" stroke="#F5D0FE" stroke-width="2" stroke-linecap="round" opacity="0.7" />
-            <!-- Нижняя кромка -->
-            <path d="M107 134 C 132 130, 168 130, 193 134" stroke="url(#nbBellStroke)" stroke-width="1.3" stroke-linecap="round" opacity="0.45" />
-            <!-- Язычок -->
-            <path d="M139 140 C 139 147, 144 152, 150 152 C 156 152, 161 147, 161 140"
-                  stroke="url(#nbBellStroke)" stroke-width="2.8" stroke-linecap="round" filter="url(#nbGlow)" />
+                <!-- Верхнее колечко -->
+                <path d="M142 50 A 8 8 0 0 1 158 50" stroke="url(#nbBellStroke)" stroke-width="2.6" stroke-linecap="round" filter="url(#nbGlow)" />
+                <!-- Купол колокольчика -->
+                <path d="M150 51
+                         C 127 51, 112 69, 112 94
+                         L 112 110
+                         C 112 121, 104 128, 99 133
+                         C 97 135, 98 139, 102 139
+                         L 198 139
+                         C 202 139, 203 135, 201 133
+                         C 196 128, 188 121, 188 110
+                         L 188 94
+                         C 188 69, 173 51, 150 51 Z"
+                      fill="url(#nbBellFill)" stroke="url(#nbBellStroke)" stroke-width="3" stroke-linejoin="round" filter="url(#nbGlow)" />
+                <!-- Внутренний блик -->
+                <path d="M126 84 C 127 72, 134 64, 143 61" stroke="#F5D0FE" stroke-width="2" stroke-linecap="round" opacity="0.7" />
+                <!-- Нижняя кромка -->
+                <path d="M107 134 C 132 130, 168 130, 193 134" stroke="url(#nbBellStroke)" stroke-width="1.3" stroke-linecap="round" opacity="0.45" />
+                <!-- Язычок -->
+                <path d="M139 140 C 139 147, 144 152, 150 152 C 156 152, 161 147, 161 140"
+                      stroke="url(#nbBellStroke)" stroke-width="2.8" stroke-linecap="round" filter="url(#nbGlow)" />
+            </g>
+
+            <!-- Искры и звёздочки -->
+            <path d="M72 130 L74.2 135.8 L80 138 L74.2 140.2 L72 146 L69.8 140.2 L64 138 L69.8 135.8 Z" fill="#C084FC" opacity="0.9" filter="url(#nbGlow)" />
+            <path d="M235 66 L236.6 70.4 L241 72 L236.6 73.6 L235 78 L233.4 73.6 L229 72 L233.4 70.4 Z" fill="#D9F99D" opacity="0.88" filter="url(#nbGlow)" />
+            <circle cx="72"  cy="66"  r="2.2" fill="#C084FC" opacity="0.75" />
+            <circle cx="48"  cy="98"  r="1.4" fill="#E9D5FF" opacity="0.55" />
+            <circle cx="212" cy="148" r="2"   fill="#D9F99D" opacity="0.8" />
+            <circle cx="256" cy="118" r="1.4" fill="#B5C680" opacity="0.5" />
         </g>
-
-        <!-- Искры и звёздочки -->
-        <path d="M72 130 L74.2 135.8 L80 138 L74.2 140.2 L72 146 L69.8 140.2 L64 138 L69.8 135.8 Z" fill="#C084FC" opacity="0.9" filter="url(#nbGlow)" />
-        <path d="M235 66 L236.6 70.4 L241 72 L236.6 73.6 L235 78 L233.4 73.6 L229 72 L233.4 70.4 Z" fill="#D9F99D" opacity="0.88" filter="url(#nbGlow)" />
-        <circle cx="72"  cy="66"  r="2.2" fill="#C084FC" opacity="0.75" />
-        <circle cx="48"  cy="98"  r="1.4" fill="#E9D5FF" opacity="0.55" />
-        <circle cx="212" cy="148" r="2"   fill="#D9F99D" opacity="0.8" />
-        <circle cx="256" cy="118" r="1.4" fill="#B5C680" opacity="0.5" />
     </svg>`;
     let notifAsked = false;
 
