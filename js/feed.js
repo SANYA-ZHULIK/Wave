@@ -246,6 +246,7 @@ const EMPTY_WAVES_SLOTS_SVG = `
 const Feed = (() => {
     const PREFS_KEY = 'wave_search_prefs';
     const BLOCKED_KEY = 'wave_blocked_local';
+    const SEEN_WAVES_KEY = 'wave_seen_waves';
     const prefs = { ageMode: 'peer', sameCity: false, isHidden: false, onlyWithBio: false };
     try {
         const savedPrefs = JSON.parse(localStorage.getItem(PREFS_KEY));
@@ -311,10 +312,54 @@ const Feed = (() => {
         return true;
     }
 
+    let seenWaves = new Set();
+    try {
+        const sw = JSON.parse(localStorage.getItem(SEEN_WAVES_KEY));
+        if (Array.isArray(sw)) seenWaves = new Set(sw.map(String));
+    } catch (e) {}
+    function saveSeenWaves() {
+        try { localStorage.setItem(SEEN_WAVES_KEY, JSON.stringify([...seenWaves])); } catch (e) {}
+    }
+    const waveKeyOf = (r) => (r ? String(r.wave_id != null ? r.wave_id : r.id) : '');
+    function markWavesSeen(mat) {
+        const nextSet = new Set();
+        (Array.isArray(mat) ? mat : []).forEach((r) => {
+            const k = waveKeyOf(r);
+            if (k) nextSet.add(k);
+        });
+        seenWaves = nextSet;
+        saveSeenWaves();
+        st.newWaves = 0;
+        st.matchesSynced = true;
+        st.lastSyncedUsed = nextSet.size;
+    }
+    function syncUnseenWaves(mat) {
+        const list = Array.isArray(mat) ? mat : [];
+        const activeKeys = new Set();
+        let unseen = 0;
+        list.forEach((r) => {
+            const k = waveKeyOf(r);
+            if (!k) return;
+            activeKeys.add(k);
+            if (!seenWaves.has(k)) unseen++;
+        });
+        // Убираем из сохранённых завершённые волны, которых больше нет среди активных
+        let pruned = false;
+        seenWaves.forEach((k) => {
+            if (!activeKeys.has(k)) { seenWaves.delete(k); pruned = true; }
+        });
+        if (pruned) saveSeenWaves();
+        st.newWaves = step === WAVES ? 0 : unseen;
+        if (step === WAVES) markWavesSeen(list);
+        st.matchesSynced = true;
+        st.lastSyncedUsed = list.length;
+    }
+
     const st = {
         queue: [], cur: null, intent: null, sameCity: prefs.sameCity, lastZone: null,
         loading: false, busy: false, exhausted: false, err: '', gen: 0, nameSent: false,
-        status: { used: 0, max: 3, incoming: 0, unread: 0 }
+        status: { used: 0, max: 3, incoming: 0, unread: 0 },
+        newWaves: 0, matchesSynced: false, lastSyncedUsed: -1
     };
     const urlCache = new Map();
     let toastTimer;
@@ -710,11 +755,35 @@ const Feed = (() => {
         cnt.append(usedNum, document.createTextNode('/' + s.max));
         box.append(bars, cnt);
         box.classList.toggle('is-full', s.used >= s.max);
-        $('wavesBadge').hidden = true;
-        document.dispatchEvent(new CustomEvent('wave:status', { detail: s }));
+        const newWaves = st.newWaves || 0;
+        const wb = $('wavesBadge');
+        if (wb) {
+            wb.hidden = !newWaves;
+            wb.textContent = String(newWaves);
+        }
+        document.dispatchEvent(new CustomEvent('wave:status', { detail: { ...s, newWaves } }));
     }
-    async function refreshStatus() {
-        try { st.status = await Supa.rpc('wave_status'); } catch (e) { console.error('Status error:', e); }
+    async function refreshStatus(forceMatches = false) {
+        try {
+            st.status = await Supa.rpc('wave_status');
+            const used = st.status.used || 0;
+            if (used === 0) {
+                if (seenWaves.size || st.newWaves) {
+                    seenWaves.clear();
+                    saveSeenWaves();
+                }
+                st.newWaves = 0;
+                st.matchesSynced = true;
+                st.lastSyncedUsed = 0;
+            } else if (step !== WAVES && (forceMatches || !st.matchesSynced || used !== st.lastSyncedUsed)) {
+                try {
+                    const mat = await Supa.rpc('my_matches');
+                    syncUnseenWaves(mat);
+                } catch (err) {
+                    console.error('Matches sync error:', err);
+                }
+            }
+        } catch (e) { console.error('Status error:', e); }
         renderStatus();
     }
     function explainSlots() {
@@ -1096,7 +1165,7 @@ const Feed = (() => {
                 if (onFail) onFail();
             } else {
                 if (text) { TG.ok(); toast(text, res.result === 'sent' ? 3000 : 5500); }
-                await leave('right'); next(); refreshStatus();
+                await leave('right'); next(); refreshStatus(res.result === 'matched');
             }
         } catch (e) {
             console.error('Wave error:', e); TG.fail(); toast('Не удалось отправить лайк' + dbg(e));
@@ -1355,13 +1424,18 @@ const Feed = (() => {
         const waitMin = withDelay ? new Promise((r) => setTimeout(r, 420)) : Promise.resolve();
         if (!dbOn()) {
             await waitMin;
+            markWavesSeen([]);
+            renderStatus();
             renderWaves([]);
             return;
         }
         try {
             const [status, mat] = await Promise.all([Supa.rpc('wave_status'), Supa.rpc('my_matches'), waitMin]);
             if (Array.isArray(mat) && mat.length) await preloadPhotos(mat, 1500);
-            st.status = status; renderStatus(); renderWaves(mat);
+            st.status = status;
+            markWavesSeen(mat);
+            renderStatus();
+            renderWaves(mat);
         } catch (e) {
             await waitMin;
             console.error('Waves error:', e);
@@ -1392,7 +1466,7 @@ const Feed = (() => {
         } catch (e) { console.error('Respond error:', e); toast('Не получилось ответить' + dbg(e)); }
         if (typeof onDone === 'function') onDone();
         if (step === WAVES) loadWaves();
-        refreshStatus();
+        refreshStatus(true);
     }
     async function endWave(r) {
         if (!(await ask(`Завершить волну с ${r.name}? Слот освободится у вас обоих, вернуть волну будет нельзя.`))) return;
@@ -1413,7 +1487,11 @@ const Feed = (() => {
 
     /* ---------- уведомления в реальном времени ---------- */
     function onNotification(n) {
-        refreshStatus();
+        if (n && n.kind === 'match' && step !== WAVES) {
+            st.newWaves = Math.max(st.newWaves || 0, 1);
+            renderStatus();
+        }
+        refreshStatus(n && (n.kind === 'match' || n.kind === 'ended'));
         const name = n.data && n.data.name ? n.data.name : '';
         const msg = {
             like: '💌 Вас лайкнули',
@@ -1450,6 +1528,8 @@ const Feed = (() => {
         st.loading = false; st.busy = false; st.exhausted = false; st.err = ''; st.gen++;
         st.nameSent = false; st.rtStarted = false;
         st.status = { used: 0, max: 3, incoming: 0, unread: 0 };
+        st.newWaves = 0; st.matchesSynced = false; st.lastSyncedUsed = -1;
+        seenWaves.clear();
         urlCache.clear();
         imgPreloads.clear();
         imgCache.clear();

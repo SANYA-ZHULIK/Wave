@@ -7,7 +7,7 @@ const Nav = (() => {
     const SUPPORT_TG_URL = 'https://t.me/zhul1nsky'; // Замените на ваш @username поддержки или бота
     const MENU = [
         { go: 'feed',     label: 'Анкеты' },
-        { go: 'waves',    label: 'Волны' },
+        { go: 'waves',    label: 'Волны', badge: 'waves' },
         { go: 'notifs',   label: 'Уведомления', badge: 'notifs' },
         { go: 'profile',  label: 'Мой профиль' },
         { go: 'edit',     label: 'Изменить анкету' },
@@ -142,10 +142,15 @@ const Nav = (() => {
     }
     function updateBadges(s) {
         const incoming = s.incoming || 0;
-        document.querySelectorAll('.menu-btn .dot').forEach((d) => { d.hidden = !incoming; });
+        const newWaves = s.newWaves || 0;
+        const hasAny = (incoming + newWaves) > 0;
+        document.querySelectorAll('.menu-btn .dot').forEach((d) => { d.hidden = !hasAny; });
         $('drawerNav').querySelectorAll('.badge[data-badge]').forEach((b) => {
-            const n = b.dataset.badge === 'notifs' ? incoming : (s[b.dataset.badge] || 0);
-            b.hidden = !n; b.textContent = n;
+            const n = b.dataset.badge === 'notifs'
+                ? incoming
+                : (b.dataset.badge === 'waves' ? newWaves : (s[b.dataset.badge] || 0));
+            b.hidden = !n;
+            b.textContent = n;
         });
     }
     function openDrawer() {
