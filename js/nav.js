@@ -598,6 +598,9 @@ const Nav = (() => {
                     waitMin
                 ]);
                 incomingList = Array.isArray(inc) ? inc : [];
+                if (incomingList.length && typeof Feed !== 'undefined' && Feed.preloadPhotos) {
+                    await Feed.preloadPhotos(incomingList, 1500);
+                }
                 firstLoaded = true;
                 renderNotifs(st);
                 // Очищаем уже ненужные временные записи в таблице notifications, чтобы не копить мусор в БД

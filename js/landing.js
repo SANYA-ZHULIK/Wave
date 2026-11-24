@@ -343,7 +343,7 @@ function submitIntents() {
 /* ---------- 6. фото ---------- */
 // Фото обрезается под вертикальную карточку 4:5 — именно так оно показывается в ленте.
 // Маленькие фото не увеличиваем, большие уменьшаем до 1080 px по ширине (хватает для экранов с высокой плотностью).
-const PHOTO_W = 1080, PHOTO_MIN_W = 400, PHOTO_RATIO = 4 / 5;
+const PHOTO_W = 900, PHOTO_MIN_W = 400, PHOTO_RATIO = 4 / 5;
 function portraitCrop(w, h) {
     let cw, ch, sx = 0, sy = 0;
     if (w / h > PHOTO_RATIO) { ch = h; cw = h * PHOTO_RATIO; sx = (w - cw) / 2; }   // широкое — режем с боков по центру
@@ -368,8 +368,8 @@ async function toPortraitJpeg(file) {
     g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
     g.drawImage(img, sx, sy, cw, ch, 0, 0, outW, outH);
     if (objUrl) URL.revokeObjectURL(objUrl);
-    let q = 0.9, url;
-    do { url = c.toDataURL('image/jpeg', q); q -= 0.1; } while (url.length * 0.75 > 1.6e6 && q > 0.45);  // лимит bucket — 2 МБ
+    let q = 0.82, url;
+    do { url = c.toDataURL('image/jpeg', q); q -= 0.08; } while (url.length * 0.75 > 4.5e5 && q > 0.5);
     return url;
 }
 function paintPhoto() {

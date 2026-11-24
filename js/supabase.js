@@ -107,6 +107,40 @@ const Supa = (() => {
             const j = await res.json();
             return `${SUPA_URL}/storage/v1${j.signedURL}`;
         },
+        // Пакетная генерация подписанных ссылок (1 запрос вместо N) — резко ускоряет загрузку ленты
+        async signedUrls(paths, expiresIn = 3600) {
+            const unique = [...new Set((paths || []).filter(Boolean))];
+            if (!unique.length) return {};
+            const s = await auth();
+            const map = {};
+            const norm = (u) => (u.startsWith('http') ? u : `${SUPA_URL}/storage/v1${u}`);
+            try {
+                const res = await fetch(`${SUPA_URL}/storage/v1/object/sign/avatars`, {
+                    method: 'POST',
+                    headers: { apikey: SUPA_ANON, Authorization: `Bearer ${s.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ expiresIn, paths: unique })
+                });
+                if (res.ok) {
+                    const arr = await res.json();
+                    if (Array.isArray(arr)) {
+                        arr.forEach((item) => {
+                            if (item && item.path && item.signedURL) {
+                                map[item.path] = norm(item.signedURL);
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('Batch sign fallback:', e);
+            }
+            const restPaths = unique.filter((p) => !map[p]);
+            if (restPaths.length) {
+                await Promise.all(restPaths.map((p) =>
+                    this.signedUrl(p, expiresIn).then((u) => { map[p] = u; }).catch(() => {})
+                ));
+            }
+            return map;
+        },
         // Вызов SQL-функции (RPC): подбор анкет, волны, слоты, мэтчи
         async rpc(fn, args = {}) {
             const res = await rest('rpc/' + fn, { method: 'POST', body: JSON.stringify(args) });

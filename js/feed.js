@@ -436,9 +436,53 @@ const Feed = (() => {
         t.hidden = false;
         scheduleToastHide(ms);
     }
+    const imgPreloads = new Map();
+    const imgCache = new Map(); // Держим ссылки на декодированные Image, чтобы WebView не выгружал их до свайпа
+    const IMG_CACHE_MAX = 18;
+    function rememberImage(path, im) {
+        if (imgCache.has(path)) imgCache.delete(path);
+        imgCache.set(path, im);
+        while (imgCache.size > IMG_CACHE_MAX) {
+            const oldest = imgCache.keys().next().value;
+            imgCache.delete(oldest);
+        }
+    }
     async function photoUrl(path) {
         if (!urlCache.has(path)) urlCache.set(path, await Supa.signedUrl(path));
         return urlCache.get(path);
+    }
+    function preloadImage(path) {
+        if (!path) return Promise.resolve();
+        if (imgCache.has(path)) return Promise.resolve();
+        if (imgPreloads.has(path)) return imgPreloads.get(path);
+        const p = photoUrl(path).then((u) => new Promise((res) => {
+            if (!u) { imgPreloads.delete(path); return res(); }
+            const im = new Image();
+            im.decoding = 'async';
+            const finishOk = () => { rememberImage(path, im); res(); };
+            im.onload = () => (im.decode ? im.decode().then(finishOk, finishOk) : finishOk());
+            im.onerror = () => { imgPreloads.delete(path); res(); };
+            im.src = u;
+        })).catch(() => { imgPreloads.delete(path); });
+        imgPreloads.set(path, p);
+        return p;
+    }
+    async function preloadPhotos(list, timeoutMs = 0) {
+        const paths = [...new Set((list || []).map((r) => r && r.photo_path).filter(Boolean))];
+        if (!paths.length) return;
+        const missing = paths.filter((p) => !urlCache.has(p));
+        const work = (async () => {
+            if (missing.length && dbOn() && typeof Supa.signedUrls === 'function') {
+                const signed = await Supa.signedUrls(missing);
+                Object.keys(signed).forEach((k) => { if (signed[k]) urlCache.set(k, signed[k]); });
+            }
+            await Promise.all(paths.map((p) => preloadImage(p)));
+        })().catch(() => {});
+        if (timeoutMs > 0) {
+            await Promise.race([work, new Promise((r) => setTimeout(r, timeoutMs))]);
+        } else {
+            await work;
+        }
     }
     const SWIPE_HEART_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
     const SWIPE_PASS_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
@@ -608,8 +652,26 @@ const Feed = (() => {
 
     function avatar(r, cls, zoomable = false) {
         const a = el('div', cls, (r.name || '?').slice(0, 1).toUpperCase());
-        if (r.photo_path) photoUrl(r.photo_path).then((u) => {
-            const im = new Image(); im.alt = r.name || ''; im.src = u; a.textContent = ''; a.appendChild(im);
+        if (!r.photo_path) return a;
+        const mount = (u) => {
+            if (!u) return;
+            const ready = imgCache.has(r.photo_path);
+            const im = new Image();
+            im.alt = r.name || '';
+            im.decoding = ready ? 'sync' : 'async';
+            im.src = u;
+            const isLoaded = ready || (im.complete && im.naturalWidth > 0);
+            if (!isLoaded) {
+                im.classList.add('is-loading');
+                const reveal = () => {
+                    rememberImage(r.photo_path, im);
+                    im.classList.remove('is-loading');
+                };
+                im.onload = () => (im.decode ? im.decode().then(reveal, reveal) : reveal());
+                im.onerror = () => im.classList.remove('is-loading');
+            }
+            a.textContent = '';
+            a.appendChild(im);
             if (zoomable) {
                 a.classList.add('is-zoomable');
                 a.setAttribute('role', 'button');
@@ -621,7 +683,10 @@ const Feed = (() => {
                     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPhotoViewer(u, cap, a); }
                 });
             }
-        }).catch(() => {});
+        };
+        const cached = urlCache.get(r.photo_path);
+        if (cached) mount(cached);
+        else photoUrl(r.photo_path).then(mount).catch(() => {});
         return a;
     }
     function tagsOf(r) {
@@ -661,21 +726,53 @@ const Feed = (() => {
         st.loading = true; st.err = '';
         const gen = st.gen;
         if (!st.cur) renderDeck();
-        const waitMin = !st.cur ? new Promise((r) => setTimeout(r, 520)) : Promise.resolve();
+        const waitMin = !st.cur ? new Promise((r) => setTimeout(r, 420)) : Promise.resolve();
         try {
             if (!dbOn()) {
                 await waitMin;
                 if (gen === st.gen) st.err = 'Лента доступна только внутри Telegram';
             } else {
-                const [rows] = await Promise.all([
-                    Supa.rpc('discover', { p_intent: st.intent, p_same_city: st.sameCity, p_limit: 20, p_offset: 0 }),
-                    waitMin
-                ]);
+                const rows = await Supa.rpc('discover', { p_intent: st.intent, p_same_city: st.sameCity, p_limit: 20, p_offset: 0 });
                 if (gen !== st.gen) return;
                 const have = new Set(st.queue.map((r) => r.id));
                 if (st.cur) have.add(st.cur.id);
-                rows.forEach((r) => { if (!have.has(r.id) && matchCardPrefs(r)) st.queue.push(r); });
+                const added = [];
+                rows.forEach((r) => {
+                    if (!have.has(r.id) && matchCardPrefs(r)) {
+                        st.queue.push(r);
+                        added.push(r);
+                    }
+                });
                 if (rows.length < 20) st.exhausted = true;
+
+                // Пакетно подписываем URL всех анкет пачки и заранее декодируем ближайшие фото
+                if (added.length) {
+                    const missing = [...new Set(added.map((r) => r.photo_path).filter((p) => p && !urlCache.has(p)))];
+                    const batchSign = (missing.length && typeof Supa.signedUrls === 'function')
+                        ? Supa.signedUrls(missing).then((signed) => {
+                            Object.keys(signed).forEach((k) => { if (signed[k]) urlCache.set(k, signed[k]); });
+                        }).catch(() => {})
+                        : Promise.resolve();
+
+                    if (!st.cur && st.queue.length) {
+                        const firstReady = batchSign.then(() => {
+                            st.queue.slice(1, 6).forEach((r) => preloadImage(r.photo_path));
+                            return preloadImage(st.queue[0].photo_path);
+                        });
+                        await Promise.all([
+                            waitMin,
+                            Promise.race([firstReady, new Promise((r) => setTimeout(r, 2200))])
+                        ]);
+                    } else {
+                        batchSign.then(() => {
+                            st.queue.slice(0, 6).forEach((r) => preloadImage(r.photo_path));
+                        });
+                        await waitMin;
+                    }
+                } else {
+                    await waitMin;
+                }
+                if (gen !== st.gen) return;
             }
         } catch (e) {
             await waitMin;
@@ -699,7 +796,8 @@ const Feed = (() => {
         st.cur = st.queue.shift() || null;
         announceZone();
         renderDeck();
-        if (st.cur && st.queue.length < 4) loadQueue();
+        if (st.queue.length) preloadPhotos(st.queue.slice(0, 5));
+        if (st.cur && st.queue.length < 6) loadQueue();
     }
     function resetDeck() {
         st.queue = []; st.cur = null; st.lastZone = null; st.exhausted = false; st.err = ''; st.loading = false; st.gen++;
@@ -1260,6 +1358,7 @@ const Feed = (() => {
         }
         try {
             const [status, mat] = await Promise.all([Supa.rpc('wave_status'), Supa.rpc('my_matches'), waitMin]);
+            if (Array.isArray(mat) && mat.length) await preloadPhotos(mat, 1500);
             st.status = status; renderStatus(); renderWaves(mat);
         } catch (e) {
             await waitMin;
@@ -1350,6 +1449,8 @@ const Feed = (() => {
         st.nameSent = false; st.rtStarted = false;
         st.status = { used: 0, max: 3, incoming: 0, unread: 0 };
         urlCache.clear();
+        imgPreloads.clear();
+        imgCache.clear();
     }
     function init() {
         initToastSwipe();
@@ -1404,7 +1505,7 @@ const Feed = (() => {
         setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }
     init();
-    return { open, openWaves, toast, refreshStatus, onCityChanged, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession, incomingCard, openPhotoViewer };
+    return { open, openWaves, toast, refreshStatus, onCityChanged, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession, incomingCard, openPhotoViewer, preloadPhotos };
 })();
 
 // Если лента уже показана при загрузке (вход в приложение с готовым профилем) — запускаем её
