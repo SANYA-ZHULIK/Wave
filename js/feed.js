@@ -442,6 +442,17 @@ const Feed = (() => {
             if (t) t.hidden = true;
         }, toastRemainingMs);
     }
+    function hideToast() {
+        const t = $('toast');
+        clearTimeout(toastTimer);
+        clearTimeout(toastHideAnimTimer);
+        if (!t || t.hidden) return;
+        t.hidden = true;
+        t.classList.remove('dragging', 'snap-back', 'dismiss-left', 'dismiss-right', 'dismiss-up');
+        t.style.transform = '';
+        t.style.opacity = '';
+        t.style.top = '';
+    }
     function positionToast(t) {
         if (!t) return;
         const deck = step === FEED ? $('deck') : null;
@@ -639,6 +650,7 @@ const Feed = (() => {
         const img = $('photoViewerImg');
         const cap = $('photoViewerCaption');
         if (!viewer || !img || !url) return;
+        hideToast();
         TG.tap();
         clearTimeout(viewerCloseTimer);
         viewerClosing = false;
@@ -1488,6 +1500,7 @@ const Feed = (() => {
             onboardSteps = steps;
             onboardStep = 0;
             onboardActive = true;
+            hideToast();
             scr.classList.add('is-onboarding');
             overlay.hidden = false;
             overlay.classList.remove('is-open');
@@ -1742,6 +1755,7 @@ const Feed = (() => {
 
     function openPersonMenu(r, fromWaves) {
         if (!r || st.busy) return;
+        hideToast();
         TG.tap();
         menuTarget = r;
         menuFromWaves = !!fromWaves;
@@ -1764,6 +1778,7 @@ const Feed = (() => {
 
     function openReportSheet(r, fromWaves) {
         if (!r) return;
+        hideToast();
         TG.tap();
         reportTarget = r;
         reportFromWaves = !!fromWaves;
@@ -1964,6 +1979,7 @@ const Feed = (() => {
 
     function openSheet(prefill) {
         if (!st.cur) return;
+        hideToast();
         const sh = $('waveSheet');
         const ta = $('sheetText');
         resetSheetState(sh);
@@ -2324,7 +2340,7 @@ const Feed = (() => {
         setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }
     init();
-    return { open, openWaves, toast, refreshStatus, onCityChanged, clearActed, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession, incomingCard, openPhotoViewer, preloadPhotos, replayOnboard };
+    return { open, openWaves, toast, hideToast, refreshStatus, onCityChanged, clearActed, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession, incomingCard, openPhotoViewer, preloadPhotos, replayOnboard };
 })();
 
 // Если лента уже показана при загрузке (вход в приложение с готовым профилем) — запускаем её

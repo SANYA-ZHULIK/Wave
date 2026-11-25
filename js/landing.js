@@ -145,6 +145,7 @@ function applyBack() {
 }
 
 function show(n) {
+    if (n !== step && typeof Feed !== 'undefined' && Feed.hideToast) Feed.hideToast();
     if (n !== 4 && cityReturnStep) {
         cityReturnStep = null;
         const prog = $('screen-city').querySelector('.auth-progress');

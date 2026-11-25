@@ -156,6 +156,7 @@ const Nav = (() => {
     function openDrawer() {
         const drawer = $('drawer');
         const overlay = $('drawerOverlay');
+        if (typeof Feed !== 'undefined' && Feed.hideToast) Feed.hideToast();
         TG.tap(); markActive(); renderDrawer();
         drawer.classList.remove('is-dragging');
         overlay.classList.remove('is-dragging');
@@ -234,6 +235,7 @@ const Nav = (() => {
                 }
                 dragging = true;
                 if (mode === 'open') {
+                    if (typeof Feed !== 'undefined' && Feed.hideToast) Feed.hideToast();
                     markActive();
                     renderDrawer();
                 }
