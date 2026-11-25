@@ -68,22 +68,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=60"
+        href="css/base.css?v=61"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=60"
+        href="css/landing.css?v=61"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=60"
+        href="css/network.css?v=61"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=60"
+        href="css/auth.css?v=61"
     >
 
 </head>
@@ -334,14 +334,13 @@
         <div class="feed-onboard" id="feedOnboard" hidden role="dialog" aria-modal="true" aria-label="Как пользоваться Wave">
             <div class="onboard-spotlight" id="onboardSpotlight" aria-hidden="true"></div>
             <div class="onboard-gesture" id="onboardGesture" hidden aria-hidden="true">
-                <div class="onboard-gesture-pill is-pass">
-                    <span class="onboard-gesture-arrow">←</span>
-                    <span>Пропуск</span>
-                </div>
-                <div class="onboard-gesture-pill is-like">
-                    <span>Волна</span>
-                    <span class="onboard-gesture-arrow">→</span>
-                </div>
+                <svg class="onboard-arrow is-pass" viewBox="0 0 68 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M64 28 Q30 31 8 10 M20 11.5 L8 10 L11 22" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="onboard-gesture-text">Свайп вправо — волна,<br>влево — пропуск</div>
+                <svg class="onboard-arrow is-like" viewBox="0 0 68 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 28 Q38 31 60 10 M48 11.5 L60 10 L57 22" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
             </div>
             <div class="onboard-card" id="onboardCard">
                 <div class="onboard-caret" id="onboardCaret" aria-hidden="true"></div>
@@ -875,18 +874,18 @@
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=60"></script>
+    <script src="js/telegram.js?v=61"></script>
 
     <!-- Supabase JS — нужен только для уведомлений в реальном времени (без него приложение работает с периодическим опросом) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-    <script src="js/supabase.js?v=60"></script>
+    <script src="js/supabase.js?v=61"></script>
 
-    <script src="js/landing.js?v=60"></script>
+    <script src="js/landing.js?v=61"></script>
 
-    <script src="js/feed.js?v=60"></script>
+    <script src="js/feed.js?v=61"></script>
 
-    <script src="js/nav.js?v=60"></script>
+    <script src="js/nav.js?v=61"></script>
 
 
     <script>

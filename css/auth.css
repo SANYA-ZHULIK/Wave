@@ -446,41 +446,40 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 2;
+    width: calc(100vw - 44px);
+    max-width: 360px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     pointer-events: none;
     transition: opacity 0.24s ease;
 }
-.onboard-gesture-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 9px 15px;
-    border-radius: 999px;
-    font-size: 13px;
+.onboard-gesture-text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(13px, 3.8vw, 15px);
     font-weight: 700;
-    letter-spacing: 0.1px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42);
+    line-height: 1.32;
+    text-align: center;
+    color: #ffffff;
+    white-space: nowrap;
+    text-shadow: 0 2px 14px rgba(8, 3, 20, 0.96), 0 0 22px rgba(8, 3, 20, 0.85);
 }
-.onboard-gesture-pill.is-pass {
-    background: rgba(24, 10, 26, 0.72);
-    border: 1px solid rgba(255, 107, 107, 0.55);
-    color: #FF9494;
+.onboard-arrow {
+    flex: 0 0 auto;
+    width: clamp(44px, 14.5vw, 62px);
+    height: auto;
+    overflow: visible;
+}
+.onboard-arrow.is-pass {
+    color: #FF6B6B;
+    filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.58));
     animation: onboardDriftLeft 2.2s ease-in-out infinite;
 }
-.onboard-gesture-pill.is-like {
-    background: rgba(18, 22, 16, 0.72);
-    border: 1px solid rgba(181, 198, 128, 0.65);
-    color: #D9F99D;
+.onboard-arrow.is-like {
+    color: #B5C680;
+    filter: drop-shadow(0 0 8px rgba(181, 198, 128, 0.58));
     animation: onboardDriftRight 2.2s ease-in-out infinite;
-}
-.onboard-gesture-arrow {
-    font-size: 15px;
-    line-height: 1;
 }
 @keyframes onboardDriftLeft {
     0%, 100% { transform: translateX(0); }
