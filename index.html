@@ -68,22 +68,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=53"
+        href="css/base.css?v=54"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=53"
+        href="css/landing.css?v=54"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=53"
+        href="css/network.css?v=54"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=53"
+        href="css/auth.css?v=54"
     >
 
 </head>
@@ -321,7 +321,16 @@
             <button class="feed-pill" id="feedWaves">Волны<span class="badge" id="wavesBadge" hidden>0</span></button>
         </header>
         <div class="feed-chips" id="feedChips"></div>
-        <div class="deck" id="deck"></div>
+        <div class="deck-stage">
+            <div class="deck" id="deck"></div>
+            <button type="button" class="undo-pass-btn" id="undoPassBtn" hidden aria-label="Вернуть прошлую анкету">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 14L4 9l5-5" />
+                    <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+                </svg>
+                <span>Вернуть</span>
+            </button>
+        </div>
         <div class="sheet" id="waveSheet" hidden>
             <div class="sheet-box">
                 <div class="sheet-handle" aria-hidden="true"></div>
@@ -836,18 +845,18 @@
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=53"></script>
+    <script src="js/telegram.js?v=54"></script>
 
     <!-- Supabase JS — нужен только для уведомлений в реальном времени (без него приложение работает с периодическим опросом) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-    <script src="js/supabase.js?v=53"></script>
+    <script src="js/supabase.js?v=54"></script>
 
-    <script src="js/landing.js?v=53"></script>
+    <script src="js/landing.js?v=54"></script>
 
-    <script src="js/feed.js?v=53"></script>
+    <script src="js/feed.js?v=54"></script>
 
-    <script src="js/nav.js?v=53"></script>
+    <script src="js/nav.js?v=54"></script>
 
 
     <script>

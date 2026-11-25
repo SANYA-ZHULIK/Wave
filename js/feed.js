@@ -290,6 +290,7 @@ const Feed = (() => {
     const PREFS_KEY = 'wave_search_prefs';
     const BLOCKED_KEY = 'wave_blocked_local';
     const SEEN_WAVES_KEY = 'wave_seen_waves';
+    const SWIPE_HINT_KEY = 'wave_swipe_hint_seen';
     const prefs = { ageMode: 'peer', sameCity: false, isHidden: false, onlyWithBio: false };
     try {
         const savedPrefs = JSON.parse(localStorage.getItem(PREFS_KEY));
@@ -400,11 +401,14 @@ const Feed = (() => {
 
     const st = {
         queue: [], cur: null, intent: null, sameCity: prefs.sameCity, lastZone: null,
+        seenInCity: 0, autoExpandedFromCity: false, cityExhaustedAfterSwipe: false,
         loading: false, busy: false, exhausted: false, err: '', gen: 0, nameSent: false,
         status: { used: 0, max: 3, incoming: 0, unread: 0 },
         newWaves: 0, matchesSynced: false, lastSyncedUsed: -1
     };
     const urlCache = new Map();
+    let pendingPass = null;
+    let swipeHintTimer = null;
     let toastTimer;
     let toastHideAnimTimer;
     let toastRemainingMs = 3000;
@@ -913,20 +917,49 @@ const Feed = (() => {
     function announceZone() {
         const z = st.cur ? st.cur.zone : null;
         if (z === null || z === undefined) return;
-        if (z > 0 && st.lastZone === null) toast('Показываем людей из ближайших городов', 4500);
-        else if (z > 0 && st.lastZone === 0) toast('В вашем городе анкеты закончились — показываем людей из ближайших городов', 4500);
-        else if (st.lastZone !== null && z > st.lastZone && z > 1) toast('Расширяем поиск — показываем города подальше', 4500);
+        if (z > 0 && st.autoExpandedFromCity) {
+            toast(st.cityExhaustedAfterSwipe
+                ? 'В вашем городе анкеты закончились — показываем людей из ближайших городов'
+                : 'В вашем городе пока нет новых анкет — показываем людей из ближайших городов', 4500);
+        } else if (z > 0 && st.lastZone === null) {
+            toast('Показываем людей из ближайших городов', 4500);
+        } else if (z > 0 && st.lastZone === 0) {
+            toast('В вашем городе анкеты закончились — показываем людей из ближайших городов', 4500);
+        } else if (st.lastZone !== null && z > st.lastZone && z > 1) {
+            toast('Расширяем поиск — показываем города подальше', 4500);
+        }
+        st.autoExpandedFromCity = false;
+        st.cityExhaustedAfterSwipe = false;
         st.lastZone = z;
+    }
+    function expandToNearbyCities() {
+        st.sameCity = false;
+        prefs.sameCity = false;
+        savePrefs();
+        st.exhausted = false;
+        st.autoExpandedFromCity = true;
+        st.cityExhaustedAfterSwipe = st.seenInCity > 0;
+        buildChips();
+        if (typeof Nav !== 'undefined' && Nav.renderSettings) Nav.renderSettings();
+        loadQueue();
     }
     function next() {
         st.cur = st.queue.shift() || null;
+        if (!st.cur && !st.queue.length && st.sameCity && st.exhausted && !st.err && dbOn()) {
+            expandToNearbyCities();
+            return;
+        }
+        if (st.cur && (st.cur.zone === 0 || st.sameCity)) st.seenInCity++;
         announceZone();
         renderDeck();
         if (st.queue.length) preloadPhotos(st.queue.slice(0, 5));
         if (st.cur && st.queue.length < 6) loadQueue();
     }
     function resetDeck() {
-        st.queue = []; st.cur = null; st.lastZone = null; st.exhausted = false; st.err = ''; st.loading = false; st.gen++;
+        flushPendingPass();
+        st.queue = []; st.cur = null; st.lastZone = null; st.seenInCity = 0;
+        st.autoExpandedFromCity = false; st.cityExhaustedAfterSwipe = false;
+        st.exhausted = false; st.err = ''; st.loading = false; st.gen++;
         loadQueue();
     }
 
@@ -952,7 +985,7 @@ const Feed = (() => {
             desc.textContent = st.err;
         } else {
             desc.append(
-                document.createTextNode('В твоём городе анкеты закончились.'),
+                document.createTextNode(st.sameCity ? 'В твоём городе анкеты закончились.' : 'Новые анкеты закончились.'),
                 document.createElement('br'),
                 document.createTextNode('Загляни чуть позже — новые люди появляются каждый день.')
             );
@@ -1117,14 +1150,54 @@ const Feed = (() => {
         card.addEventListener('pointercancel', onEnd);
     }
 
-    function renderDeck() {
+    const SWIPE_HINT_LEFT_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>`;
+    const SWIPE_HINT_RIGHT_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>`;
+
+    function shouldShowSwipeHint() {
+        try { return localStorage.getItem(SWIPE_HINT_KEY) !== '1'; } catch (e) { return false; }
+    }
+    function markSwipeHintSeen() {
+        try { localStorage.setItem(SWIPE_HINT_KEY, '1'); } catch (e) {}
+    }
+    function maybeShowSwipeHint(card) {
+        if (!card || step !== FEED || !shouldShowSwipeHint()) return;
+        markSwipeHintSeen();
+        clearTimeout(swipeHintTimer);
+
+        const tip = el('div', 'swipe-hint-tip');
+        tip.setAttribute('aria-hidden', 'true');
+        const leftSide = el('span', 'swipe-hint-side swipe-hint-pass');
+        leftSide.innerHTML = SWIPE_HINT_LEFT_SVG;
+        leftSide.appendChild(document.createTextNode('Пропустить'));
+        const rightSide = el('span', 'swipe-hint-side swipe-hint-like');
+        rightSide.appendChild(document.createTextNode('Лайк'));
+        rightSide.insertAdjacentHTML('beforeend', SWIPE_HINT_RIGHT_SVG);
+        tip.append(leftSide, el('span', 'swipe-hint-dot', '·'), rightSide);
+        card.appendChild(tip);
+
+        card.classList.add('is-hint-sway');
+        const dismissHint = () => {
+            clearTimeout(swipeHintTimer);
+            card.classList.remove('is-hint-sway');
+            if (!tip.isConnected || tip.classList.contains('is-fading')) return;
+            tip.classList.add('is-fading');
+            setTimeout(() => { if (tip.isConnected) tip.remove(); }, 280);
+        };
+        card.addEventListener('pointerdown', dismissHint, { once: true });
+        card.addEventListener('animationend', (e) => {
+            if (e.animationName === 'cardHintSway') card.classList.remove('is-hint-sway');
+        }, { once: true });
+        swipeHintTimer = setTimeout(dismissHint, 3600);
+    }
+
+    function renderDeck(mode) {
         const deck = $('deck'), r = st.cur;
         deck.innerHTML = '';
         if (!r) {
             renderEmptyDeck(deck);
             return;
         }
-        const card = el('article', 'deck-card');
+        const card = el('article', 'deck-card' + (mode === 'undo' ? ' is-undo-in' : ''));
         card.appendChild(avatar(r, 'deck-photo'));
 
         const auraLike = el('div', 'swipe-aura swipe-aura-like');
@@ -1169,7 +1242,33 @@ const Feed = (() => {
         headRow.append(headMain, msgBtn);
         info.append(headRow, tagsOf(r));
 
-        if (r.bio) info.appendChild(el('p', 'deck-bio', r.bio));
+        if (r.bio) {
+            const bioWrap = el('div', 'deck-bio-wrap');
+            const bioEl = el('p', 'deck-bio', r.bio);
+            const bioToggle = el('button', 'deck-bio-toggle', 'Развернуть');
+            bioToggle.type = 'button';
+            bioToggle.hidden = true;
+            const toggleBio = (e) => {
+                e.stopPropagation();
+                if (!bioEl.classList.contains('is-expandable')) return;
+                TG.pick();
+                const expanded = bioEl.classList.toggle('is-expanded');
+                bioToggle.textContent = expanded ? 'Свернуть' : 'Развернуть';
+                bioEl.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            };
+            bioEl.addEventListener('click', toggleBio);
+            bioToggle.addEventListener('click', toggleBio);
+            bioWrap.append(bioEl, bioToggle);
+            info.appendChild(bioWrap);
+            requestAnimationFrame(() => {
+                if (!bioEl.isConnected) return;
+                if (bioEl.scrollHeight > bioEl.clientHeight + 2) {
+                    bioEl.classList.add('is-expandable');
+                    bioEl.setAttribute('aria-expanded', 'false');
+                    bioToggle.hidden = false;
+                }
+            });
+        }
         if (prompts.length) {
             const h = el('div', 'hint');
             h.setAttribute('role', 'button');
@@ -1230,6 +1329,7 @@ const Feed = (() => {
         card.appendChild(info);
         attachSwipe(card);
         deck.appendChild(card);
+        maybeShowSwipeHint(card);
     }
     function leave(dir) {
         return new Promise((res) => {
@@ -1239,7 +1339,7 @@ const Feed = (() => {
                 const aura = c.querySelector(dir === 'right' ? '.swipe-aura-like' : '.swipe-aura-pass');
                 if (aura) aura.style.opacity = '1';
                 if (badge) { badge.style.opacity = '1'; badge.classList.add('is-ready', 'is-commit'); }
-                c.classList.remove('dragging', 'snap-back');
+                c.classList.remove('dragging', 'snap-back', 'is-hint-sway');
                 c.style.transform = '';
                 c.style.boxShadow = '';
                 c.classList.add('leave-' + dir);
@@ -1249,14 +1349,56 @@ const Feed = (() => {
     }
 
     /* ---------- действия ---------- */
+    function hideUndoBtn() {
+        const btn = $('undoPassBtn');
+        if (btn) btn.hidden = true;
+    }
+    function flushPendingPass() {
+        if (!pendingPass) return;
+        const item = pendingPass;
+        pendingPass = null;
+        clearTimeout(item.timer);
+        hideUndoBtn();
+        if (item.card && item.card.id !== undefined && item.card.id !== null && dbOn()) {
+            Supa.rpc('pass_profile', { p_target: item.card.id }).catch((e) => console.error('Pass error:', e));
+        }
+    }
+    function showUndoPass(card) {
+        flushPendingPass();
+        if (!card) return;
+        pendingPass = {
+            card,
+            timer: setTimeout(() => flushPendingPass(), 4500)
+        };
+        const btn = $('undoPassBtn');
+        if (btn) {
+            btn.hidden = true;
+            void btn.offsetWidth;
+            btn.hidden = false;
+        }
+    }
+    function undoLastPass() {
+        if (!pendingPass || st.busy) return;
+        const item = pendingPass;
+        pendingPass = null;
+        clearTimeout(item.timer);
+        hideUndoBtn();
+        if (st.cur) st.queue.unshift(st.cur);
+        st.cur = item.card;
+        TG.tap();
+        renderDeck('undo');
+    }
+
     async function pass() {
         if (!st.cur || st.busy) return;
         st.busy = true; TG.pick();
-        Supa.rpc('pass_profile', { p_target: st.cur.id }).catch((e) => console.error('Pass error:', e));
+        const skipped = st.cur;
+        showUndoPass(skipped);
         await leave('left'); next(); st.busy = false;
     }
     async function wave(msg, onFail) {
         if (!st.cur || st.busy) return;
+        flushPendingPass();
         st.busy = true;
         try {
             const res = await Supa.rpc('send_wave', { p_to: st.cur.id, p_message: msg || null });
@@ -1774,9 +1916,16 @@ const Feed = (() => {
         if (!st.cur && !st.queue.length) { st.exhausted = false; loadQueue(); } else renderDeck();
     }
     function resetSession() {
+        if (pendingPass) {
+            clearTimeout(pendingPass.timer);
+            pendingPass = null;
+            hideUndoBtn();
+        }
+        clearTimeout(swipeHintTimer);
         localBlocked = [];
         Object.assign(prefs, { ageMode: 'peer', sameCity: false, isHidden: false, onlyWithBio: false });
         st.queue = []; st.cur = null; st.intent = null; st.sameCity = false; st.lastZone = null;
+        st.seenInCity = 0; st.autoExpandedFromCity = false; st.cityExhaustedAfterSwipe = false;
         st.loading = false; st.busy = false; st.exhausted = false; st.err = ''; st.gen++;
         st.nameSent = false; st.rtStarted = false;
         st.status = { used: 0, max: 3, incoming: 0, unread: 0 };
@@ -1788,6 +1937,11 @@ const Feed = (() => {
     }
     function init() {
         initToastSwipe();
+        if ($('undoPassBtn')) $('undoPassBtn').addEventListener('click', (e) => { e.stopPropagation(); undoLastPass(); });
+        window.addEventListener('pagehide', flushPendingPass);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') flushPendingPass();
+        });
         $('feedWaves').addEventListener('click', openWaves);
         $('slots').addEventListener('click', explainSlots);
         $('sheetSend').addEventListener('click', () => { const t = $('sheetText').value.trim(); closeSheet(); wave(t); });

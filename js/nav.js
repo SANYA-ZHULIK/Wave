@@ -154,15 +154,146 @@ const Nav = (() => {
         });
     }
     function openDrawer() {
+        const drawer = $('drawer');
+        const overlay = $('drawerOverlay');
         TG.tap(); markActive(); renderDrawer();
-        $('drawer').classList.add('open'); $('drawerOverlay').classList.add('open');
-        $('drawer').setAttribute('aria-hidden', 'false');
+        drawer.classList.remove('is-dragging');
+        overlay.classList.remove('is-dragging');
+        drawer.style.transform = '';
+        overlay.style.opacity = '';
+        drawer.classList.add('open'); overlay.classList.add('open');
+        drawer.setAttribute('aria-hidden', 'false');
         TG.back(closeDrawer);
     }
     function closeDrawer() {
-        $('drawer').classList.remove('open'); $('drawerOverlay').classList.remove('open');
-        $('drawer').setAttribute('aria-hidden', 'true');
+        const drawer = $('drawer');
+        const overlay = $('drawerOverlay');
+        drawer.classList.remove('is-dragging');
+        overlay.classList.remove('is-dragging');
+        drawer.style.transform = '';
+        overlay.style.opacity = '';
+        drawer.classList.remove('open'); overlay.classList.remove('open');
+        drawer.setAttribute('aria-hidden', 'true');
         applyBack();
+    }
+    let drawerSwipeJustEnded = false;
+    function initDrawerSwipe() {
+        const drawer = $('drawer');
+        const overlay = $('drawerOverlay');
+        if (!drawer || !overlay) return;
+
+        let mode = null; // 'close' | 'open'
+        let startX = 0, startY = 0, dx = 0, startTime = 0, width = 260;
+        let tracking = false, dragging = false, pointerId = null;
+
+        function hasBlockingModal() {
+            return !!document.querySelector('.sheet:not([hidden]), .photo-viewer:not([hidden])');
+        }
+        function canEdgeOpen() {
+            return (step === WAVES || step === NOTIFS || step === DONE || step === ABOUT || step === RULES || step === SETTINGS) && !hasBlockingModal();
+        }
+
+        function onDown(e) {
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            const isOpen = drawer.classList.contains('open');
+            if (isOpen) {
+                if (!drawer.contains(e.target) && e.target !== overlay) return;
+                mode = 'close';
+            } else {
+                if (e.clientX > 24 || !canEdgeOpen()) return;
+                mode = 'open';
+            }
+            tracking = true;
+            dragging = false;
+            pointerId = e.pointerId;
+            startX = e.clientX;
+            startY = e.clientY;
+            dx = 0;
+            startTime = Date.now();
+            width = Math.max(220, drawer.offsetWidth || 260);
+        }
+
+        function onMove(e) {
+            if (!tracking || e.pointerId !== pointerId) return;
+            const rawDx = e.clientX - startX;
+            const rawDy = e.clientY - startY;
+
+            if (!dragging) {
+                if (Math.abs(rawDx) < 8 && Math.abs(rawDy) < 8) return;
+                if (Math.abs(rawDy) > Math.abs(rawDx) * 1.15) {
+                    tracking = false;
+                    return;
+                }
+                if (mode === 'close' && rawDx >= 0) {
+                    tracking = false;
+                    return;
+                }
+                if (mode === 'open' && rawDx <= 0) {
+                    tracking = false;
+                    return;
+                }
+                dragging = true;
+                if (mode === 'open') {
+                    markActive();
+                    renderDrawer();
+                }
+                drawer.classList.add('is-dragging');
+                overlay.classList.add('is-dragging');
+            }
+
+            e.preventDefault();
+            if (mode === 'close') {
+                dx = Math.min(0, Math.max(-width, rawDx));
+                const progress = 1 + dx / width;
+                drawer.style.transform = `translate3d(${dx}px, 0, 0)`;
+                overlay.style.opacity = String(Math.max(0, Math.min(1, progress)));
+            } else {
+                dx = Math.max(0, Math.min(width, rawDx));
+                const progress = dx / width;
+                drawer.style.transform = `translate3d(${dx - width}px, 0, 0)`;
+                overlay.style.opacity = String(Math.max(0, Math.min(1, progress)));
+            }
+        }
+
+        function onEnd(e) {
+            if (!tracking || e.pointerId !== pointerId) return;
+            tracking = false;
+            if (!dragging) return;
+            dragging = false;
+
+            const elapsed = Math.max(1, Date.now() - startTime);
+            const velocity = Math.abs(dx) / elapsed;
+            drawerSwipeJustEnded = true;
+            setTimeout(() => { drawerSwipeJustEnded = false; }, 120);
+
+            drawer.classList.remove('is-dragging');
+            overlay.classList.remove('is-dragging');
+            void drawer.offsetWidth;
+
+            if (mode === 'close') {
+                const shouldClose = Math.abs(dx) >= width * 0.28 || (velocity > 0.36 && Math.abs(dx) >= 28);
+                if (shouldClose) {
+                    TG.pick();
+                    closeDrawer();
+                } else {
+                    drawer.style.transform = '';
+                    overlay.style.opacity = '';
+                }
+            } else {
+                const shouldOpen = dx >= width * 0.28 || (velocity > 0.36 && dx >= 28);
+                if (shouldOpen) {
+                    openDrawer();
+                } else {
+                    drawer.style.transform = '';
+                    overlay.style.opacity = '';
+                }
+            }
+        }
+
+        document.addEventListener('pointerdown', onDown, { passive: true });
+        document.addEventListener('pointermove', onMove, { passive: false });
+        document.addEventListener('pointerup', onEnd);
+        document.addEventListener('pointercancel', onEnd);
     }
     function go(key) {
         closeDrawer();
@@ -635,11 +766,11 @@ const Nav = (() => {
     }
 
     function init() {
-        buildMenu(); renderDrawer();
+        buildMenu(); renderDrawer(); initDrawerSwipe();
         document.querySelectorAll('[data-menu]').forEach((b) => b.addEventListener('click', openDrawer));
         document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => go(b.dataset.go)));
-        $('drawerOverlay').addEventListener('click', closeDrawer);
-        $('drawerNav').addEventListener('click', (e) => { const b = e.target.closest('.menu-item'); if (b) go(b.dataset.go); });
+        $('drawerOverlay').addEventListener('click', () => { if (!drawerSwipeJustEnded) closeDrawer(); });
+        $('drawerNav').addEventListener('click', (e) => { if (drawerSwipeJustEnded) return; const b = e.target.closest('.menu-item'); if (b) go(b.dataset.go); });
         if ($('setLookingChips')) $('setLookingChips').addEventListener('click', onSetLooking);
         if ($('setGeoRow')) $('setGeoRow').addEventListener('click', onSetGeo);
         if ($('setAgeChips')) $('setAgeChips').addEventListener('click', onSetAge);

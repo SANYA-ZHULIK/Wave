@@ -350,15 +350,64 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     margin: 0 2px;
 }
 
-.deck { flex: 1; min-height: 0; margin: 0 12px calc(12px + env(safe-area-inset-bottom, 0px)); position: relative; }
+.deck-stage { flex: 1; min-height: 0; margin: 0 12px calc(12px + env(safe-area-inset-bottom, 0px)); position: relative; }
+.deck { position: absolute; inset: 0; }
+.undo-pass-btn {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 12;
+    height: 38px;
+    padding: 0 13px 0 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(12, 6, 27, 0.56);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.34);
+    animation: undoPopIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 0.15s ease, background 0.18s ease, border-color 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.undo-pass-btn svg {
+    width: 15px;
+    height: 15px;
+    color: #B5C680;
+    flex-shrink: 0;
+}
+.undo-pass-btn:active {
+    transform: scale(0.94);
+    background: rgba(12, 6, 27, 0.78);
+    border-color: rgba(181, 198, 128, 0.45);
+}
+@keyframes undoPopIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.92); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .deck-card {
     position: absolute; inset: 0; border-radius: 26px; overflow: hidden;
     background: linear-gradient(135deg, #7C3AED, #4C1D95);
     animation: cardIn 0.3s ease; transition: transform 0.26s ease, opacity 0.26s ease;
     touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab;
 }
+.deck-card.is-undo-in {
+    animation: cardUndoIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.deck-card.is-hint-sway {
+    animation: cardHintSway 1.55s cubic-bezier(0.45, 0.05, 0.55, 0.95) 0.45s 1;
+}
 .deck-card.dragging {
     transition: none;
+    animation: none;
     cursor: grabbing;
 }
 .deck-card.snap-back {
@@ -367,6 +416,63 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .deck-card.leave-left  { transform: translateX(-135%) rotate(-16deg) !important; opacity: 0; }
 .deck-card.leave-right { transform: translateX(135%) rotate(16deg) !important;   opacity: 0; }
 @keyframes cardIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes cardUndoIn {
+    from { opacity: 0.35; transform: translateX(-44%) rotate(-6deg) scale(0.96); }
+    to   { opacity: 1; transform: translateX(0) rotate(0) scale(1); }
+}
+@keyframes cardHintSway {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
+    28%  { transform: translate3d(18px, 0, 0) rotate(2deg); }
+    64%  { transform: translate3d(-18px, 0, 0) rotate(-2deg); }
+    100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+}
+
+.swipe-hint-tip {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 7;
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: rgba(12, 6, 27, 0.68);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.88);
+    white-space: nowrap;
+    animation: hintTipIn 0.32s ease;
+    transition: opacity 0.28s ease, transform 0.28s ease;
+}
+.swipe-hint-tip.is-fading {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+}
+.swipe-hint-side {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.swipe-hint-side svg {
+    width: 13px;
+    height: 13px;
+}
+.swipe-hint-pass svg { color: #FF8585; }
+.swipe-hint-like svg { color: #B5C680; }
+.swipe-hint-dot {
+    color: rgba(255, 255, 255, 0.28);
+}
+@keyframes hintTipIn {
+    from { opacity: 0; transform: translate(-50%, -8px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+}
 
 .swipe-aura {
     position: absolute;
@@ -513,7 +619,50 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     color: #12051f;
     box-shadow: 0 4px 16px rgba(181, 198, 128, 0.45);
 }
-.deck-bio { font-size: 14px; line-height: 1.45; opacity: 0.9; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.deck-bio-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+}
+.deck-bio {
+    font-size: 14px;
+    line-height: 1.45;
+    opacity: 0.9;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+.deck-bio.is-expandable {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.deck-bio.is-expanded {
+    display: block;
+    -webkit-line-clamp: unset;
+    max-height: 40dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    padding-right: 4px;
+    scrollbar-width: none;
+}
+.deck-bio.is-expanded::-webkit-scrollbar { display: none; }
+.deck-bio-toggle {
+    background: none;
+    border: none;
+    padding: 2px 0;
+    color: rgba(181, 198, 128, 0.85);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.deck-bio-toggle:active { opacity: 0.65; }
 .deck-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 30px; opacity: 0.6; line-height: 1.5; }
 
 .hint {
@@ -930,15 +1079,18 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .head-spacer { width: 40px; }
 .badge.static { position: static; margin-left: auto; }
 
-.drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 190; opacity: 0; pointer-events: none; transition: opacity 0.28s; }
+.drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 190; opacity: 0; pointer-events: none; transition: opacity 0.28s; touch-action: none; }
 .drawer-overlay.open { opacity: 1; pointer-events: all; }
+.drawer-overlay.is-dragging { transition: none; }
 .drawer {
     position: fixed; top: 0; bottom: 0; left: 0; width: min(300px, 84%); z-index: 200;
     background: #120a22; border-right: 1px solid rgba(255,255,255,0.08);
     padding: calc(24px + env(safe-area-inset-top, 0px)) 14px 24px; display: flex; flex-direction: column; gap: 18px;
     transform: translateX(-100%); transition: transform 0.28s ease; overflow-y: auto;
+    touch-action: pan-y; will-change: transform;
 }
 .drawer.open { transform: none; }
+.drawer.is-dragging { transition: none; }
 .drawer-user { display: flex; align-items: center; gap: 14px; padding: 4px 8px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
 .drawer-ava { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; flex: 0 0 56px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #7C3AED, #4C1D95); font-size: 22px; font-weight: 800; }
 .drawer-ava img { width: 100%; height: 100%; object-fit: cover; }
