@@ -350,57 +350,12 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     margin: 0 2px;
 }
 
-.deck-stage { flex: 1; min-height: 0; margin: 0 12px calc(12px + env(safe-area-inset-bottom, 0px)); position: relative; }
-.deck { position: absolute; inset: 0; }
-.undo-pass-btn {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    z-index: 12;
-    height: 38px;
-    padding: 0 13px 0 11px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(12, 6, 27, 0.56);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 13px;
-    font-weight: 600;
-    font-family: inherit;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.34);
-    animation: undoPopIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
-    transition: transform 0.15s ease, background 0.18s ease, border-color 0.18s ease;
-    -webkit-tap-highlight-color: transparent;
-}
-.undo-pass-btn svg {
-    width: 15px;
-    height: 15px;
-    color: #B5C680;
-    flex-shrink: 0;
-}
-.undo-pass-btn:active {
-    transform: scale(0.94);
-    background: rgba(12, 6, 27, 0.78);
-    border-color: rgba(181, 198, 128, 0.45);
-}
-@keyframes undoPopIn {
-    from { opacity: 0; transform: translateY(-6px) scale(0.92); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
+.deck { flex: 1; min-height: 0; margin: 0 12px calc(12px + env(safe-area-inset-bottom, 0px)); position: relative; }
 .deck-card {
     position: absolute; inset: 0; border-radius: 26px; overflow: hidden;
     background: linear-gradient(135deg, #7C3AED, #4C1D95);
     animation: cardIn 0.3s ease; transition: transform 0.26s ease, opacity 0.26s ease;
     touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab;
-}
-.deck-card.is-undo-in {
-    animation: cardUndoIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .deck-card.is-hint-sway {
     animation: cardHintSway 1.55s cubic-bezier(0.45, 0.05, 0.55, 0.95) 0.45s 1;
@@ -416,10 +371,6 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .deck-card.leave-left  { transform: translateX(-135%) rotate(-16deg) !important; opacity: 0; }
 .deck-card.leave-right { transform: translateX(135%) rotate(16deg) !important;   opacity: 0; }
 @keyframes cardIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
-@keyframes cardUndoIn {
-    from { opacity: 0.35; transform: translateX(-44%) rotate(-6deg) scale(0.96); }
-    to   { opacity: 1; transform: translateX(0) rotate(0) scale(1); }
-}
 @keyframes cardHintSway {
     0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
     28%  { transform: translate3d(18px, 0, 0) rotate(2deg); }

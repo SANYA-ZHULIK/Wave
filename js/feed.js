@@ -407,7 +407,6 @@ const Feed = (() => {
         newWaves: 0, matchesSynced: false, lastSyncedUsed: -1
     };
     const urlCache = new Map();
-    let pendingPass = null;
     let swipeHintTimer = null;
     let toastTimer;
     let toastHideAnimTimer;
@@ -956,7 +955,6 @@ const Feed = (() => {
         if (st.cur && st.queue.length < 6) loadQueue();
     }
     function resetDeck() {
-        flushPendingPass();
         st.queue = []; st.cur = null; st.lastZone = null; st.seenInCity = 0;
         st.autoExpandedFromCity = false; st.cityExhaustedAfterSwipe = false;
         st.exhausted = false; st.err = ''; st.loading = false; st.gen++;
@@ -1190,14 +1188,14 @@ const Feed = (() => {
         swipeHintTimer = setTimeout(dismissHint, 3600);
     }
 
-    function renderDeck(mode) {
+    function renderDeck() {
         const deck = $('deck'), r = st.cur;
         deck.innerHTML = '';
         if (!r) {
             renderEmptyDeck(deck);
             return;
         }
-        const card = el('article', 'deck-card' + (mode === 'undo' ? ' is-undo-in' : ''));
+        const card = el('article', 'deck-card');
         card.appendChild(avatar(r, 'deck-photo'));
 
         const auraLike = el('div', 'swipe-aura swipe-aura-like');
@@ -1349,56 +1347,14 @@ const Feed = (() => {
     }
 
     /* ---------- действия ---------- */
-    function hideUndoBtn() {
-        const btn = $('undoPassBtn');
-        if (btn) btn.hidden = true;
-    }
-    function flushPendingPass() {
-        if (!pendingPass) return;
-        const item = pendingPass;
-        pendingPass = null;
-        clearTimeout(item.timer);
-        hideUndoBtn();
-        if (item.card && item.card.id !== undefined && item.card.id !== null && dbOn()) {
-            Supa.rpc('pass_profile', { p_target: item.card.id }).catch((e) => console.error('Pass error:', e));
-        }
-    }
-    function showUndoPass(card) {
-        flushPendingPass();
-        if (!card) return;
-        pendingPass = {
-            card,
-            timer: setTimeout(() => flushPendingPass(), 4500)
-        };
-        const btn = $('undoPassBtn');
-        if (btn) {
-            btn.hidden = true;
-            void btn.offsetWidth;
-            btn.hidden = false;
-        }
-    }
-    function undoLastPass() {
-        if (!pendingPass || st.busy) return;
-        const item = pendingPass;
-        pendingPass = null;
-        clearTimeout(item.timer);
-        hideUndoBtn();
-        if (st.cur) st.queue.unshift(st.cur);
-        st.cur = item.card;
-        TG.tap();
-        renderDeck('undo');
-    }
-
     async function pass() {
         if (!st.cur || st.busy) return;
         st.busy = true; TG.pick();
-        const skipped = st.cur;
-        showUndoPass(skipped);
+        Supa.rpc('pass_profile', { p_target: st.cur.id }).catch((e) => console.error('Pass error:', e));
         await leave('left'); next(); st.busy = false;
     }
     async function wave(msg, onFail) {
         if (!st.cur || st.busy) return;
-        flushPendingPass();
         st.busy = true;
         try {
             const res = await Supa.rpc('send_wave', { p_to: st.cur.id, p_message: msg || null });
@@ -1916,11 +1872,6 @@ const Feed = (() => {
         if (!st.cur && !st.queue.length) { st.exhausted = false; loadQueue(); } else renderDeck();
     }
     function resetSession() {
-        if (pendingPass) {
-            clearTimeout(pendingPass.timer);
-            pendingPass = null;
-            hideUndoBtn();
-        }
         clearTimeout(swipeHintTimer);
         localBlocked = [];
         Object.assign(prefs, { ageMode: 'peer', sameCity: false, isHidden: false, onlyWithBio: false });
@@ -1937,11 +1888,6 @@ const Feed = (() => {
     }
     function init() {
         initToastSwipe();
-        if ($('undoPassBtn')) $('undoPassBtn').addEventListener('click', (e) => { e.stopPropagation(); undoLastPass(); });
-        window.addEventListener('pagehide', flushPendingPass);
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') flushPendingPass();
-        });
         $('feedWaves').addEventListener('click', openWaves);
         $('slots').addEventListener('click', explainSlots);
         $('sheetSend').addEventListener('click', () => { const t = $('sheetText').value.trim(); closeSheet(); wave(t); });
