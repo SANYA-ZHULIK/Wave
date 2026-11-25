@@ -1454,6 +1454,14 @@ const Feed = (() => {
             });
         }, 320);
     }
+    function replayOnboard() {
+        try { localStorage.removeItem(ONBOARD_KEY); } catch (e) {}
+        closeFeedOnboard(true);
+        show(FEED);
+        if (!st.cur && !st.loading) {
+            toast('Обучение откроется, как только в ленте появится анкета', 3500);
+        }
+    }
 
     function renderDeck() {
         const deck = $('deck'), r = st.cur;
@@ -2269,7 +2277,7 @@ const Feed = (() => {
         setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }
     init();
-    return { open, openWaves, toast, refreshStatus, onCityChanged, clearActed, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession, incomingCard, openPhotoViewer, preloadPhotos };
+    return { open, openWaves, toast, refreshStatus, onCityChanged, clearActed, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession, incomingCard, openPhotoViewer, preloadPhotos, replayOnboard };
 })();
 
 // Если лента уже показана при загрузке (вход в приложение с готовым профилем) — запускаем её

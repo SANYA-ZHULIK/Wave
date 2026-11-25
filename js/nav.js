@@ -779,6 +779,10 @@ const Nav = (() => {
         if ($('setBioRow')) $('setBioRow').addEventListener('click', onSetBio);
         if ($('setResetPassesBtn')) $('setResetPassesBtn').addEventListener('click', onResetPasses);
         if ($('setHapticRow')) $('setHapticRow').addEventListener('click', onSetHaptic);
+        if ($('setReplayOnboardBtn')) $('setReplayOnboardBtn').addEventListener('click', () => {
+            TG.tap();
+            if (typeof Feed !== 'undefined' && Feed.replayOnboard) Feed.replayOnboard();
+        });
         if ($('setRefreshUsernameBtn')) $('setRefreshUsernameBtn').addEventListener('click', onRefreshUsername);
         if ($('setBlacklistToggleBtn')) $('setBlacklistToggleBtn').addEventListener('click', onToggleBlacklist);
         if ($('setSupportBtn')) $('setSupportBtn').addEventListener('click', onOpenSupport);
