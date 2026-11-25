@@ -645,6 +645,7 @@ const Nav = (() => {
                 await Supa.resetPasses();
             }
             if (typeof Feed !== 'undefined') {
+                if (Feed.clearActed) Feed.clearActed();
                 Feed.onCityChanged();
                 Feed.toast('Пропущенные анкеты снова доступны в ленте');
             }

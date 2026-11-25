@@ -407,6 +407,7 @@ const Feed = (() => {
         newWaves: 0, matchesSynced: false, lastSyncedUsed: -1
     };
     const urlCache = new Map();
+    const actedIds = new Set();
     let swipeHintTimer = null;
     let toastTimer;
     let toastHideAnimTimer;
@@ -863,11 +864,12 @@ const Feed = (() => {
             } else {
                 const rows = await Supa.rpc('discover', { p_intent: st.intent, p_same_city: st.sameCity, p_limit: 20, p_offset: 0 });
                 if (gen !== st.gen) return;
-                const have = new Set(st.queue.map((r) => r.id));
-                if (st.cur) have.add(st.cur.id);
+                const have = new Set(st.queue.map((r) => String(r.id)));
+                if (st.cur) have.add(String(st.cur.id));
                 const added = [];
                 rows.forEach((r) => {
-                    if (!have.has(r.id) && matchCardPrefs(r)) {
+                    const idKey = String(r.id);
+                    if (!have.has(idKey) && !actedIds.has(idKey) && matchCardPrefs(r)) {
                         st.queue.push(r);
                         added.push(r);
                     }
@@ -1350,14 +1352,22 @@ const Feed = (() => {
     async function pass() {
         if (!st.cur || st.busy) return;
         st.busy = true; TG.pick();
-        Supa.rpc('pass_profile', { p_target: st.cur.id }).catch((e) => console.error('Pass error:', e));
-        await leave('left'); next(); st.busy = false;
+        const targetId = st.cur.id;
+        actedIds.add(String(targetId));
+        const passReq = Supa.rpc('pass_profile', { p_target: targetId }).catch((e) => console.error('Pass error:', e));
+        if (!st.queue.length) {
+            await Promise.all([leave('left'), Promise.race([passReq, new Promise((r) => setTimeout(r, 600))])]);
+        } else {
+            await leave('left');
+        }
+        next(); st.busy = false;
     }
     async function wave(msg, onFail) {
         if (!st.cur || st.busy) return;
         st.busy = true;
         try {
-            const res = await Supa.rpc('send_wave', { p_to: st.cur.id, p_message: msg || null });
+            const targetId = st.cur.id;
+            const res = await Supa.rpc('send_wave', { p_to: targetId, p_message: msg || null });
             const text = {
                 sent: 'Лайк отправлен ♥',
                 matched: 'Взаимно! Началась волна 🌊 Она занимает слот',
@@ -1369,6 +1379,7 @@ const Feed = (() => {
                 toast('Не получилось отправить лайк');
                 if (onFail) onFail();
             } else {
+                actedIds.add(String(targetId));
                 if (text) { TG.ok(); toast(text, res.result === 'sent' ? 3000 : 5500); }
                 await leave('right'); next(); refreshStatus(res.result === 'matched');
             }
@@ -1455,8 +1466,9 @@ const Feed = (() => {
                 await Supa.reportUser(target.id, reason, comment).catch((e) => console.error('Report error:', e));
             }
             // Скрываем анкету из ленты, чтобы не попадалась повторно
+            actedIds.add(String(target.id));
             if (!fromWaves && dbOn()) {
-                Supa.rpc('pass_profile', { p_target: target.id }).catch(() => {});
+                await Supa.rpc('pass_profile', { p_target: target.id }).catch(() => {});
             }
             closeReportSheet();
             TG.ok();
@@ -1882,9 +1894,13 @@ const Feed = (() => {
         st.status = { used: 0, max: 3, incoming: 0, unread: 0 };
         st.newWaves = 0; st.matchesSynced = false; st.lastSyncedUsed = -1;
         seenWaves.clear();
+        actedIds.clear();
         urlCache.clear();
         imgPreloads.clear();
         imgCache.clear();
+    }
+    function clearActed() {
+        actedIds.clear();
     }
     function init() {
         initToastSwipe();
@@ -1950,7 +1966,7 @@ const Feed = (() => {
         setInterval(() => { if (dbOn() && isComplete() && document.visibilityState === 'visible') refreshStatus(); }, 30000);
     }
     init();
-    return { open, openWaves, toast, refreshStatus, onCityChanged, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession, incomingCard, openPhotoViewer, preloadPhotos };
+    return { open, openWaves, toast, refreshStatus, onCityChanged, clearActed, setSearchPrefs, getSearchPrefs, unblockLocal, getLocalBlocked, resetSession, incomingCard, openPhotoViewer, preloadPhotos };
 })();
 
 // Если лента уже показана при загрузке (вход в приложение с готовым профилем) — запускаем её
