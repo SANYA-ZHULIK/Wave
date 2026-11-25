@@ -3,17 +3,61 @@
    Зависит от landing.js (INTENTS, show, FEED, WAVES, DONE, DEBUG, dbOn, changeCityFromFeed) и supabase.js
 ========================================= */
 const ICEBREAKERS = {
-    sport: 'Каким спортом занимаешься?',
-    gaming: 'Во что любишь играть?',
-    travel: 'Какое место запомнилось больше всего?',
-    events: 'На какие мероприятия ходишь?',
-    hobby: 'Чем увлекаешься в свободное время?',
-    party: 'Какие тусовки тебе по душе?',
-    drives: 'На чём катаешься и какой маршрут любимый?',
-    chat: 'О чём тебе интересно поговорить?',
-    friendship: 'Что для тебя важно в друзьях?',
-    relationship: 'Какие отношения ты ищешь?'
+    sport: [
+        'Каким спортом занимаешься?',
+        'Утренняя тренировка или вечерняя?',
+        'Какой вид спорта давно хочешь попробовать?'
+    ],
+    gaming: [
+        'Во что сейчас чаще всего играешь?',
+        'Кооп с друзьями или соло-сюжетки?',
+        'Какая игра затянула тебя больше всего?'
+    ],
+    travel: [
+        'Какое место запомнилось больше всего?',
+        'Море и пляж или горы и маршруты?',
+        'Куда бы улетел(а) хоть завтра?'
+    ],
+    events: [
+        'На какое событие ходил(а) в последний раз?',
+        'Концерты, выставки или стендап?',
+        'На что хочешь сходить в ближайшее время?'
+    ],
+    hobby: [
+        'Чем увлекаешься в свободное время?',
+        'Какое хобби появилось у тебя недавно?',
+        'Что может увлечь тебя на несколько часов подряд?'
+    ],
+    party: [
+        'Какие тусовки тебе по душе?',
+        'Уютный бар с друзьями или громкий танцпол?',
+        'Идеальный вечер пятницы — это…?'
+    ],
+    drives: [
+        'На чём катаешься и какой маршрут любимый?',
+        'Ночной город под музыку или трасса за город?',
+        'Какой трек обязательно играет в дороге?'
+    ],
+    chat: [
+        'О чём тебе интереснее всего поговорить?',
+        'Какая тема может затянуть разговор до ночи?',
+        'Что хорошего случилось на этой неделе?'
+    ],
+    friendship: [
+        'Что для тебя важнее всего в друзьях?',
+        'Как обычно проводишь выходные с близкими?',
+        'Спонтанная встреча или всё по плану?'
+    ],
+    relationship: [
+        'Что для тебя главное в близком человеке?',
+        'Идеальное первое свидание — какое оно?',
+        'Что сразу подкупает тебя в людях?'
+    ]
 };
+
+const HINT_SPARK_SVG = `<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.2l1.55 4.25L13.8 7l-4.25 1.55L8 12.8 6.45 8.55 2.2 7l4.25-1.55L8 1.2z"/></svg>`;
+const HINT_NEXT_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.3 6.36L3 16"/><path d="M3 12a9 9 0 0 1 15.3-6.36L21 8"/><path d="M21 3v5h-5"/><path d="M3 21v-5h5"/></svg>`;
+const HINT_SEND_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>`;
 
 const EMPTY_WAVE_SVG = `
 <svg viewBox="0 0 320 180" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -741,7 +785,19 @@ const Feed = (() => {
         (r.intents || []).forEach((k) => box.appendChild(el('span', 'tag' + ((r.shared || []).includes(k) ? ' shared' : ''), INTENTS[k] || k)));
         return box;
     }
-    const commonKey = (r) => (r.shared || []).find((k) => ICEBREAKERS[k]);
+    function promptsFor(r) {
+        const keys = (r.shared || []).filter((k) => ICEBREAKERS[k]);
+        if (!keys.length) return [];
+        const list = [];
+        const maxLen = Math.max(...keys.map((k) => (Array.isArray(ICEBREAKERS[k]) ? ICEBREAKERS[k].length : 1)));
+        for (let i = 0; i < maxLen; i++) {
+            keys.forEach((k) => {
+                const arr = Array.isArray(ICEBREAKERS[k]) ? ICEBREAKERS[k] : [ICEBREAKERS[k]];
+                if (arr[i]) list.push({ key: k, topic: INTENTS[k] || k, text: arr[i] });
+            });
+        }
+        return list;
+    }
 
     /* ---------- слоты ---------- */
     // Лайки без ограничений. Слот занимает только ВОЛНА — взаимный мэтч (у обоих людей).
@@ -959,7 +1015,7 @@ const Feed = (() => {
 
         card.addEventListener('pointerdown', (e) => {
             if (st.busy || (e.pointerType === 'mouse' && e.button !== 0)) return;
-            if (e.target.closest('button, a, input, textarea')) return;
+            if (e.target.closest('button, a, input, textarea, .hint')) return;
             tracking = true;
             dragging = false;
             pointerId = e.pointerId;
@@ -1097,6 +1153,10 @@ const Feed = (() => {
             el('div', 'deck-name', `${r.name}, ${r.age}`),
             el('div', 'deck-city', (r.city || '') + (r.distance_km ? ' · ~' + r.distance_km + ' км от вас' : ''))
         );
+        const prompts = promptsFor(r);
+        let promptIdx = 0;
+        const curPrompt = () => (prompts.length ? prompts[promptIdx % prompts.length] : null);
+
         const msgBtn = el('button', 'deck-msg-btn');
         msgBtn.type = 'button';
         msgBtn.setAttribute('aria-label', 'Написать сообщение');
@@ -1105,19 +1165,72 @@ const Feed = (() => {
         msgBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             TG.tap();
-            const ck = commonKey(r);
-            openSheet(ck ? ICEBREAKERS[ck] : '');
+            const p = curPrompt();
+            openSheet(p ? p.text : '');
         });
         headRow.append(headMain, msgBtn);
         info.append(headRow, tagsOf(r));
 
         if (r.bio) info.appendChild(el('p', 'deck-bio', r.bio));
-        const k = commonKey(r);
-        if (k) {
-            const h = el('button', 'hint'); h.type = 'button';
-            h.append(el('span', 'hint-top', '🎯 Общий интерес: ' + (INTENTS[k] || k)),
-                     el('span', 'hint-ask', 'Спросить: «' + ICEBREAKERS[k] + '»'));
-            h.addEventListener('click', () => openSheet(ICEBREAKERS[k]));
+        if (prompts.length) {
+            const h = el('div', 'hint');
+            h.setAttribute('role', 'button');
+            h.setAttribute('tabindex', '0');
+            h.setAttribute('aria-label', 'Отправить вопрос по общему интересу');
+
+            const body = el('div', 'hint-body');
+            const top = el('div', 'hint-top');
+            const spark = el('span', 'hint-spark');
+            spark.innerHTML = HINT_SPARK_SVG;
+            const label = el('span', 'hint-label', 'Общий интерес');
+            const dot = el('span', 'hint-dot', '·');
+            const topic = el('span', 'hint-topic', prompts[0].topic);
+            top.append(spark, label, dot, topic);
+
+            const ask = el('div', 'hint-ask', `«${prompts[0].text}»`);
+            body.append(top, ask);
+
+            const actions = el('div', 'hint-actions');
+            if (prompts.length > 1) {
+                const nextBtn = el('button', 'hint-next');
+                nextBtn.type = 'button';
+                nextBtn.setAttribute('aria-label', 'Другой вопрос');
+                nextBtn.title = 'Другой вопрос';
+                nextBtn.innerHTML = HINT_NEXT_SVG;
+                let spin = 0;
+                nextBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    TG.pick();
+                    promptIdx = (promptIdx + 1) % prompts.length;
+                    const nextP = prompts[promptIdx];
+                    spin += 180;
+                    const svg = nextBtn.querySelector('svg');
+                    if (svg) svg.style.transform = `rotate(${spin}deg)`;
+                    ask.classList.add('is-swap');
+                    setTimeout(() => {
+                        topic.textContent = nextP.topic;
+                        ask.textContent = `«${nextP.text}»`;
+                        ask.classList.remove('is-swap');
+                    }, 110);
+                });
+                actions.appendChild(nextBtn);
+            }
+
+            const sendCue = el('span', 'hint-send');
+            sendCue.setAttribute('aria-hidden', 'true');
+            sendCue.innerHTML = HINT_SEND_SVG;
+            actions.appendChild(sendCue);
+
+            h.append(body, actions);
+            const triggerOpen = () => {
+                TG.tap();
+                const p = curPrompt();
+                openSheet(p ? p.text : '');
+            };
+            h.addEventListener('click', triggerOpen);
+            h.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerOpen(); }
+            });
             info.appendChild(h);
         }
         card.appendChild(info);
