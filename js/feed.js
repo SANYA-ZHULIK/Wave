@@ -291,6 +291,13 @@ const Feed = (() => {
     const BLOCKED_KEY = 'wave_blocked_local';
     const SEEN_WAVES_KEY = 'wave_seen_waves';
     const ONBOARD_KEY = 'wave_feed_onboard_seen';
+    const AUTO_EXPAND_KEY = 'wave_city_auto_expanded';
+    const hasAutoExpanded = () => {
+        try { return localStorage.getItem(AUTO_EXPAND_KEY) === '1'; } catch (e) { return true; }
+    };
+    const markAutoExpanded = () => {
+        try { localStorage.setItem(AUTO_EXPAND_KEY, '1'); } catch (e) {}
+    };
     const prefs = { ageMode: 'peer', sameCity: false, isHidden: false, onlyWithBio: false };
     try {
         const savedPrefs = JSON.parse(localStorage.getItem(PREFS_KEY));
@@ -950,7 +957,8 @@ const Feed = (() => {
     }
     function next() {
         st.cur = st.queue.shift() || null;
-        if (!st.cur && !st.queue.length && st.sameCity && st.exhausted && !st.err && dbOn()) {
+        if (!st.cur && !st.queue.length && st.sameCity && st.exhausted && !st.err && dbOn() && !hasAutoExpanded()) {
+            markAutoExpanded();
             expandToNearbyCities();
             return;
         }

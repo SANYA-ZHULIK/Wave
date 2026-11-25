@@ -569,6 +569,7 @@ function resetLocalAccount() {
         localStorage.removeItem('wave_blocked_local');
         localStorage.removeItem('wave_seen_waves');
         localStorage.removeItem('wave_feed_onboard_seen');
+        localStorage.removeItem('wave_city_auto_expanded');
         localStorage.removeItem('wave_wa');
     } catch (e) {}
     applyProfile({});
