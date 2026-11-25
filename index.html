@@ -68,22 +68,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=57"
+        href="css/base.css?v=58"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=57"
+        href="css/landing.css?v=58"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=57"
+        href="css/network.css?v=58"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=57"
+        href="css/auth.css?v=58"
     >
 
 </head>
@@ -332,9 +332,33 @@
             </div>
         </div>
         <div class="feed-onboard" id="feedOnboard" hidden role="dialog" aria-modal="true" aria-label="Как пользоваться Wave">
-            <svg class="onboard-svg" id="onboardSvg" aria-hidden="true"></svg>
-            <div class="onboard-layer" id="onboardLayer"></div>
-            <button type="button" class="onboard-cta" id="feedOnboardBtn">Понятно, погнали</button>
+            <div class="onboard-spotlight" id="onboardSpotlight" aria-hidden="true"></div>
+            <div class="onboard-gesture" id="onboardGesture" hidden aria-hidden="true">
+                <div class="onboard-gesture-pill is-pass">
+                    <span class="onboard-gesture-arrow">←</span>
+                    <span>Пропуск</span>
+                </div>
+                <div class="onboard-gesture-pill is-like">
+                    <span>Волна</span>
+                    <span class="onboard-gesture-arrow">→</span>
+                </div>
+            </div>
+            <div class="onboard-card" id="onboardCard">
+                <div class="onboard-caret" id="onboardCaret" aria-hidden="true"></div>
+                <div class="onboard-top">
+                    <div class="onboard-progress" id="onboardProgress" aria-hidden="true"></div>
+                    <button type="button" class="onboard-skip" id="feedOnboardSkip">Пропустить</button>
+                </div>
+                <div class="onboard-content" id="onboardContent">
+                    <div class="onboard-step-label" id="onboardStepLabel"></div>
+                    <h3 class="onboard-title" id="onboardTitle"></h3>
+                    <p class="onboard-desc" id="onboardDesc"></p>
+                </div>
+                <div class="onboard-actions">
+                    <button type="button" class="onboard-btn onboard-btn-back" id="feedOnboardBack" hidden>Назад</button>
+                    <button type="button" class="onboard-btn onboard-btn-next" id="feedOnboardNext">Далее</button>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -841,18 +865,18 @@
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=57"></script>
+    <script src="js/telegram.js?v=58"></script>
 
     <!-- Supabase JS — нужен только для уведомлений в реальном времени (без него приложение работает с периодическим опросом) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-    <script src="js/supabase.js?v=57"></script>
+    <script src="js/supabase.js?v=58"></script>
 
-    <script src="js/landing.js?v=57"></script>
+    <script src="js/landing.js?v=58"></script>
 
-    <script src="js/feed.js?v=57"></script>
+    <script src="js/feed.js?v=58"></script>
 
-    <script src="js/nav.js?v=57"></script>
+    <script src="js/nav.js?v=58"></script>
 
 
     <script>
