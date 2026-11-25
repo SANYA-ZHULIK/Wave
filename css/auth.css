@@ -410,6 +410,7 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     width: 0;
     height: 0;
     border-radius: 20px;
+    background: transparent;
     pointer-events: none;
     box-shadow:
         0 0 0 9999px rgba(8, 4, 20, 0.8),
@@ -420,8 +421,12 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
         left 0.36s cubic-bezier(0.22, 1, 0.36, 1),
         width 0.36s cubic-bezier(0.22, 1, 0.36, 1),
         height 0.36s cubic-bezier(0.22, 1, 0.36, 1),
-        border-radius 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+        border-radius 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+        background 0.28s ease;
     animation: onboardGlowPulse 2.4s ease-in-out infinite;
+}
+.onboard-spotlight.is-dimmed {
+    background: rgba(8, 4, 20, 0.58);
 }
 .feed-onboard.no-anim .onboard-spotlight,
 .feed-onboard.no-anim .onboard-card {
@@ -473,12 +478,12 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 }
 .onboard-arrow.is-pass {
     color: #FF6B6B;
-    filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.58));
+    filter: drop-shadow(0 0 10px rgba(255, 107, 107, 0.68));
     animation: onboardDriftLeft 2.2s ease-in-out infinite;
 }
 .onboard-arrow.is-like {
     color: #B5C680;
-    filter: drop-shadow(0 0 8px rgba(181, 198, 128, 0.58));
+    filter: drop-shadow(0 0 10px rgba(181, 198, 128, 0.68));
     animation: onboardDriftRight 2.2s ease-in-out infinite;
 }
 @keyframes onboardDriftLeft {

@@ -1275,6 +1275,7 @@ const Feed = (() => {
         spot.style.width = sw.toFixed(1) + 'px';
         spot.style.height = sh.toFixed(1) + 'px';
         spot.style.borderRadius = (cur.radius >= 999 ? Math.round(Math.max(sw, sh) / 2) : cur.radius) + 'px';
+        spot.classList.toggle('is-dimmed', cur.id === 'swipe');
 
         // Позиционируем компактную карточку подсказки так, чтобы она не перекрывала подсвеченный элемент
         const cardRect = cardBox.getBoundingClientRect();
