@@ -393,6 +393,86 @@ function submitPhoto() {
     clearErr('photoError'); TG.tap(); show(7);
 }
 
+let photoUpdating = false;
+async function onProfilePhotoChosen(e) {
+    const input = e.target;
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file || photoUpdating) return;
+
+    const wrap = $('profileAvatarWrap');
+    const btn = $('profilePhotoBtn');
+    const notify = (msg) => {
+        if (typeof Feed !== 'undefined' && Feed.toast) Feed.toast(msg);
+    };
+
+    let dataUrl;
+    try {
+        dataUrl = await toPortraitJpeg(file);
+    } catch (err) {
+        TG.fail();
+        notify(err.message === 'small'
+            ? 'Фото слишком маленькое — выберите фото получше'
+            : 'Не удалось открыть фото. Попробуйте другое');
+        return;
+    }
+
+    const prevUrl = profile.photo_url;
+    const prevPath = profile.photo_path;
+
+    photoUpdating = true;
+    if (wrap) wrap.classList.add('is-uploading');
+    if (btn) btn.disabled = true;
+
+    profile.photo_url = dataUrl;
+    paintPhoto();
+    renderDone();
+
+    try {
+        if (dbOn()) {
+            const blob = await (await fetch(dataUrl)).blob();
+            profile.photo_path = await Supa.uploadAvatar(blob);
+            const tu = TG.user();
+            if (tu && tu.username) profile.tg_username = tu.username;
+            await Supa.saveProfile(profile);
+            try {
+                const freshUrl = await Supa.signedUrl(profile.photo_path);
+                if (freshUrl) {
+                    await new Promise((res) => {
+                        const im = new Image();
+                        const done = () => res();
+                        im.onload = done;
+                        im.onerror = done;
+                        im.src = freshUrl;
+                        setTimeout(done, 1500);
+                    });
+                    profile.photo_url = freshUrl;
+                }
+            } catch (signErr) {
+                console.error('Signed url refresh error:', signErr);
+            }
+            setSync(true);
+        }
+        saveProfile();
+        paintPhoto();
+        renderDone();
+        TG.ok();
+        notify('Фото профиля обновлено');
+    } catch (err) {
+        console.error('Profile photo update error:', err);
+        profile.photo_url = prevUrl;
+        profile.photo_path = prevPath;
+        paintPhoto();
+        renderDone();
+        TG.fail();
+        notify('Не удалось обновить фото. Проверьте интернет');
+    } finally {
+        photoUpdating = false;
+        if (wrap) wrap.classList.remove('is-uploading');
+        if (btn) btn.disabled = false;
+    }
+}
+
 /* ---------- 7. описание ---------- */
 function onBioInput() {
     const v = $('bioInput').value;
@@ -564,6 +644,13 @@ function init() {
     $('bioInput').addEventListener('input', onBioInput);
     $('bioNext').addEventListener('click', finish);
     $('resetBtn').addEventListener('click', editProfile);
+    if ($('profilePhotoBtn')) $('profilePhotoBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (photoUpdating) return;
+        TG.tap();
+        if ($('profilePhotoFile')) $('profilePhotoFile').click();
+    });
+    if ($('profilePhotoFile')) $('profilePhotoFile').addEventListener('change', onProfilePhotoChosen);
 
     // Сохранённый локально профиль
     const saved = loadProfile();

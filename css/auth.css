@@ -1044,12 +1044,73 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 
 .profile-body .done-avatar {
     object-fit: cover;
+    transition: opacity 0.2s ease;
 }
 
 .profile-body .done-emoji {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.profile-photo-btn {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(181, 198, 128, 0.72);
+    background: #170d2b;
+    color: #B5C680;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 0 0 3px #0C061B, 0 4px 14px rgba(0, 0, 0, 0.48);
+    transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.profile-photo-btn svg {
+    width: 17px;
+    height: 17px;
+    transition: opacity 0.16s ease;
+}
+
+.profile-photo-btn:active {
+    transform: scale(0.92);
+    background: #B5C680;
+    border-color: #B5C680;
+    color: #12051f;
+}
+
+.profile-photo-btn:disabled {
+    cursor: default;
+}
+
+.profile-avatar-wrap.is-uploading .done-avatar {
+    opacity: 0.55;
+}
+
+.profile-avatar-wrap.is-uploading .profile-photo-btn svg {
+    opacity: 0;
+}
+
+.profile-avatar-wrap.is-uploading .profile-photo-btn::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid rgba(181, 198, 128, 0.28);
+    border-top-color: #B5C680;
+    animation: photoSpin 0.7s linear infinite;
+}
+
+@keyframes photoSpin {
+    to { transform: rotate(360deg); }
 }
 
 .notif-day-title {

@@ -68,22 +68,22 @@
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=52"
+        href="css/base.css?v=53"
     >
 
     <link
         rel="stylesheet"
-        href="css/landing.css?v=52"
+        href="css/landing.css?v=53"
     >
 
     <link
         rel="stylesheet"
-        href="css/network.css?v=52"
+        href="css/network.css?v=53"
     >
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=52"
+        href="css/auth.css?v=53"
     >
 
 </head>
@@ -295,9 +295,16 @@
             <span class="head-spacer"></span>
         </header>
         <div class="profile-body">
-            <div class="profile-avatar-wrap">
+            <div class="profile-avatar-wrap" id="profileAvatarWrap">
                 <div class="done-emoji" id="doneEmoji">🌊</div>
                 <img class="done-avatar" id="doneAvatar" alt="" hidden>
+                <button type="button" class="profile-photo-btn" id="profilePhotoBtn" aria-label="Изменить фото" title="Изменить фото">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                    </svg>
+                </button>
+                <input type="file" id="profilePhotoFile" accept="image/*" hidden>
             </div>
             <div class="auth-header"><h2 id="doneTitle"></h2><p id="doneMeta"></p></div>
             <div class="tags" id="doneIntents"></div>
@@ -829,18 +836,18 @@
          JAVASCRIPT
     ================================== -->
 
-    <script src="js/telegram.js?v=52"></script>
+    <script src="js/telegram.js?v=53"></script>
 
     <!-- Supabase JS — нужен только для уведомлений в реальном времени (без него приложение работает с периодическим опросом) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-    <script src="js/supabase.js?v=52"></script>
+    <script src="js/supabase.js?v=53"></script>
 
-    <script src="js/landing.js?v=52"></script>
+    <script src="js/landing.js?v=53"></script>
 
-    <script src="js/feed.js?v=52"></script>
+    <script src="js/feed.js?v=53"></script>
 
-    <script src="js/nav.js?v=52"></script>
+    <script src="js/nav.js?v=53"></script>
 
 
     <script>
