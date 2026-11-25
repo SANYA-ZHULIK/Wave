@@ -1164,8 +1164,7 @@ const Feed = (() => {
         msgBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             TG.tap();
-            const p = curPrompt();
-            openSheet(p ? p.text : '');
+            openSheet('');
         });
         headRow.append(headMain, msgBtn);
         info.append(headRow, tagsOf(r));
@@ -1295,11 +1294,17 @@ const Feed = (() => {
         const title = $('personMenuTitle');
         if (title) title.textContent = r.name ? `${r.name}${r.age ? ', ' + r.age : ''}` : 'Действия с анкетой';
         const sh = $('personMenuSheet');
-        if (sh) sh.hidden = false;
+        if (sh) {
+            resetSheetState(sh);
+            sh.hidden = false;
+        }
     }
     function closePersonMenu() {
         const sh = $('personMenuSheet');
-        if (sh) sh.hidden = true;
+        if (sh) {
+            resetSheetState(sh);
+            sh.hidden = true;
+        }
         menuTarget = null;
     }
 
@@ -1317,11 +1322,25 @@ const Feed = (() => {
                 b.classList.toggle('selected', b.dataset.reason === reportReason);
             });
         }
-        if ($('reportComment')) $('reportComment').value = '';
-        if ($('reportSheet')) $('reportSheet').hidden = false;
+        const commentEl = $('reportComment');
+        if (commentEl) {
+            commentEl.value = '';
+            commentEl.classList.remove('is-scrollable');
+        }
+        const sh = $('reportSheet');
+        if (sh) {
+            resetSheetState(sh);
+            sh.hidden = false;
+        }
     }
     function closeReportSheet() {
-        if ($('reportSheet')) $('reportSheet').hidden = true;
+        const commentEl = $('reportComment');
+        if (commentEl) commentEl.blur();
+        const sh = $('reportSheet');
+        if (sh) {
+            resetSheetState(sh);
+            sh.hidden = true;
+        }
         reportTarget = null;
     }
     async function submitReport() {
@@ -1379,14 +1398,139 @@ const Feed = (() => {
         }
     }
 
-    /* ---------- окно сообщения ---------- */
+    /* ---------- окно сообщения и свайп-закрытие нижних шторок ---------- */
+    function resetSheetState(sheet) {
+        if (!sheet) return;
+        clearTimeout(sheet._sheetTimer);
+        sheet.classList.remove('is-dragging', 'is-snapping', 'is-closing');
+        sheet.style.background = '';
+        const box = sheet.querySelector('.sheet-box');
+        if (box) {
+            box.style.transform = '';
+            box.style.animation = '';
+        }
+    }
+
+    function syncTextareaScrollable(ta) {
+        if (!ta) return;
+        ta.classList.toggle('is-scrollable', ta.scrollHeight > ta.clientHeight + 2);
+    }
+
+    function initSheetSwipe(sheet, closeFn) {
+        if (!sheet) return;
+        const box = sheet.querySelector('.sheet-box');
+        if (!box) return;
+        let startX = 0, startY = 0, dy = 0, startTime = 0;
+        let tracking = false, dragging = false, pointerId = null, fromInput = null;
+
+        box.addEventListener('pointerdown', (e) => {
+            if (sheet.hidden || sheet.classList.contains('is-closing')) return;
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            fromInput = e.target.closest('textarea, input');
+            if (fromInput && (e.pointerType === 'mouse' || fromInput.scrollTop > 0)) return;
+            tracking = true;
+            dragging = false;
+            pointerId = e.pointerId;
+            startX = e.clientX;
+            startY = e.clientY;
+            dy = 0;
+            startTime = Date.now();
+        });
+
+        box.addEventListener('pointermove', (e) => {
+            if (!tracking || e.pointerId !== pointerId) return;
+            const dx = e.clientX - startX;
+            const rawDy = e.clientY - startY;
+
+            if (!dragging) {
+                if (Math.abs(rawDy) < 8 && Math.abs(dx) < 8) return;
+                if (rawDy <= 0 || Math.abs(dx) > rawDy * 1.15) {
+                    tracking = false;
+                    return;
+                }
+                if (fromInput && fromInput.scrollTop > 0) {
+                    tracking = false;
+                    return;
+                }
+                dragging = true;
+                clearTimeout(sheet._sheetTimer);
+                const active = document.activeElement;
+                if (active && sheet.contains(active) && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) {
+                    active.blur();
+                }
+                sheet.classList.remove('is-snapping');
+                sheet.classList.add('is-dragging');
+                box.style.animation = 'none';
+                try { box.setPointerCapture(pointerId); } catch (err) {}
+            }
+
+            e.preventDefault();
+            dy = rawDy < 0 ? rawDy * 0.16 : rawDy;
+            box.style.transform = `translate3d(0, ${dy}px, 0)`;
+            const h = Math.max(180, box.offsetHeight || 260);
+            const progress = Math.min(1, Math.max(0, dy) / h);
+            sheet.style.background = `rgba(0, 0, 0, ${(0.58 * (1 - progress * 0.85)).toFixed(3)})`;
+        });
+
+        function onEnd(e) {
+            if (!tracking || e.pointerId !== pointerId) return;
+            tracking = false;
+            if (!dragging) return;
+            dragging = false;
+            try { box.releasePointerCapture(pointerId); } catch (err) {}
+            sheet.classList.remove('is-dragging');
+
+            const elapsed = Math.max(1, Date.now() - startTime);
+            const velocity = dy / elapsed;
+            const h = Math.max(180, box.offsetHeight || 260);
+
+            if (dy >= Math.min(108, h * 0.28) || (velocity > 0.42 && dy >= 34)) {
+                TG.pick();
+                sheet.classList.add('is-closing');
+                sheet.style.background = 'rgba(0, 0, 0, 0)';
+                box.style.transform = 'translate3d(0, 105%, 0)';
+                clearTimeout(sheet._sheetTimer);
+                sheet._sheetTimer = setTimeout(() => closeFn(), 220);
+            } else {
+                sheet.classList.add('is-snapping');
+                sheet.style.background = '';
+                box.style.transform = 'translate3d(0, 0, 0)';
+                clearTimeout(sheet._sheetTimer);
+                sheet._sheetTimer = setTimeout(() => {
+                    sheet.classList.remove('is-snapping');
+                    box.style.transform = '';
+                }, 260);
+            }
+        }
+
+        box.addEventListener('pointerup', onEnd);
+        box.addEventListener('pointercancel', onEnd);
+    }
+
     function openSheet(prefill) {
         if (!st.cur) return;
-        $('sheetText').value = prefill || '';
-        $('waveSheet').hidden = false;
-        setTimeout(() => $('sheetText').focus(), 60);
+        const sh = $('waveSheet');
+        const ta = $('sheetText');
+        resetSheetState(sh);
+        if (ta) {
+            ta.value = prefill || '';
+            syncTextareaScrollable(ta);
+        }
+        sh.hidden = false;
+        setTimeout(() => {
+            if (!sh.hidden && ta) {
+                ta.focus();
+                syncTextareaScrollable(ta);
+            }
+        }, 60);
     }
-    const closeSheet = () => { $('waveSheet').hidden = true; };
+    const closeSheet = () => {
+        const sh = $('waveSheet');
+        const ta = $('sheetText');
+        if (ta) ta.blur();
+        resetSheetState(sh);
+        if (sh) sh.hidden = true;
+    };
 
     /* ---------- фильтры ---------- */
     function buildChips() {
@@ -1648,9 +1792,16 @@ const Feed = (() => {
         $('slots').addEventListener('click', explainSlots);
         $('sheetSend').addEventListener('click', () => { const t = $('sheetText').value.trim(); closeSheet(); wave(t); });
         $('sheetCancel').addEventListener('click', closeSheet);
-        if ($('waveSheet')) $('waveSheet').addEventListener('click', (e) => { if (e.target === $('waveSheet')) closeSheet(); });
+        if ($('sheetText')) $('sheetText').addEventListener('input', () => syncTextareaScrollable($('sheetText')));
+        if ($('waveSheet')) {
+            $('waveSheet').addEventListener('click', (e) => { if (e.target === $('waveSheet') && !$('waveSheet').classList.contains('is-closing')) closeSheet(); });
+            initSheetSwipe($('waveSheet'), closeSheet);
+        }
         if ($('personMenuCancel')) $('personMenuCancel').addEventListener('click', closePersonMenu);
-        if ($('personMenuSheet')) $('personMenuSheet').addEventListener('click', (e) => { if (e.target === $('personMenuSheet')) closePersonMenu(); });
+        if ($('personMenuSheet')) {
+            $('personMenuSheet').addEventListener('click', (e) => { if (e.target === $('personMenuSheet') && !$('personMenuSheet').classList.contains('is-closing')) closePersonMenu(); });
+            initSheetSwipe($('personMenuSheet'), closePersonMenu);
+        }
         if ($('personMenuReport')) $('personMenuReport').addEventListener('click', () => {
             const target = menuTarget;
             const fromWaves = menuFromWaves;
@@ -1670,9 +1821,13 @@ const Feed = (() => {
             reportReason = b.dataset.reason || 'other';
             $('reportReasons').querySelectorAll('.report-reason').forEach((x) => x.classList.toggle('selected', x === b));
         });
+        if ($('reportComment')) $('reportComment').addEventListener('input', () => syncTextareaScrollable($('reportComment')));
         if ($('reportSendBtn')) $('reportSendBtn').addEventListener('click', submitReport);
         if ($('reportCancelBtn')) $('reportCancelBtn').addEventListener('click', closeReportSheet);
-        if ($('reportSheet')) $('reportSheet').addEventListener('click', (e) => { if (e.target === $('reportSheet')) closeReportSheet(); });
+        if ($('reportSheet')) {
+            $('reportSheet').addEventListener('click', (e) => { if (e.target === $('reportSheet') && !$('reportSheet').classList.contains('is-closing')) closeReportSheet(); });
+            initSheetSwipe($('reportSheet'), closeReportSheet);
+        }
         if ($('photoViewerClose')) $('photoViewerClose').addEventListener('click', closePhotoViewer);
         if ($('photoViewer')) {
             $('photoViewer').addEventListener('click', (e) => {
