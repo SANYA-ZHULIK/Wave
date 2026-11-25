@@ -959,17 +959,17 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     transform: translateX(2px);
 }
 
-/* Всплывающий баннер подсказок (Toast) — можно смахнуть влево или вправо */
+/* Всплывающий баннер подсказок (Toast) — в верхней части анкеты, можно смахнуть вверх, влево или вправо */
 .toast {
     position: fixed;
     left: 50%;
-    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    top: calc(68px + env(safe-area-inset-top, 0px));
     transform: translateX(-50%);
-    width: calc(100% - 32px);
+    width: calc(100% - 44px);
     max-width: 360px;
     display: flex;
     align-items: center;
-    padding: 14px 18px;
+    padding: 12px 16px;
     background: rgba(18, 9, 36, 0.94);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -977,9 +977,9 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     border-radius: 18px;
     text-align: left;
     z-index: 300;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
     animation: toastIn 0.25s ease;
-    touch-action: pan-y;
+    touch-action: none;
     user-select: none;
     -webkit-user-select: none;
     cursor: grab;
@@ -1005,9 +1005,15 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     transform: translate(calc(-50% + 115%), 0) !important;
     opacity: 0 !important;
 }
+.toast.dismiss-up {
+    animation: none;
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+    transform: translate(-50%, -135%) !important;
+    opacity: 0 !important;
+}
 
 @keyframes toastIn {
-    from { opacity: 0; transform: translate(-50%, 10px); }
+    from { opacity: 0; transform: translate(-50%, -12px); }
     to   { opacity: 1; transform: translate(-50%, 0); }
 }
 

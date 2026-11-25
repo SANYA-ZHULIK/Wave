@@ -442,6 +442,18 @@ const Feed = (() => {
             if (t) t.hidden = true;
         }, toastRemainingMs);
     }
+    function positionToast(t) {
+        if (!t) return;
+        const deck = step === FEED ? $('deck') : null;
+        if (deck) {
+            const rect = deck.getBoundingClientRect();
+            if (rect.height > 40 && rect.top >= 0) {
+                t.style.top = Math.round(rect.top + 12) + 'px';
+                return;
+            }
+        }
+        t.style.top = '';
+    }
     function dismissToast(dir) {
         const t = $('toast');
         if (!t || t.hidden) return;
@@ -450,51 +462,65 @@ const Feed = (() => {
         t.classList.remove('dragging', 'snap-back');
         t.style.transform = '';
         t.style.opacity = '';
-        t.classList.add(dir === 'left' ? 'dismiss-left' : 'dismiss-right');
+        const cls = dir === 'up' ? 'dismiss-up' : (dir === 'left' ? 'dismiss-left' : 'dismiss-right');
+        t.classList.add(cls);
         TG.pick();
         toastHideAnimTimer = setTimeout(() => {
             t.hidden = true;
-            t.classList.remove('dismiss-left', 'dismiss-right');
+            t.classList.remove('dismiss-left', 'dismiss-right', 'dismiss-up');
         }, 210);
     }
     function initToastSwipe() {
         const t = $('toast');
         if (!t) return;
-        let startX = 0, startY = 0, dx = 0, startTime = 0;
-        let tracking = false, dragging = false, pointerId = null;
+        let startX = 0, startY = 0, dx = 0, dy = 0, startTime = 0;
+        let tracking = false, dragging = false, axis = null, pointerId = null;
 
         t.addEventListener('pointerdown', (e) => {
             if (t.hidden || (e.pointerType === 'mouse' && e.button !== 0)) return;
             tracking = true;
             dragging = false;
+            axis = null;
             pointerId = e.pointerId;
             startX = e.clientX;
             startY = e.clientY;
             dx = 0;
+            dy = 0;
             startTime = Date.now();
             clearTimeout(toastTimer);
             toastRemainingMs = Math.max(1200, toastRemainingMs - (Date.now() - toastShownAt));
-            t.classList.remove('snap-back', 'dismiss-left', 'dismiss-right');
+            t.classList.remove('snap-back', 'dismiss-left', 'dismiss-right', 'dismiss-up');
         });
 
         t.addEventListener('pointermove', (e) => {
             if (!tracking || e.pointerId !== pointerId) return;
             dx = e.clientX - startX;
-            const dy = e.clientY - startY;
+            dy = e.clientY - startY;
             if (!dragging) {
                 if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-                if (Math.abs(dy) > Math.abs(dx) * 1.4) {
-                    tracking = false;
-                    scheduleToastHide(toastRemainingMs);
-                    return;
+                if (Math.abs(dy) > Math.abs(dx) * 1.15) {
+                    if (dy > 0) {
+                        tracking = false;
+                        scheduleToastHide(toastRemainingMs);
+                        return;
+                    }
+                    axis = 'y';
+                } else {
+                    axis = 'x';
                 }
                 dragging = true;
                 t.classList.add('dragging');
                 try { t.setPointerCapture(pointerId); } catch (err) {}
             }
             e.preventDefault();
-            t.style.transform = `translate(calc(-50% + ${dx}px), 0)`;
-            t.style.opacity = String(Math.max(0.18, 1 - Math.abs(dx) / 160));
+            if (axis === 'y') {
+                const clampedY = Math.min(0, dy);
+                t.style.transform = `translate(-50%, ${clampedY}px)`;
+                t.style.opacity = String(Math.max(0.18, 1 - Math.abs(clampedY) / 96));
+            } else {
+                t.style.transform = `translate(calc(-50% + ${dx}px), 0)`;
+                t.style.opacity = String(Math.max(0.18, 1 - Math.abs(dx) / 160));
+            }
         });
 
         function onEnd(e) {
@@ -508,27 +534,38 @@ const Feed = (() => {
             try { t.releasePointerCapture(pointerId); } catch (err) {}
 
             const elapsed = Math.max(1, Date.now() - startTime);
-            const velocity = Math.abs(dx) / elapsed;
-            if (Math.abs(dx) >= 54 || (velocity > 0.35 && Math.abs(dx) >= 22)) {
-                dismissToast(dx < 0 ? 'left' : 'right');
+            if (axis === 'y') {
+                const velY = Math.abs(Math.min(0, dy)) / elapsed;
+                if (dy <= -32 || (velY > 0.28 && dy <= -14)) {
+                    dismissToast('up');
+                    return;
+                }
             } else {
-                t.classList.remove('dragging');
-                t.classList.add('snap-back');
-                t.style.transform = '';
-                t.style.opacity = '';
-                setTimeout(() => t.classList.remove('snap-back'), 250);
-                scheduleToastHide(toastRemainingMs);
+                const velocity = Math.abs(dx) / elapsed;
+                if (Math.abs(dx) >= 54 || (velocity > 0.35 && Math.abs(dx) >= 22)) {
+                    dismissToast(dx < 0 ? 'left' : 'right');
+                    return;
+                }
             }
+            t.classList.remove('dragging');
+            t.classList.add('snap-back');
+            t.style.transform = '';
+            t.style.opacity = '';
+            setTimeout(() => t.classList.remove('snap-back'), 250);
+            scheduleToastHide(toastRemainingMs);
         }
 
         t.addEventListener('pointerup', onEnd);
         t.addEventListener('pointercancel', onEnd);
+        window.addEventListener('resize', () => {
+            if (!t.hidden) positionToast(t);
+        });
     }
     function toast(msg, ms = 3000) {
         const t = $('toast');
         clearTimeout(toastTimer);
         clearTimeout(toastHideAnimTimer);
-        t.classList.remove('dragging', 'snap-back', 'dismiss-left', 'dismiss-right');
+        t.classList.remove('dragging', 'snap-back', 'dismiss-left', 'dismiss-right', 'dismiss-up');
         t.style.transform = '';
         t.style.opacity = '';
         t.innerHTML = '';
@@ -538,6 +575,7 @@ const Feed = (() => {
         const cleanMsg = (msg || '').replace(/^[💌🌊🎉👋]+\s*|\s*[♥🌊🎉]+$/g, '');
         const txt = el('div', 'toast-text', cleanMsg);
         t.append(ico, sep, txt);
+        positionToast(t);
         t.hidden = false;
         scheduleToastHide(ms);
     }
