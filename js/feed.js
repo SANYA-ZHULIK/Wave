@@ -55,9 +55,8 @@ const ICEBREAKERS = {
     ]
 };
 
-const HINT_SPARK_SVG = `<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.2l1.55 4.25L13.8 7l-4.25 1.55L8 12.8 6.45 8.55 2.2 7l4.25-1.55L8 1.2z"/></svg>`;
-const HINT_NEXT_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.3 6.36L3 16"/><path d="M3 12a9 9 0 0 1 15.3-6.36L21 8"/><path d="M21 3v5h-5"/><path d="M3 21v-5h5"/></svg>`;
-const HINT_SEND_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>`;
+const HINT_NEXT_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-13.8-5.5L4 7.7"/><path d="M4 4v3.8h3.8"/><path d="M4 13a8 8 0 0 0 13.8 5.5L20 16.3"/><path d="M20 20v-3.8h-3.8"/></svg>`;
+const HINT_SEND_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>`;
 
 const EMPTY_WAVE_SVG = `
 <svg viewBox="0 0 320 180" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1180,14 +1179,10 @@ const Feed = (() => {
 
             const body = el('div', 'hint-body');
             const top = el('div', 'hint-top');
-            const spark = el('span', 'hint-spark');
-            spark.innerHTML = HINT_SPARK_SVG;
-            const label = el('span', 'hint-label', 'Общий интерес');
-            const dot = el('span', 'hint-dot', '·');
             const topic = el('span', 'hint-topic', prompts[0].topic);
-            top.append(spark, label, dot, topic);
+            top.append(el('span', 'hint-label', 'Общий интерес'), el('span', 'hint-dot', '·'), topic);
 
-            const ask = el('div', 'hint-ask', `«${prompts[0].text}»`);
+            const ask = el('div', 'hint-ask', prompts[0].text);
             body.append(top, ask);
 
             const actions = el('div', 'hint-actions');
@@ -1209,11 +1204,11 @@ const Feed = (() => {
                     ask.classList.add('is-swap');
                     setTimeout(() => {
                         topic.textContent = nextP.topic;
-                        ask.textContent = `«${nextP.text}»`;
+                        ask.textContent = nextP.text;
                         ask.classList.remove('is-swap');
                     }, 110);
                 });
-                actions.appendChild(nextBtn);
+                actions.append(nextBtn, el('span', 'hint-sep'));
             }
 
             const sendCue = el('span', 'hint-send');

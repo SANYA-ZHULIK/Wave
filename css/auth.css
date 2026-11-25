@@ -517,115 +517,88 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .deck-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 30px; opacity: 0.6; line-height: 1.5; }
 
 .hint {
-    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 11px 11px 11px 16px;
-    border-radius: 16px;
+    padding: 10px 12px 10px 14px;
+    border-radius: 14px;
     color: #fff;
     font-family: inherit;
     text-align: left;
     cursor: pointer;
-    background: linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(16, 9, 32, 0.84) 58%, rgba(181, 198, 128, 0.16));
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(181, 198, 128, 0.32);
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    transition: transform 0.15s ease, background 0.18s ease, border-color 0.18s ease;
     -webkit-tap-highlight-color: transparent;
-}
-.hint::before {
-    content: '';
-    position: absolute;
-    left: 6px;
-    top: 10px;
-    bottom: 10px;
-    width: 3px;
-    border-radius: 999px;
-    background: linear-gradient(180deg, #D9F99D 0%, #B5C680 48%, #A855F7 100%);
-    box-shadow: 0 0 10px rgba(181, 198, 128, 0.45);
 }
 .hint:active {
     transform: scale(0.985);
-    border-color: rgba(181, 198, 128, 0.68);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), 0 0 18px rgba(181, 198, 128, 0.18);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(181, 198, 128, 0.35);
 }
 .hint-body {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
 }
 .hint-top {
     display: flex;
     align-items: center;
     gap: 5px;
     min-width: 0;
-    font-size: 10.5px;
+    font-size: 11px;
     line-height: 1.2;
 }
-.hint-spark {
-    width: 12px;
-    height: 12px;
-    flex-shrink: 0;
-    color: #D9F99D;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    filter: drop-shadow(0 0 5px rgba(217, 249, 157, 0.55));
-}
-.hint-spark svg { width: 100%; height: 100%; }
 .hint-label {
-    font-weight: 700;
-    letter-spacing: 0.55px;
-    text-transform: uppercase;
-    color: rgba(181, 198, 128, 0.88);
+    font-weight: 600;
+    color: rgba(181, 198, 128, 0.82);
     white-space: nowrap;
     flex-shrink: 0;
 }
 .hint-dot {
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.28);
     flex-shrink: 0;
 }
 .hint-topic {
-    font-size: 11px;
-    font-weight: 700;
-    color: #E9D5FF;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.56);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .hint-ask {
     font-size: 13.5px;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1.38;
-    color: rgba(255, 255, 255, 0.94);
+    color: rgba(255, 255, 255, 0.92);
     transition: opacity 0.12s ease, transform 0.12s ease;
 }
 .hint-ask.is-swap {
     opacity: 0;
-    transform: translateY(3px);
+    transform: translateY(2px);
 }
 .hint-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     flex-shrink: 0;
 }
 .hint-next {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.78);
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.44);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease;
+    transition: color 0.16s ease, background 0.16s ease, transform 0.14s ease;
 }
 .hint-next svg {
     width: 15px;
@@ -634,29 +607,30 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 }
 .hint-next:active {
     transform: scale(0.9);
-    background: rgba(255, 255, 255, 0.16);
-    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.86);
+}
+.hint-sep {
+    width: 1px;
+    height: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
 }
 .hint-send {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: #B5C680;
-    color: #12051f;
+    width: 28px;
+    height: 30px;
+    color: #B5C680;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 14px rgba(181, 198, 128, 0.32);
-    transition: transform 0.15s ease, background 0.18s ease;
+    transition: transform 0.16s ease, opacity 0.16s ease;
 }
 .hint-send svg {
-    width: 15px;
-    height: 15px;
-    transform: translate(-0.5px, 0.5px);
+    width: 17px;
+    height: 17px;
 }
 .hint:active .hint-send {
-    transform: scale(0.92);
-    background: #c8d994;
+    transform: translateX(2px);
 }
 
 /* Всплывающий баннер подсказок (Toast) — можно смахнуть влево или вправо */
