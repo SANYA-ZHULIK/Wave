@@ -350,15 +350,26 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
     margin: 0 2px;
 }
 
-.deck { flex: 1; min-height: 0; margin: 0 12px calc(12px + env(safe-area-inset-bottom, 0px)); position: relative; }
+.deck {
+    flex: 1;
+    min-height: 0;
+    margin: 0 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    position: relative;
+    transition: margin-bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.feed-screen.is-onboarding .deck {
+    margin-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+    transition: none;
+}
+.feed-screen.is-onboarding .deck-photo img {
+    filter: grayscale(0.68) brightness(0.76);
+    transition: filter 0.28s ease;
+}
 .deck-card {
     position: absolute; inset: 0; border-radius: 26px; overflow: hidden;
     background: linear-gradient(135deg, #7C3AED, #4C1D95);
     animation: cardIn 0.3s ease; transition: transform 0.26s ease, opacity 0.26s ease;
     touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab;
-}
-.deck-card.is-hint-sway {
-    animation: cardHintSway 1.55s cubic-bezier(0.45, 0.05, 0.55, 0.95) 0.45s 1;
 }
 .deck-card.dragging {
     transition: none;
@@ -371,58 +382,101 @@ textarea.auth-input { height: 120px; resize: none; line-height: 1.4; }
 .deck-card.leave-left  { transform: translateX(-135%) rotate(-16deg) !important; opacity: 0; }
 .deck-card.leave-right { transform: translateX(135%) rotate(16deg) !important;   opacity: 0; }
 @keyframes cardIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
-@keyframes cardHintSway {
-    0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-    28%  { transform: translate3d(18px, 0, 0) rotate(2deg); }
-    64%  { transform: translate3d(-18px, 0, 0) rotate(-2deg); }
-    100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-}
 
-.swipe-hint-tip {
-    position: absolute;
-    top: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 7;
-    pointer-events: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 13px;
-    border-radius: 999px;
-    background: rgba(12, 6, 27, 0.68);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
-    font-size: 12px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.88);
-    white-space: nowrap;
-    animation: hintTipIn 0.32s ease;
-    transition: opacity 0.28s ease, transform 0.28s ease;
-}
-.swipe-hint-tip.is-fading {
+/* Первичное обучение на ленте (затемнение + подсветка + стрелки, показывается 1 раз) */
+.feed-onboard {
+    position: fixed;
+    inset: 0;
+    z-index: 260;
     opacity: 0;
-    transform: translate(-50%, -6px);
+    transition: opacity 0.28s ease;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
-.swipe-hint-side {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+.feed-onboard.is-open {
+    opacity: 1;
 }
-.swipe-hint-side svg {
-    width: 13px;
-    height: 13px;
+.onboard-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
 }
-.swipe-hint-pass svg { color: #FF8585; }
-.swipe-hint-like svg { color: #B5C680; }
-.swipe-hint-dot {
-    color: rgba(255, 255, 255, 0.28);
+.onboard-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
 }
-@keyframes hintTipIn {
-    from { opacity: 0; transform: translate(-50%, -8px); }
-    to   { opacity: 1; transform: translate(-50%, 0); }
+.onboard-label {
+    position: absolute;
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    text-shadow: 0 2px 14px rgba(8, 3, 20, 0.96), 0 0 22px rgba(8, 3, 20, 0.85);
+}
+.onboard-label-top {
+    transform: translate(-50%, -50%);
+    font-size: 14.5px;
+    font-weight: 700;
+    line-height: 1.25;
+    white-space: nowrap;
+    text-align: center;
+    padding: 4px 10px;
+    border-radius: 10px;
+    background: rgba(12, 6, 27, 0.56);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+.onboard-label-mid {
+    transform: translate(-50%, -50%);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: center;
+    max-width: min(220px, calc(100vw - 138px));
+}
+.onboard-label-bot {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-width: min(260px, calc(100vw - 84px));
+}
+.onboard-label-bot b {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #ffffff;
+}
+.onboard-label-bot span {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.3;
+    color: rgba(255, 255, 255, 0.72);
+}
+.onboard-cta {
+    position: absolute;
+    left: 50%;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    height: 48px;
+    padding: 0 32px;
+    border: none;
+    border-radius: 999px;
+    background: #B5C680;
+    color: #12051f;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 8px 26px rgba(181, 198, 128, 0.3);
+    transition: transform 0.15s ease, background 0.18s ease, box-shadow 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.onboard-cta:active {
+    transform: translateX(-50%) scale(0.96);
+    background: #c5d68f;
 }
 
 .swipe-aura {

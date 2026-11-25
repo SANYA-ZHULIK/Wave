@@ -290,7 +290,7 @@ const Feed = (() => {
     const PREFS_KEY = 'wave_search_prefs';
     const BLOCKED_KEY = 'wave_blocked_local';
     const SEEN_WAVES_KEY = 'wave_seen_waves';
-    const SWIPE_HINT_KEY = 'wave_swipe_hint_seen';
+    const ONBOARD_KEY = 'wave_feed_onboard_seen';
     const prefs = { ageMode: 'peer', sameCity: false, isHidden: false, onlyWithBio: false };
     try {
         const savedPrefs = JSON.parse(localStorage.getItem(PREFS_KEY));
@@ -408,7 +408,8 @@ const Feed = (() => {
     };
     const urlCache = new Map();
     const actedIds = new Set();
-    let swipeHintTimer = null;
+    let onboardTimer = null;
+    let onboardActive = false;
     let toastTimer;
     let toastHideAnimTimer;
     let toastRemainingMs = 3000;
@@ -1150,44 +1151,221 @@ const Feed = (() => {
         card.addEventListener('pointercancel', onEnd);
     }
 
-    const SWIPE_HINT_LEFT_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>`;
-    const SWIPE_HINT_RIGHT_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>`;
-
-    function shouldShowSwipeHint() {
-        try { return localStorage.getItem(SWIPE_HINT_KEY) !== '1'; } catch (e) { return false; }
+    function shouldShowOnboard() {
+        try { return localStorage.getItem(ONBOARD_KEY) !== '1'; } catch (e) { return false; }
     }
-    function markSwipeHintSeen() {
-        try { localStorage.setItem(SWIPE_HINT_KEY, '1'); } catch (e) {}
+    function markOnboardSeen() {
+        try { localStorage.setItem(ONBOARD_KEY, '1'); } catch (e) {}
+    }
+    function curvedArrowPath(x1, y1, cx, cy, x2, y2, headLen = 11) {
+        const ang = Math.atan2(y2 - cy, x2 - cx);
+        const a1 = ang - 0.56;
+        const a2 = ang + 0.56;
+        const hx1 = x2 - headLen * Math.cos(a1);
+        const hy1 = y2 - headLen * Math.sin(a1);
+        const hx2 = x2 - headLen * Math.cos(a2);
+        const hy2 = y2 - headLen * Math.sin(a2);
+        const f = (n) => n.toFixed(1);
+        return `M${f(x1)} ${f(y1)} Q${f(cx)} ${f(cy)} ${f(x2)} ${f(y2)} M${f(hx1)} ${f(hy1)} L${f(x2)} ${f(y2)} L${f(hx2)} ${f(hy2)}`;
+    }
+    function layoutFeedOnboard() {
+        const overlay = $('feedOnboard');
+        const svg = $('onboardSvg');
+        const layer = $('onboardLayer');
+        const slotsEl = $('slots');
+        const cardEl = document.querySelector('#deck .deck-card');
+        if (!overlay || !svg || !layer || !slotsEl || !cardEl || overlay.hidden) return;
+
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const sr = slotsEl.getBoundingClientRect();
+        const cr = cardEl.getBoundingClientRect();
+        const hintEl = cardEl.querySelector('.hint');
+        const msgEl = cardEl.querySelector('.deck-msg-btn');
+        const headEl = cardEl.querySelector('.deck-head-row');
+        const hr = hintEl ? hintEl.getBoundingClientRect() : null;
+        const mr = !hr && msgEl ? msgEl.getBoundingClientRect() : null;
+
+        layer.innerHTML = '';
+
+        // 1. Подпись для слотов в шапке
+        const topLbl = el('div', 'onboard-label onboard-label-top', '3 слота для взаимных волн');
+        const topY = Math.round((sr.bottom + cr.top) / 2);
+        topLbl.style.left = Math.round(vw / 2) + 'px';
+        topLbl.style.top = topY + 'px';
+        layer.appendChild(topLbl);
+
+        // 2. Подпись для свайпов по центру свободной части фото
+        const midLbl = el('div', 'onboard-label onboard-label-mid');
+        midLbl.append(
+            document.createTextNode('Свайп вправо — волна,'),
+            document.createElement('br'),
+            document.createTextNode('влево — пропуск')
+        );
+        const headTop = headEl ? headEl.getBoundingClientRect().top : cr.bottom - 180;
+        const midCx = cr.left + cr.width / 2;
+        const midCy = Math.round(cr.top + Math.max(84, Math.min(cr.height * 0.44, (headTop - cr.top) * 0.62)));
+        midLbl.style.left = Math.round(midCx) + 'px';
+        midLbl.style.top = midCy + 'px';
+        layer.appendChild(midLbl);
+
+        // 3. Подпись для «Общего интереса» (или кнопки сообщения, если нет общих интересов)
+        let botLbl = null;
+        if (hr || mr) {
+            botLbl = el('div', 'onboard-label onboard-label-bot');
+            botLbl.append(
+                el('b', '', hr ? 'Готовый вопрос для старта' : 'Первое сообщение'),
+                el('span', '', 'Начни диалог без неловкости')
+            );
+            if (hr) {
+                botLbl.style.right = Math.max(22, Math.round(vw - hr.right + 34)) + 'px';
+                botLbl.style.bottom = Math.round(vh - hr.top + 14) + 'px';
+            } else if (mr) {
+                botLbl.style.right = Math.max(22, Math.round(vw - mr.left + 16)) + 'px';
+                botLbl.style.bottom = Math.round(vh - mr.bottom + 4) + 'px';
+            }
+            layer.appendChild(botLbl);
+        }
+
+        // Измеряем реальные размеры подписей, чтобы стрелки идеально стыковались без наложений
+        const midRect = midLbl.getBoundingClientRect();
+        const botRect = botLbl ? botLbl.getBoundingClientRect() : null;
+
+        const padS = 4;
+        const sx = sr.left - padS, sy = sr.top - padS, sw = sr.width + padS * 2, sh = sr.height + padS * 2;
+        const padH = 4;
+        const hx = hr ? hr.left - padH : 0;
+        const hy = hr ? hr.top - padH : 0;
+        const hw = hr ? hr.width + padH * 2 : 0;
+        const hh = hr ? hr.height + padH * 2 : 0;
+
+        // Вычисляем 4 изогнутые лаймовые стрелки
+        const arrows = [];
+
+        // Верхняя стрелка -> к слотам
+        const topAx1 = Math.min(vw - 24, Math.max(sr.right + 20, vw / 2 + 54));
+        const topAy1 = Math.min(cr.top - 10, topY - 12);
+        const topAx2 = sr.right + 10;
+        const topAy2 = sr.top + sr.height * 0.5;
+        arrows.push(curvedArrowPath(topAx1, topAy1, topAx1 + 4, topAy2 + 4, topAx2, topAy2, 10));
+
+        // Средняя левая стрелка (влево — пропуск)
+        const lStartX = midRect.left - 10;
+        const lEndX = Math.max(cr.left + 14, lStartX - Math.min(58, Math.max(36, cr.width * 0.16)));
+        if (lStartX - lEndX >= 24) {
+            arrows.push(curvedArrowPath(lStartX, midCy + 6, (lStartX + lEndX) / 2 - 4, midCy + 12, lEndX, midCy - 12, 11));
+        }
+
+        // Средняя правая стрелка (вправо — волна)
+        const rStartX = midRect.right + 10;
+        const rEndX = Math.min(cr.right - 14, rStartX + Math.min(58, Math.max(36, cr.width * 0.16)));
+        if (rEndX - rStartX >= 24) {
+            arrows.push(curvedArrowPath(rStartX, midCy + 6, (rStartX + rEndX) / 2 + 4, midCy + 12, rEndX, midCy - 12, 11));
+        }
+
+        // Нижняя стрелка -> к блоку «Общий интерес» или кнопке сообщения
+        if (hr && botRect) {
+            const bStartX = Math.min(hr.right - 22, botRect.right + 8);
+            const bStartY = botRect.top + botRect.height * 0.34;
+            const bEndX = Math.min(hr.right - 14, bStartX + 12);
+            const bEndY = hy - 7;
+            arrows.push(curvedArrowPath(bStartX, bStartY, bStartX + 22, (bStartY + bEndY) / 2 - 2, bEndX, bEndY, 10));
+        } else if (mr && botRect) {
+            const bStartX = botRect.right + 8;
+            const bStartY = botRect.top + botRect.height * 0.4;
+            const bEndX = mr.left - 9;
+            const bEndY = mr.top + mr.height * 0.45;
+            if (bEndX - bStartX >= 14) {
+                arrows.push(curvedArrowPath(bStartX, bStartY, (bStartX + bEndX) / 2, bStartY - 8, bEndX, bEndY, 10));
+            }
+        }
+
+        const f = (n) => n.toFixed(1);
+        const maskCutouts = [
+            `<rect x="${f(cr.left)}" y="${f(cr.top)}" width="${f(cr.width)}" height="${f(cr.height)}" rx="26" fill="#4f4f4f" />`,
+            `<rect x="${f(sx)}" y="${f(sy)}" width="${f(sw)}" height="${f(sh)}" rx="14" fill="#000000" />`
+        ];
+        const glowFrames = [
+            `<rect x="${f(cr.left)}" y="${f(cr.top)}" width="${f(cr.width)}" height="${f(cr.height)}" rx="26" fill="none" stroke="#B5C680" stroke-opacity="0.72" stroke-width="1.5" />`,
+            `<rect x="${f(sx)}" y="${f(sy)}" width="${f(sw)}" height="${f(sh)}" rx="14" fill="none" stroke="#B5C680" stroke-width="1.8" filter="url(#obGlow)" />`
+        ];
+
+        if (hr) {
+            maskCutouts.push(`<rect x="${f(hx)}" y="${f(hy)}" width="${f(hw)}" height="${f(hh)}" rx="16" fill="#000000" />`);
+            glowFrames.push(`<rect x="${f(hx)}" y="${f(hy)}" width="${f(hw)}" height="${f(hh)}" rx="16" fill="none" stroke="#B5C680" stroke-width="1.8" filter="url(#obGlow)" />`);
+        } else if (mr) {
+            const mcx = mr.left + mr.width / 2;
+            const mcy = mr.top + mr.height / 2;
+            const mrad = mr.width / 2 + 4;
+            maskCutouts.push(`<circle cx="${f(mcx)}" cy="${f(mcy)}" r="${f(mrad)}" fill="#000000" />`);
+            glowFrames.push(`<circle cx="${f(mcx)}" cy="${f(mcy)}" r="${f(mrad)}" fill="none" stroke="#B5C680" stroke-width="1.8" filter="url(#obGlow)" />`);
+        }
+
+        const arrowPaths = arrows
+            .map((d) => `<path d="${d}" fill="none" stroke="#B5C680" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#obGlow)" />`)
+            .join('');
+
+        svg.setAttribute('viewBox', `0 0 ${vw} ${vh}`);
+        svg.innerHTML = `
+            <defs>
+                <filter id="obGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="3.5" result="blur" />
+                    <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+                <mask id="obMask">
+                    <rect x="0" y="0" width="${vw}" height="${vh}" fill="#ffffff" />
+                    ${maskCutouts.join('')}
+                </mask>
+            </defs>
+            <rect x="0" y="0" width="${vw}" height="${vh}" fill="rgba(9, 4, 21, 0.8)" mask="url(#obMask)" />
+            ${glowFrames.join('')}
+            ${arrowPaths}
+        `;
+    }
+    function closeFeedOnboard(silent = false) {
+        clearTimeout(onboardTimer);
+        const overlay = $('feedOnboard');
+        const scr = $('screen-feed');
+        if (!onboardActive && (!overlay || overlay.hidden)) return;
+        onboardActive = false;
+        if (!silent) TG.tap();
+        if (overlay) overlay.classList.remove('is-open');
+        if (scr) scr.classList.remove('is-onboarding');
+        onboardTimer = setTimeout(() => {
+            if (overlay) {
+                overlay.hidden = true;
+                if ($('onboardSvg')) $('onboardSvg').innerHTML = '';
+                if ($('onboardLayer')) $('onboardLayer').innerHTML = '';
+            }
+            applyBack();
+        }, 280);
     }
     function maybeShowSwipeHint(card) {
-        if (!card || step !== FEED || !shouldShowSwipeHint()) return;
-        markSwipeHintSeen();
-        clearTimeout(swipeHintTimer);
-
-        const tip = el('div', 'swipe-hint-tip');
-        tip.setAttribute('aria-hidden', 'true');
-        const leftSide = el('span', 'swipe-hint-side swipe-hint-pass');
-        leftSide.innerHTML = SWIPE_HINT_LEFT_SVG;
-        leftSide.appendChild(document.createTextNode('Пропустить'));
-        const rightSide = el('span', 'swipe-hint-side swipe-hint-like');
-        rightSide.appendChild(document.createTextNode('Лайк'));
-        rightSide.insertAdjacentHTML('beforeend', SWIPE_HINT_RIGHT_SVG);
-        tip.append(leftSide, el('span', 'swipe-hint-dot', '·'), rightSide);
-        card.appendChild(tip);
-
-        card.classList.add('is-hint-sway');
-        const dismissHint = () => {
-            clearTimeout(swipeHintTimer);
-            card.classList.remove('is-hint-sway');
-            if (!tip.isConnected || tip.classList.contains('is-fading')) return;
-            tip.classList.add('is-fading');
-            setTimeout(() => { if (tip.isConnected) tip.remove(); }, 280);
-        };
-        card.addEventListener('pointerdown', dismissHint, { once: true });
-        card.addEventListener('animationend', (e) => {
-            if (e.animationName === 'cardHintSway') card.classList.remove('is-hint-sway');
-        }, { once: true });
-        swipeHintTimer = setTimeout(dismissHint, 3600);
+        if (!card || step !== FEED || onboardActive || !shouldShowOnboard()) return;
+        markOnboardSeen();
+        clearTimeout(onboardTimer);
+        onboardTimer = setTimeout(() => {
+            if (step !== FEED || !card.isConnected) return;
+            const overlay = $('feedOnboard');
+            const scr = $('screen-feed');
+            if (!overlay || !scr) return;
+            onboardActive = true;
+            scr.classList.add('is-onboarding');
+            overlay.hidden = false;
+            overlay.classList.remove('is-open');
+            requestAnimationFrame(() => {
+                if (!onboardActive || !card.isConnected) return;
+                layoutFeedOnboard();
+                requestAnimationFrame(() => {
+                    if (!onboardActive) return;
+                    overlay.classList.add('is-open');
+                });
+            });
+            TG.back(() => closeFeedOnboard());
+        }, 280);
     }
 
     function renderDeck() {
@@ -1884,7 +2062,7 @@ const Feed = (() => {
         if (!st.cur && !st.queue.length) { st.exhausted = false; loadQueue(); } else renderDeck();
     }
     function resetSession() {
-        clearTimeout(swipeHintTimer);
+        closeFeedOnboard(true);
         localBlocked = [];
         Object.assign(prefs, { ageMode: 'peer', sameCity: false, isHidden: false, onlyWithBio: false });
         st.queue = []; st.cur = null; st.intent = null; st.sameCity = false; st.lastZone = null;
@@ -1904,6 +2082,9 @@ const Feed = (() => {
     }
     function init() {
         initToastSwipe();
+        if ($('feedOnboardBtn')) $('feedOnboardBtn').addEventListener('click', (e) => { e.stopPropagation(); closeFeedOnboard(); });
+        if ($('feedOnboard')) $('feedOnboard').addEventListener('click', (e) => { if (e.target === $('feedOnboard')) closeFeedOnboard(); });
+        window.addEventListener('resize', () => { if (onboardActive) layoutFeedOnboard(); });
         $('feedWaves').addEventListener('click', openWaves);
         $('slots').addEventListener('click', explainSlots);
         $('sheetSend').addEventListener('click', () => { const t = $('sheetText').value.trim(); closeSheet(); wave(t); });
@@ -1949,7 +2130,12 @@ const Feed = (() => {
             $('photoViewer').addEventListener('click', (e) => {
                 if (e.target === $('photoViewer') || e.target === $('photoViewerStage')) closePhotoViewer();
             });
-            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePhotoViewer(); });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (onboardActive) closeFeedOnboard();
+                    else closePhotoViewer();
+                }
+            });
             initPhotoViewerDrag();
         }
         if ($('doneAvatar')) {
