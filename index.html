@@ -64,11 +64,14 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 
+    <!-- Preload стартового логотипа -->
+    <link rel="preload" as="image" href="/assets/wave-logo.png">
+
     <!-- CSS -->
 
     <link
         rel="stylesheet"
-        href="css/base.css?v=63"
+        href="css/base.css?v=68"
     >
 
     <link
@@ -90,6 +93,70 @@
 
 
 <body>
+
+    <!-- Стартовая анимация при открытии приложения -->
+    <div class="app-splash" id="appSplash" aria-hidden="true">
+        <div class="app-splash-glow"></div>
+        <div class="app-splash-stage">
+            <div class="app-splash-mark">
+                <img class="app-splash-logo" src="/assets/wave-logo.png" alt="Wave" decoding="async" fetchpriority="high">
+                <div class="app-splash-sheen"></div>
+                <svg class="app-splash-trail" viewBox="0 0 740 388" fill="none" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="splashTrailGrad" x1="0%" y1="60%" x2="100%" y2="25%">
+                            <stop offset="0%" stop-color="#A78BFA" stop-opacity="0.2" />
+                            <stop offset="55%" stop-color="#EDE9FE" stop-opacity="0.95" />
+                            <stop offset="100%" stop-color="#FFFFFF" stop-opacity="1" />
+                        </linearGradient>
+                    </defs>
+                    <path class="app-splash-trail-crest" d="M 22 250 C 120 286, 240 248, 345 128 C 430 32, 535 6, 622 36 C 685 58, 722 118, 720 186" />
+                    <path class="app-splash-trail-under" d="M 374 252 C 446 336, 578 386, 720 322" />
+                </svg>
+                <div class="app-splash-sparks">
+                    <span class="app-splash-spark s1"></span>
+                    <span class="app-splash-spark s2"></span>
+                    <span class="app-splash-spark s3"></span>
+                    <span class="app-splash-spark s4"></span>
+                </div>
+            </div>
+            <div class="app-splash-word"><span>W</span><span>A</span><span>V</span><span>E</span></div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var el = document.getElementById('appSplash');
+            if (!el) { window.__waveSplashDone = Promise.resolve(); return; }
+            var resolveDone;
+            window.__waveSplashDone = new Promise(function (r) { resolveDone = r; });
+            var closed = false;
+            function close() {
+                if (closed) return;
+                closed = true;
+                el.classList.add('is-hiding');
+                setTimeout(function () {
+                    if (el.parentNode) el.parentNode.removeChild(el);
+                    resolveDone();
+                }, 420);
+            }
+            var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var minDelay = reduced ? 300 : 1380;
+            var img = el.querySelector('img');
+            var started = false;
+            function schedule() {
+                if (started) return;
+                started = true;
+                setTimeout(close, minDelay);
+            }
+            if (img && !img.complete) {
+                img.addEventListener('load', schedule, { once: true });
+                img.addEventListener('error', schedule, { once: true });
+                setTimeout(schedule, 300);
+            } else {
+                schedule();
+            }
+            setTimeout(close, 2600);
+        })();
+    </script>
 
 
     <!-- =================================
@@ -883,7 +950,7 @@
 
     <script src="js/landing.js?v=65"></script>
 
-    <script src="js/feed.js?v=65"></script>
+    <script src="js/feed.js?v=66"></script>
 
     <script src="js/nav.js?v=65"></script>
 

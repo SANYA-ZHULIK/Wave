@@ -1490,29 +1490,36 @@ const Feed = (() => {
         if (!card || step !== FEED || onboardActive || !shouldShowOnboard()) return;
         markOnboardSeen();
         clearTimeout(onboardTimer);
-        onboardTimer = setTimeout(() => {
-            if (step !== FEED || !card.isConnected) return;
-            const overlay = $('feedOnboard');
-            const scr = $('screen-feed');
-            if (!overlay || !scr) return;
-            const steps = buildOnboardSteps();
-            if (!steps.length) return;
-            onboardSteps = steps;
-            onboardStep = 0;
-            onboardActive = true;
-            hideToast();
-            scr.classList.add('is-onboarding');
-            overlay.hidden = false;
-            overlay.classList.remove('is-open');
-            requestAnimationFrame(() => {
-                if (!onboardActive || !card.isConnected) return;
-                renderOnboardStep(true);
+        const start = () => {
+            onboardTimer = setTimeout(() => {
+                if (step !== FEED || !card.isConnected) return;
+                const overlay = $('feedOnboard');
+                const scr = $('screen-feed');
+                if (!overlay || !scr) return;
+                const steps = buildOnboardSteps();
+                if (!steps.length) return;
+                onboardSteps = steps;
+                onboardStep = 0;
+                onboardActive = true;
+                hideToast();
+                scr.classList.add('is-onboarding');
+                overlay.hidden = false;
+                overlay.classList.remove('is-open');
                 requestAnimationFrame(() => {
-                    if (!onboardActive) return;
-                    overlay.classList.add('is-open');
+                    if (!onboardActive || !card.isConnected) return;
+                    renderOnboardStep(true);
+                    requestAnimationFrame(() => {
+                        if (!onboardActive) return;
+                        overlay.classList.add('is-open');
+                    });
                 });
-            });
-        }, 320);
+            }, 320);
+        };
+        if (window.__waveSplashDone && typeof window.__waveSplashDone.then === 'function') {
+            window.__waveSplashDone.then(start);
+        } else {
+            start();
+        }
     }
     function replayOnboard() {
         try { localStorage.removeItem(ONBOARD_KEY); } catch (e) {}

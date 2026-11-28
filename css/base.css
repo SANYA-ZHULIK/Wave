@@ -29,3 +29,279 @@ img    { display: block; max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* =========================================
+   СТАРТОВАЯ АНИМАЦИЯ С ЛОГОТИПОМ (Splash)
+========================================= */
+.app-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+    background: #0C061B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.42s ease;
+}
+.app-splash.is-hiding {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+.app-splash-glow {
+    position: absolute;
+    width: 340px;
+    height: 340px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(147, 83, 255, 0.34) 0%, rgba(124, 58, 237, 0.1) 46%, transparent 72%);
+    pointer-events: none;
+    animation: splashGlow 1.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.app-splash-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s ease;
+}
+.app-splash-mark {
+    position: relative;
+    width: 144px;
+    aspect-ratio: 740 / 388;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    will-change: transform, opacity, filter;
+    animation:
+        splashWaveSurge 0.88s cubic-bezier(0.22, 1, 0.36, 1) both,
+        splashWaveFloat 1.6s ease-in-out 0.88s infinite;
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s ease, filter 0.36s ease;
+}
+.app-splash.is-hiding .app-splash-mark {
+    animation: none;
+    transform: translate3d(10px, -8px, 0) scale(1.09) rotate(2deg);
+    opacity: 0;
+    filter: drop-shadow(0 0 38px rgba(196, 168, 255, 0.78));
+}
+.app-splash-logo {
+    width: 100%;
+    height: 100%;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+    animation: splashWaveReveal 0.62s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.app-splash-sheen {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    -webkit-mask-image: url('/assets/wave-logo.png');
+    mask-image: url('/assets/wave-logo.png');
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    overflow: hidden;
+}
+.app-splash-sheen::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    left: -55%;
+    width: 48%;
+    height: 160%;
+    background: linear-gradient(105deg, transparent 10%, rgba(255, 255, 255, 0.72) 50%, transparent 90%);
+    transform: skewX(-24deg);
+    opacity: 0;
+    animation: splashLiquidSheen 0.74s cubic-bezier(0.22, 1, 0.36, 1) 0.44s both;
+}
+.app-splash-trail {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+.app-splash-trail-crest {
+    fill: none;
+    stroke: url(#splashTrailGrad);
+    stroke-width: 14;
+    stroke-linecap: round;
+    stroke-dasharray: 220 1200;
+    stroke-dashoffset: 240;
+    filter: drop-shadow(0 0 10px rgba(233, 213, 255, 0.95));
+    animation: splashTrailRun 0.72s cubic-bezier(0.25, 0.8, 0.25, 1) 0.04s both;
+}
+.app-splash-trail-under {
+    fill: none;
+    stroke: rgba(192, 152, 255, 0.88);
+    stroke-width: 9;
+    stroke-linecap: round;
+    stroke-dasharray: 120 800;
+    stroke-dashoffset: 140;
+    filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.9));
+    animation: splashUnderRun 0.62s cubic-bezier(0.25, 0.8, 0.25, 1) 0.24s both;
+}
+
+/* Брызги энергии с гребня волны (как в анимированных иконках Telegram) */
+.app-splash-sparks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.app-splash-spark {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+.app-splash-spark.s1 {
+    right: 4%;
+    top: 30%;
+    width: 6px;
+    height: 6px;
+    background: #F3E8FF;
+    box-shadow: 0 0 10px rgba(233, 213, 255, 0.95);
+    animation: splashSpark1 0.62s cubic-bezier(0.16, 1, 0.3, 1) 0.44s both;
+}
+.app-splash-spark.s2 {
+    right: 10%;
+    top: 14%;
+    width: 4.5px;
+    height: 4.5px;
+    background: #B5C680;
+    box-shadow: 0 0 9px rgba(181, 198, 128, 0.95);
+    animation: splashSpark2 0.66s cubic-bezier(0.16, 1, 0.3, 1) 0.48s both;
+}
+.app-splash-spark.s3 {
+    right: 0%;
+    top: 52%;
+    width: 5px;
+    height: 5px;
+    background: #C4B5FD;
+    box-shadow: 0 0 10px rgba(167, 139, 250, 0.95);
+    animation: splashSpark3 0.64s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+}
+.app-splash-spark.s4 {
+    right: 16%;
+    top: 76%;
+    width: 4px;
+    height: 4px;
+    background: #E9D5FF;
+    box-shadow: 0 0 8px rgba(216, 180, 254, 0.9);
+    animation: splashSpark4 0.62s cubic-bezier(0.16, 1, 0.3, 1) 0.54s both;
+}
+
+/* Надпись WAVE — волнообразное появление букв */
+.app-splash-word {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #ffffff;
+    text-shadow: 0 4px 20px rgba(139, 92, 246, 0.48);
+    transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+}
+.app-splash.is-hiding .app-splash-word {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+}
+.app-splash-word span {
+    display: inline-block;
+    background: linear-gradient(180deg, #FFFFFF 22%, #DDD6FE 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: splashLetterPop 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.app-splash-word span:nth-child(1) { animation-delay: 0.36s; }
+.app-splash-word span:nth-child(2) { animation-delay: 0.43s; }
+.app-splash-word span:nth-child(3) { animation-delay: 0.50s; }
+.app-splash-word span:nth-child(4) { animation-delay: 0.57s; }
+
+@keyframes splashWaveSurge {
+    0% {
+        opacity: 0;
+        transform: translate3d(-22px, 16px, 0) scale(0.76, 0.86) rotate(-8deg);
+        filter: drop-shadow(0 0 0 rgba(167, 139, 250, 0));
+    }
+    46% {
+        opacity: 1;
+        transform: translate3d(5px, -6px, 0) scale(1.07, 0.95) rotate(2.6deg);
+        filter: drop-shadow(0 0 32px rgba(167, 139, 250, 0.68)) drop-shadow(0 10px 24px rgba(124, 58, 237, 0.42));
+    }
+    74% {
+        opacity: 1;
+        transform: translate3d(-2px, 2px, 0) scale(0.98, 1.03) rotate(-1deg);
+        filter: drop-shadow(0 0 24px rgba(167, 139, 250, 0.52)) drop-shadow(0 8px 20px rgba(124, 58, 237, 0.32));
+    }
+    100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1, 1) rotate(0deg);
+        filter: drop-shadow(0 0 22px rgba(167, 139, 250, 0.46)) drop-shadow(0 6px 18px rgba(124, 58, 237, 0.28));
+    }
+}
+@keyframes splashWaveFloat {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+    50%      { transform: translate3d(0, -4px, 0) rotate(0.9deg); }
+}
+@keyframes splashWaveReveal {
+    0%   { clip-path: inset(0 100% 0 0); }
+    100% { clip-path: inset(0 0% 0 0); }
+}
+@keyframes splashTrailRun {
+    0%   { stroke-dashoffset: 240; opacity: 0; }
+    15%  { opacity: 1; }
+    80%  { opacity: 0.9; }
+    100% { stroke-dashoffset: -1050; opacity: 0; }
+}
+@keyframes splashUnderRun {
+    0%   { stroke-dashoffset: 140; opacity: 0; }
+    20%  { opacity: 0.95; }
+    80%  { opacity: 0.8; }
+    100% { stroke-dashoffset: -520; opacity: 0; }
+}
+@keyframes splashLiquidSheen {
+    0%   { left: -55%; opacity: 0; }
+    20%  { opacity: 0.95; }
+    80%  { opacity: 0.7; }
+    100% { left: 125%; opacity: 0; }
+}
+@keyframes splashSpark1 {
+    0%   { opacity: 0; transform: translate3d(-4px, 4px, 0) scale(0.3); }
+    25%  { opacity: 1; transform: translate3d(10px, -10px, 0) scale(1.1); }
+    100% { opacity: 0; transform: translate3d(24px, -22px, 0) scale(0.2); }
+}
+@keyframes splashSpark2 {
+    0%   { opacity: 0; transform: translate3d(-4px, 6px, 0) scale(0.3); }
+    28%  { opacity: 1; transform: translate3d(8px, -16px, 0) scale(1.15); }
+    100% { opacity: 0; transform: translate3d(18px, -30px, 0) scale(0.15); }
+}
+@keyframes splashSpark3 {
+    0%   { opacity: 0; transform: translate3d(-6px, 0, 0) scale(0.3); }
+    28%  { opacity: 1; transform: translate3d(14px, 4px, 0) scale(1.05); }
+    100% { opacity: 0; transform: translate3d(28px, 12px, 0) scale(0.2); }
+}
+@keyframes splashSpark4 {
+    0%   { opacity: 0; transform: translate3d(-4px, -2px, 0) scale(0.3); }
+    28%  { opacity: 1; transform: translate3d(12px, 10px, 0) scale(1.05); }
+    100% { opacity: 0; transform: translate3d(22px, 20px, 0) scale(0.15); }
+}
+@keyframes splashLetterPop {
+    0%   { opacity: 0; transform: translateY(14px) scale(0.78); }
+    62%  { opacity: 1; transform: translateY(-3px) scale(1.05); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes splashGlow {
+    0%   { opacity: 0; transform: scale(0.5); }
+    52%  { opacity: 1; transform: scale(1.12); }
+    100% { opacity: 0.85; transform: scale(1); }
+}
