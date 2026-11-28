@@ -83,7 +83,7 @@
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=70"
+        href="css/auth.css?v=71"
     >
 
 </head>
@@ -699,181 +699,163 @@
             <h2>Настройки</h2>
             <span class="head-spacer"></span>
         </header>
-        <div class="waves-body info-body" id="settingsBody">
-            <div class="sec-title">Параметры поиска</div>
+        <div class="waves-body set-body" id="settingsBody">
+            <div class="set-section">
+                <div class="set-section-title">Параметры поиска</div>
+                <div class="set-group">
+                    <div class="set-item set-item-stack">
+                        <div class="set-item-text">
+                            <div class="set-title">Кого показывать</div>
+                            <p class="set-sub">Сразу применяется к ленте анкет</p>
+                        </div>
+                        <div class="set-seg" id="setLookingChips">
+                            <button type="button" class="chip sm" data-value="male">Парней</button>
+                            <button type="button" class="chip sm" data-value="female">Девушек</button>
+                            <button type="button" class="chip sm" data-value="any">Всех</button>
+                        </div>
+                    </div>
 
-            <article class="info-card set-card">
-                <div class="set-row-head">
-                    <div>
-                        <h4>Кого показывать в ленте</h4>
-                        <p class="set-sub">Изменения сразу применяются к подбору анкет</p>
+                    <div class="set-item set-item-stack">
+                        <div class="set-item-text">
+                            <div class="set-title">Возраст собеседника</div>
+                            <p class="set-sub">Диапазон возраста в подборе</p>
+                        </div>
+                        <div class="set-seg set-seg-grid" id="setAgeChips">
+                            <button type="button" class="chip sm" data-value="peer">Ровесники (±5)</button>
+                            <button type="button" class="chip sm" data-value="18-24">18 – 24</button>
+                            <button type="button" class="chip sm" data-value="25-34">25 – 34</button>
+                            <button type="button" class="chip sm" data-value="any">Любой (18+)</button>
+                        </div>
+                    </div>
+
+                    <div class="set-item">
+                        <div class="set-item-text">
+                            <div class="set-title">Ваш город</div>
+                            <div class="set-inline-val">
+                                <svg class="set-pin-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11z" />
+                                    <circle cx="12" cy="10" r="2.5" />
+                                </svg>
+                                <span id="setCityVal">Мой город</span>
+                            </div>
+                        </div>
+                        <button type="button" class="set-btn" id="setChangeCityBtn">Изменить</button>
+                    </div>
+
+                    <div class="set-item set-toggle-row" id="setGeoRow">
+                        <div class="set-item-text">
+                            <div class="set-title">Только мой город</div>
+                            <p class="set-sub" id="setGeoNote">Показываются все города (сначала ближайшие)</p>
+                        </div>
+                        <button type="button" class="w-toggle" id="setGeoToggle" role="switch" aria-checked="false" aria-label="Только мой город">
+                            <span class="w-toggle-thumb"></span>
+                        </button>
                     </div>
                 </div>
-                <div class="chip-group" id="setLookingChips">
-                    <button type="button" class="chip sm" data-value="male">Парней</button>
-                    <button type="button" class="chip sm" data-value="female">Девушек</button>
-                    <button type="button" class="chip sm" data-value="any">Всех</button>
-                </div>
-            </article>
+            </div>
 
-            <article class="info-card set-card">
-                <div class="set-row-head">
-                    <div>
-                        <h4>Возраст собеседника</h4>
-                        <p class="set-sub">Какой возрастной диапазон искать в ленте</p>
+            <div class="set-section">
+                <div class="set-section-title">Видимость и лента</div>
+                <div class="set-group">
+                    <div class="set-item set-toggle-row" id="setVisRow">
+                        <div class="set-item-text">
+                            <div class="set-title">Показ моей анкеты</div>
+                            <p class="set-sub" id="setVisNote">Ваша анкета видна другим пользователям в ленте</p>
+                        </div>
+                        <button type="button" class="w-toggle on" id="setVisToggle" role="switch" aria-checked="true" aria-label="Показ моей анкеты">
+                            <span class="w-toggle-thumb"></span>
+                        </button>
+                    </div>
+
+                    <div class="set-item set-toggle-row" id="setBioRow">
+                        <div class="set-item-text">
+                            <div class="set-title">Только с описанием «О себе»</div>
+                            <p class="set-sub" id="setBioNote">Скрывать из ленты анкеты без описания</p>
+                        </div>
+                        <button type="button" class="w-toggle" id="setBioToggle" role="switch" aria-checked="false" aria-label="Только с описанием О себе">
+                            <span class="w-toggle-thumb"></span>
+                        </button>
+                    </div>
+
+                    <div class="set-item">
+                        <div class="set-item-text">
+                            <div class="set-title">Пропущенные анкеты</div>
+                            <p class="set-sub">Скрываются на 2 дня — можно вернуть их в ленту сейчас</p>
+                        </div>
+                        <button type="button" class="set-btn" id="setResetPassesBtn">Вернуть</button>
                     </div>
                 </div>
-                <div class="chip-group wrap set-chips" id="setAgeChips">
-                    <button type="button" class="chip sm" data-value="peer">Ровесники (±5 лет)</button>
-                    <button type="button" class="chip sm" data-value="18-24">18 – 24</button>
-                    <button type="button" class="chip sm" data-value="25-34">25 – 34</button>
-                    <button type="button" class="chip sm" data-value="any">Любой (18+)</button>
-                </div>
-            </article>
+            </div>
 
-            <article class="info-card set-card">
-                <div class="set-row-head">
-                    <div>
-                        <h4>Ваш город</h4>
-                        <p class="set-sub">От него отталкивается поиск людей рядом</p>
+            <div class="set-section">
+                <div class="set-section-title">Интерфейс</div>
+                <div class="set-group">
+                    <div class="set-item set-toggle-row" id="setHapticRow">
+                        <div class="set-item-text">
+                            <div class="set-title">Тактильный отклик</div>
+                            <p class="set-sub">Мягкая вибрация при свайпах и нажатиях</p>
+                        </div>
+                        <button type="button" class="w-toggle on" id="setHapticToggle" role="switch" aria-checked="true" aria-label="Тактильный отклик">
+                            <span class="w-toggle-thumb"></span>
+                        </button>
+                    </div>
+
+                    <div class="set-item">
+                        <div class="set-item-text">
+                            <div class="set-title">Обучение по ленте</div>
+                            <p class="set-sub">Пошаговый гид по свайпам, слотам и фильтрам</p>
+                        </div>
+                        <button type="button" class="set-btn" id="setReplayOnboardBtn">Показать</button>
                     </div>
                 </div>
-                <div class="set-city-box">
-                    <div class="set-city-info">
-                        <span class="set-city-pin" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#B5C680" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11z" />
-                                <circle cx="12" cy="10" r="2.5" />
-                            </svg>
-                        </span>
-                        <span class="set-city-name" id="setCityVal">Мой город</span>
+            </div>
+
+            <div class="set-section">
+                <div class="set-section-title">Аккаунт и безопасность</div>
+                <div class="set-group">
+                    <div class="set-item">
+                        <div class="set-item-text">
+                            <div class="set-title">Username в Telegram</div>
+                            <div class="set-inline-val" id="setUsernameVal">Не задан</div>
+                            <p class="set-sub" id="setUsernameSub">Используется для перехода в чат при взаимной волне</p>
+                        </div>
+                        <button type="button" class="set-btn" id="setRefreshUsernameBtn">Обновить</button>
                     </div>
-                    <button type="button" class="set-city-change" id="setChangeCityBtn">Изменить</button>
-                </div>
 
-                <div class="set-divider"></div>
-
-                <div class="set-toggle-row" id="setGeoRow">
-                    <div>
-                        <h4>Только мой город</h4>
-                        <p class="set-sub" id="setGeoNote">Показываются все города (сначала ближайшие)</p>
+                    <div class="set-item set-item-stack">
+                        <div class="set-item-inline">
+                            <div class="set-item-text">
+                                <div class="set-title">Чёрный список</div>
+                                <p class="set-sub" id="setBlockSub">Заблокированные не видят вас и не могут писать</p>
+                            </div>
+                            <button type="button" class="set-btn" id="setBlacklistToggleBtn">Показать</button>
+                        </div>
+                        <div class="set-blacklist-wrap" id="setBlacklistWrap" hidden>
+                            <div class="set-blacklist-list" id="setBlacklistList"></div>
+                        </div>
                     </div>
-                    <button type="button" class="w-toggle" id="setGeoToggle" role="switch" aria-checked="false" aria-label="Только мой город">
-                        <span class="w-toggle-thumb"></span>
-                    </button>
-                </div>
-            </article>
 
-            <div class="sec-title">Видимость и лента</div>
-
-            <article class="info-card set-card">
-                <div class="set-toggle-row" id="setVisRow">
-                    <div>
-                        <h4>Показ моей анкеты</h4>
-                        <p class="set-sub" id="setVisNote">Ваша анкета видна другим пользователям в ленте подбора.</p>
-                    </div>
-                    <button type="button" class="w-toggle on" id="setVisToggle" role="switch" aria-checked="true" aria-label="Показ моей анкеты">
-                        <span class="w-toggle-thumb"></span>
-                    </button>
-                </div>
-
-                <div class="set-divider"></div>
-
-                <div class="set-toggle-row" id="setBioRow">
-                    <div>
-                        <h4>Только с заполненным «О себе»</h4>
-                        <p class="set-sub" id="setBioNote">Скрывать из ленты анкеты без описания</p>
-                    </div>
-                    <button type="button" class="w-toggle" id="setBioToggle" role="switch" aria-checked="false" aria-label="Только с заполненным О себе">
-                        <span class="w-toggle-thumb"></span>
-                    </button>
-                </div>
-            </article>
-
-            <article class="info-card set-card">
-                <div class="set-row-head">
-                    <div>
-                        <h4>Пропущенные анкеты</h4>
-                        <p class="set-sub">Люди, которых вы пропустили (✕), скрываются на 2 дня. Вы можете вернуть их в выдачу прямо сейчас</p>
+                    <div class="set-item">
+                        <div class="set-item-text">
+                            <div class="set-title">Поддержка</div>
+                            <p class="set-sub">Есть вопрос, идея или нашли ошибку? Напишите нам</p>
+                        </div>
+                        <button type="button" class="set-btn" id="setSupportBtn">Написать</button>
                     </div>
                 </div>
-                <button type="button" class="w-btn set-action-btn" id="setResetPassesBtn">Вернуть пропущенные анкеты</button>
-            </article>
+            </div>
 
-            <div class="sec-title">Интерфейс</div>
-
-            <article class="info-card set-card">
-                <div class="set-toggle-row" id="setHapticRow">
-                    <div>
-                        <h4>Тактильный отклик</h4>
-                        <p class="set-sub">Мягкая вибрация при свайпах, лайках и переключении экранов</p>
-                    </div>
-                    <button type="button" class="w-toggle on" id="setHapticToggle" role="switch" aria-checked="true" aria-label="Тактильный отклик">
-                        <span class="w-toggle-thumb"></span>
-                    </button>
-                </div>
-
-                <div class="set-divider"></div>
-
-                <div class="set-row-head set-row-center">
-                    <div>
-                        <h4>Обучение по ленте</h4>
-                        <p class="set-sub">Короткий пошаговый гид по свайпам, слотам и фильтрам</p>
-                    </div>
-                    <button type="button" class="set-city-change" id="setReplayOnboardBtn">Показать</button>
-                </div>
-            </article>
-
-            <div class="sec-title">Аккаунт и безопасность</div>
-
-            <article class="info-card set-card">
-                <div class="set-row-head">
-                    <div>
-                        <h4>Ваш username в Telegram</h4>
-                        <p class="set-sub" id="setUsernameSub">Используется для перехода в чат при взаимной волне</p>
+            <div class="set-section set-section-danger">
+                <div class="set-group set-group-danger">
+                    <div class="set-item set-item-stack">
+                        <div class="set-item-text">
+                            <div class="set-title">Удалить анкету</div>
+                            <p class="set-sub">Профиль, фото, активные волны и уведомления удалятся навсегда без восстановления</p>
+                        </div>
+                        <button type="button" class="set-danger-btn" id="setDeleteAccountBtn">Удалить анкету навсегда</button>
                     </div>
                 </div>
-                <div class="set-city-box">
-                    <div class="set-city-info">
-                        <span class="set-username-at" aria-hidden="true">@</span>
-                        <span class="set-city-name" id="setUsernameVal">Не задан</span>
-                    </div>
-                    <button type="button" class="set-city-change" id="setRefreshUsernameBtn">Обновить</button>
-                </div>
-            </article>
-
-            <article class="info-card set-card">
-                <div class="set-row-head set-row-center">
-                    <div>
-                        <h4>Чёрный список</h4>
-                        <p class="set-sub" id="setBlockSub">Заблокированные люди не видят вашу анкету и не могут писать вам</p>
-                    </div>
-                    <button type="button" class="set-city-change" id="setBlacklistToggleBtn">Показать</button>
-                </div>
-                <div class="set-blacklist-wrap" id="setBlacklistWrap" hidden>
-                    <div class="set-blacklist-list" id="setBlacklistList"></div>
-                </div>
-            </article>
-
-            <article class="info-card set-card">
-                <div class="set-row-head">
-                    <div>
-                        <h4>Поддержка</h4>
-                        <p class="set-sub">Есть вопрос, идея или нашли ошибку? Напишите нам в Telegram</p>
-                    </div>
-                </div>
-                <button type="button" class="w-btn set-action-btn" id="setSupportBtn">Написать в поддержку</button>
-            </article>
-
-            <article class="info-card set-card set-card-danger">
-                <div class="set-row-head">
-                    <div>
-                        <h4>Удалить анкету</h4>
-                        <p class="set-sub">Профиль, фото, активные волны, лайки и уведомления будут удалены навсегда без возможности восстановления</p>
-                    </div>
-                </div>
-                <button type="button" class="w-btn danger set-danger-btn" id="setDeleteAccountBtn">Удалить анкету навсегда</button>
-            </article>
+            </div>
         </div>
     </section>
 
@@ -1012,7 +994,7 @@
 
     <script src="js/feed.js?v=70"></script>
 
-    <script src="js/nav.js?v=70"></script>
+    <script src="js/nav.js?v=71"></script>
 
 
     <script>

@@ -397,13 +397,13 @@ const Nav = (() => {
         const u = TG.user();
         const uname = (u && u.username) || profile.tg_username || '';
         if (uname) {
-            valEl.textContent = uname;
+            valEl.textContent = '@' + uname.replace(/^@/, '');
             valEl.classList.remove('is-empty');
-            if (subEl) subEl.textContent = 'Собеседники смогут перейти по нему в чат после взаимной волны';
+            if (subEl) subEl.textContent = 'Используется для перехода в чат при взаимной волне';
         } else {
             valEl.textContent = 'Не задан в Telegram';
             valEl.classList.add('is-empty');
-            if (subEl) subEl.textContent = 'Без @username собеседник не сможет написать вам после мэтча. Задайте его в настройках Telegram и нажмите «Обновить».';
+            if (subEl) subEl.textContent = 'Задайте @username в настройках Telegram и нажмите «Обновить»';
         }
     }
 
