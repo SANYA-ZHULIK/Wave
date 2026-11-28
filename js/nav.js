@@ -343,10 +343,31 @@ const Nav = (() => {
                 : 'Показываются все города (сначала ближайшие)';
         }
 
+        const ageMode = prefs.ageMode || 'peer';
+        const myAge = Number(profile.age);
+        const peerSpan = myAge >= 18 ? (Math.max(18, myAge - 5) + '–' + (myAge + 5)) : '';
+
+        const peerSub = $('setAgePeerSub');
+        if (peerSub) {
+            peerSub.textContent = peerSpan ? ('Ровесники · ' + peerSpan) : 'Ровесники';
+        }
+        const ageSummary = $('setAgeSummary');
+        if (ageSummary) {
+            const summaryMap = {
+                peer: peerSpan ? (peerSpan + ' лет') : '±5 лет',
+                '18-24': '18–24 года',
+                '25-34': '25–34 года',
+                any: 'Любой (18+)'
+            };
+            ageSummary.textContent = summaryMap[ageMode] || '±5 лет';
+        }
+
         const ageGroup = $('setAgeChips');
         if (ageGroup) {
             ageGroup.querySelectorAll('.chip').forEach((c) => {
-                c.classList.toggle('selected', c.dataset.value === (prefs.ageMode || 'peer'));
+                const isSel = c.dataset.value === ageMode;
+                c.classList.toggle('selected', isSel);
+                c.setAttribute('aria-pressed', isSel ? 'true' : 'false');
             });
         }
 

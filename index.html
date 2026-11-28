@@ -83,7 +83,7 @@
 
     <link
         rel="stylesheet"
-        href="css/auth.css?v=71"
+        href="css/auth.css?v=72"
     >
 
 </head>
@@ -536,41 +536,94 @@
             <span class="head-spacer"></span>
         </header>
         <div class="waves-body info-body" id="aboutBody">
-            <div class="info-hero">
-                <div class="info-logo-badge">WAVE</div>
+            <div class="about-hero">
+                <div class="about-brand-line">
+                    <svg class="about-brand-svg" viewBox="0 0 740 388" fill="none" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="aboutWaveCrest" x1="16" y1="310" x2="640" y2="30" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#A56BFF" />
+                                <stop offset="42%" stop-color="#D2AEFF" />
+                                <stop offset="100%" stop-color="#FCF9FF" />
+                            </linearGradient>
+                            <linearGradient id="aboutWaveUnder" x1="395" y1="190" x2="710" y2="345" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#6B21FF" />
+                                <stop offset="55%" stop-color="#A66CFF" />
+                                <stop offset="100%" stop-color="#F2D8FF" />
+                            </linearGradient>
+                        </defs>
+                        <path fill="url(#aboutWaveUnder)" d="M 375 255 C 446 176, 520 104, 600 103 C 652 102, 700 132, 722 186 C 696 144, 650 132, 610 144 C 584 152, 571 182, 571 228 C 571 296, 632 344, 720 321 C 654 374, 552 384, 458 338 C 424 321, 396 292, 375 255 Z" />
+                        <path fill="url(#aboutWaveCrest)" d="M 16 246 C 122 288, 228 242, 322 146 C 416 50, 488 14, 568 18 C 668 23, 728 96, 722 186 C 700 132, 650 102, 598 103 C 518 104, 444 176, 375 255 C 296 334, 152 362, 16 246 Z" />
+                    </svg>
+                    <span class="about-brand-meta">
+                        <span class="about-brand-name">WAVE</span>
+                        <span class="about-brand-sep" aria-hidden="true">·</span>
+                        <span>Telegram Mini App</span>
+                    </span>
+                </div>
                 <h3 class="info-hero-title">Знакомства и люди на одной волне</h3>
-                <p class="info-hero-sub">Мини-приложение внутри Telegram для осознанного поиска отношений, друзей и компании по общим интересам без бесконечного спама и «мёртвых» диалогов.</p>
+                <p class="info-hero-sub">Мини-приложение внутри Telegram для осознанного поиска отношений, друзей и компании по общим интересам — без бесконечного спама и «мёртвых» диалогов.</p>
             </div>
 
-            <div class="sec-title">Как устроен Wave</div>
-
-            <article class="info-card">
-                <div class="info-card-head">
-                    <span class="info-badge">3 слота</span>
-                    <h4>Механика активных волн</h4>
+            <div class="about-facts" aria-label="Ключевые особенности Wave">
+                <div class="about-fact">
+                    <span class="about-fact-val">3</span>
+                    <span class="about-fact-lbl">активных слота</span>
                 </div>
-                <p>Отправлять лайки в ленте можно без ограничений, но взаимная симпатия рождает <b>Волну</b> и занимает 1 из 3 слотов у вас обоих. Это помогает не копить десятки забытых мэтчей, а общаться с теми, кто действительно интересен прямо сейчас.</p>
-            </article>
-
-            <article class="info-card">
-                <div class="info-card-head">
-                    <span class="info-badge">Интересы</span>
-                    <h4>Точки соприкосновения и география</h4>
+                <div class="about-fact">
+                    <span class="about-fact-val">до 5</span>
+                    <span class="about-fact-lbl">общих целей</span>
                 </div>
-                <p>Выбирайте до 5 целей — от отношений и дружбы до совместных каток, спорта, ночных покатушек и путешествий. Алгоритм сначала показывает людей из вашего города, а затем плавно расширяет радиус к ближайшим городам, подсказывая темы для первого сообщения.</p>
-            </article>
-
-            <article class="info-card">
-                <div class="info-card-head">
-                    <span class="info-badge">Приватность</span>
-                    <h4>Безопасность и прямое общение</h4>
+                <div class="about-fact">
+                    <span class="about-fact-val">18+</span>
+                    <span class="about-fact-lbl">доступ в сервис</span>
                 </div>
-                <p>Ваши фотографии хранятся в закрытом хранилище и доступны только по временным защищённым ссылкам, а ваш никнейм в Telegram открывается собеседнику исключительно после взаимной волны. В любой момент волну можно завершить в один тап — и слот сразу освободится.</p>
-            </article>
+            </div>
+
+            <div class="info-section">
+                <div class="info-section-title">Как устроен Wave</div>
+                <div class="info-group">
+                    <article class="about-row">
+                        <span class="about-row-num" aria-hidden="true">01</span>
+                        <div class="about-row-body">
+                            <h4 class="info-row-title">Механика активных волн</h4>
+                            <p class="info-row-text">Отправлять лайки в ленте можно без ограничений, но взаимная симпатия рождает <b>Волну</b> и занимает 1 из 3 слотов у вас обоих. Это помогает не копить десятки забытых мэтчей, а общаться с теми, кто действительно интересен прямо сейчас.</p>
+                        </div>
+                    </article>
+
+                    <article class="about-row">
+                        <span class="about-row-num" aria-hidden="true">02</span>
+                        <div class="about-row-body">
+                            <h4 class="info-row-title">Точки соприкосновения и география</h4>
+                            <p class="info-row-text">Выбирайте до 5 целей — от отношений и дружбы до совместных каток, спорта, ночных покатушек и путешествий. Алгоритм сначала показывает людей из вашего города, а затем плавно расширяет радиус к ближайшим городам, подсказывая темы для первого сообщения.</p>
+                        </div>
+                    </article>
+
+                    <article class="about-row">
+                        <span class="about-row-num" aria-hidden="true">03</span>
+                        <div class="about-row-body">
+                            <h4 class="info-row-title">Безопасность и прямое общение</h4>
+                            <p class="info-row-text">Ваши фотографии хранятся в закрытом хранилище и доступны только по временным защищённым ссылкам, а ваш никнейм в Telegram открывается собеседнику исключительно после взаимной волны. В любой момент волну можно завершить в один тап — и слот сразу освободится.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-group">
+                    <button type="button" class="info-nav-row" data-go="rules">
+                        <span class="info-nav-text">
+                            <span class="info-nav-title">Правила пользования</span>
+                            <span class="info-nav-sub">Условия сервиса, конфиденциальность и безопасность</span>
+                        </span>
+                        <svg class="info-nav-chev" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M7.5 4.5L13 10L7.5 15.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
 
             <div class="info-actions">
-                <button type="button" class="w-btn" data-go="rules">Правила пользования и правовая информация</button>
-                <button type="button" class="w-btn ok" data-go="feed">Перейти к анкетам</button>
+                <button type="button" class="info-cta-primary" data-go="feed">Перейти к анкетам</button>
             </div>
         </div>
     </section>
@@ -602,73 +655,84 @@
             <span class="head-spacer"></span>
         </header>
         <div class="waves-body info-body" id="rulesBody">
-            <div class="info-hero compact">
-                <span class="info-age-pill">18+</span>
+            <div class="rules-hero">
+                <div class="rules-kicker">
+                    <span class="rules-age-flag">Только 18+</span>
+                    <span class="about-brand-sep" aria-hidden="true">·</span>
+                    <span>Правила сервиса Wave</span>
+                </div>
                 <h3 class="info-hero-title">Пользовательское соглашение</h3>
                 <p class="info-hero-sub">Настоящие Правила регулируют порядок использования мини-приложения Wave. Создавая анкету и пользуясь сервисом, вы подтверждаете полное согласие со всеми пунктами ниже.</p>
             </div>
 
-            <article class="info-card">
-                <div class="info-card-head">
-                    <span class="info-num">01</span>
-                    <h4>Возрастное ограничение и дееспособность</h4>
-                </div>
-                <p>Доступ к сервису Wave предоставляется <b>исключительно лицам, достигшим 18 лет</b>. Проходя регистрацию, пользователь гарантирует своё совершеннолетие и полную правовую дееспособность. Анкеты лиц младше 18 лет подлежат незамедлительному удалению.</p>
-            </article>
+            <div class="info-section">
+                <div class="info-section-title">Основные положения</div>
+                <div class="info-group rules-group">
+                    <article class="rule-item">
+                        <div class="rule-head">
+                            <span class="rule-num">01</span>
+                            <h4 class="info-row-title">Возрастное ограничение и дееспособность</h4>
+                        </div>
+                        <p class="info-row-text">Доступ к сервису Wave предоставляется <b>исключительно лицам, достигшим 18 лет</b>. Проходя регистрацию, пользователь гарантирует своё совершеннолетие и полную правовую дееспособность. Анкеты лиц младше 18 лет подлежат незамедлительному удалению.</p>
+                    </article>
 
-            <article class="info-card">
-                <div class="info-card-head">
-                    <span class="info-num">02</span>
-                    <h4>Требования к анкете и запрещённый контент</h4>
-                </div>
-                <p>В анкете разрешено указывать только достоверные данные о себе и загружать собственную фотографию. В сервисе <b>строго запрещено</b>:</p>
-                <ul class="info-list">
-                    <li>использовать чужие фотографии, выдавать себя за другого человека или создавать поддельные аккаунты;</li>
-                    <li>размещать порнографические, откровенные (NSFW), жестокие или шокирующие изображения и тексты;</li>
-                    <li>допускать оскорбления, травлю, угрозы, преследование (сталкинг) и дискриминацию по любому признаку;</li>
-                    <li>рассылать спам, рекламу, коммерческие предложения, ссылки на сторонние ресурсы, продавать товары или услуги;</li>
-                    <li>совершать мошеннические действия (выманивание денег, личных данных или кодов доступа), а также нарушать законодательство или правила Telegram.</li>
-                </ul>
-            </article>
+                    <article class="rule-item">
+                        <div class="rule-head">
+                            <span class="rule-num">02</span>
+                            <h4 class="info-row-title">Требования к анкете и запрещённый контент</h4>
+                        </div>
+                        <p class="info-row-text">В анкете разрешено указывать только достоверные данные о себе и загружать собственную фотографию. В сервисе <b>строго запрещено</b>:</p>
+                        <ul class="rule-list">
+                            <li>использовать чужие фотографии, выдавать себя за другого человека или создавать поддельные аккаунты;</li>
+                            <li>размещать порнографические, откровенные (NSFW), жестокие или шокирующие изображения и тексты;</li>
+                            <li>допускать оскорбления, травлю, угрозы, преследование (сталкинг) и дискриминацию по любому признаку;</li>
+                            <li>рассылать спам, рекламу, коммерческие предложения, ссылки на сторонние ресурсы, продавать товары или услуги;</li>
+                            <li>совершать мошеннические действия (выманивание денег, личных данных или кодов доступа), а также нарушать законодательство или правила Telegram.</li>
+                        </ul>
+                    </article>
 
-            <article class="info-card">
-                <div class="info-card-head">
-                    <span class="info-num">03</span>
-                    <h4>Персональные данные и конфиденциальность</h4>
-                </div>
-                <p>Создавая профиль, пользователь даёт согласие на обработку добровольно переданных данных: идентификатора Telegram (<code>tg_id</code>), имени пользователя (<code>@username</code>), имени, возраста, пола, города, выбранных интересов, текста «О себе» и фотографии анкеты.</p>
-                <ul class="info-list">
-                    <li>Данные используются исключительно для работы алгоритмов подбора анкет, отображения профиля другим участникам и отправки сервисных уведомлений через бота.</li>
-                    <li>Фотографии хранятся в закрытом облачном хранилище и передаются по временным подписанным ссылкам (Signed URLs).</li>
-                    <li>Ваш <code>@username</code> в Telegram скрыт в общей ленте и становится доступен собеседнику только при взаимной симпатии («Волне»).</li>
-                </ul>
-            </article>
+                    <article class="rule-item">
+                        <div class="rule-head">
+                            <span class="rule-num">03</span>
+                            <h4 class="info-row-title">Персональные данные и конфиденциальность</h4>
+                        </div>
+                        <p class="info-row-text">Создавая профиль, пользователь даёт согласие на обработку добровольно переданных данных: идентификатора Telegram (<code>tg_id</code>), имени пользователя (<code>@username</code>), имени, возраста, пола, города, выбранных интересов, текста «О себе» и фотографии анкеты.</p>
+                        <ul class="rule-list">
+                            <li>Данные используются исключительно для работы алгоритмов подбора анкет, отображения профиля другим участникам и отправки сервисных уведомлений через бота.</li>
+                            <li>Фотографии хранятся в закрытом облачном хранилище и передаются по временным подписанным ссылкам (Signed URLs).</li>
+                            <li>Ваш <code>@username</code> в Telegram скрыт в общей ленте и становится доступен собеседнику только при взаимной симпатии («Волне»).</li>
+                        </ul>
+                    </article>
 
-            <article class="info-card">
-                <div class="info-card-head">
-                    <span class="info-num">04</span>
-                    <h4>Ограничение ответственности и личная безопасность</h4>
-                </div>
-                <p>Сервис Wave предоставляется по принципу «как есть» (<i>as is</i>) в качестве технической площадки для знакомств. Администрация не проводит проверку паспортных данных или биографии участников и не несёт ответственности за:</p>
-                <ul class="info-list">
-                    <li>достоверность сведений, указанных пользователями в своих анкетах;</li>
-                    <li>содержание личной переписки в Telegram после перехода в диалог;</li>
-                    <li>любые действия, поступки или ущерб, возникшие в результате онлайн-общения или личных встреч пользователей.</li>
-                </ul>
-                <p class="info-warn"><b>Правила безопасности:</b> никогда не переводите деньги незнакомым людям, не сообщайте банковские данные и коды из СМС/Telegram. Первые личные встречи назначайте только в людных общественных местах.</p>
-            </article>
+                    <article class="rule-item">
+                        <div class="rule-head">
+                            <span class="rule-num">04</span>
+                            <h4 class="info-row-title">Ограничение ответственности и личная безопасность</h4>
+                        </div>
+                        <p class="info-row-text">Сервис Wave предоставляется по принципу «как есть» (<i>as is</i>) в качестве технической площадки для знакомств. Администрация не проводит проверку паспортных данных или биографии участников и не несёт ответственности за:</p>
+                        <ul class="rule-list">
+                            <li>достоверность сведений, указанных пользователями в своих анкетах;</li>
+                            <li>содержание личной переписки в Telegram после перехода в диалог;</li>
+                            <li>любые действия, поступки или ущерб, возникшие в результате онлайн-общения или личных встреч пользователей.</li>
+                        </ul>
+                        <div class="rule-callout">
+                            <b>Правила безопасности:</b> никогда не переводите деньги незнакомым людям, не сообщайте банковские данные и коды из СМС/Telegram. Первые личные встречи назначайте только в людных общественных местах.
+                        </div>
+                    </article>
 
-            <article class="info-card">
-                <div class="info-card-head">
-                    <span class="info-num">05</span>
-                    <h4>Модерация, блокировка и платформа Telegram</h4>
+                    <article class="rule-item">
+                        <div class="rule-head">
+                            <span class="rule-num">05</span>
+                            <h4 class="info-row-title">Модерация, блокировка и платформа Telegram</h4>
+                        </div>
+                        <p class="info-row-text">Администрация оставляет за собой право без предварительного уведомления ограничить функциональность, скрыть или удалить анкету пользователя в случае нарушения настоящих Правил или поступления обоснованных жалоб от других участников.</p>
+                        <p class="info-row-text">Wave работает как независимое мини-приложение на базе Telegram Mini Apps. Корпорация Telegram не является стороной настоящего соглашения и не несёт ответственности за работу сервиса.</p>
+                    </article>
                 </div>
-                <p>Администрация оставляет за собой право без предварительного уведомления ограничить функциональность, скрыть или удалить анкету пользователя в случае нарушения настоящих Правил или поступления обоснованных жалоб от других участников.</p>
-                <p>Wave работает как независимое мини-приложение на базе Telegram Mini Apps. Корпорация Telegram не является стороной настоящего соглашения и не несёт ответственности за работу сервиса.</p>
-            </article>
+            </div>
 
             <div class="info-actions">
-                <button type="button" class="w-btn ok" data-go="feed">Понятно, вернуться к анкетам</button>
+                <button type="button" class="info-cta-primary" data-go="feed">Понятно, вернуться к анкетам</button>
             </div>
         </div>
     </section>
@@ -716,15 +780,50 @@
                     </div>
 
                     <div class="set-item set-item-stack">
-                        <div class="set-item-text">
-                            <div class="set-title">Возраст собеседника</div>
-                            <p class="set-sub">Диапазон возраста в подборе</p>
+                        <div class="set-age-head">
+                            <div class="set-item-text">
+                                <div class="set-title">Возраст собеседника</div>
+                                <p class="set-sub">Диапазон возраста в подборе</p>
+                            </div>
+                            <span class="set-age-cur" id="setAgeSummary">±5 лет</span>
                         </div>
-                        <div class="set-seg set-seg-grid" id="setAgeChips">
-                            <button type="button" class="chip sm" data-value="peer">Ровесники (±5)</button>
-                            <button type="button" class="chip sm" data-value="18-24">18 – 24</button>
-                            <button type="button" class="chip sm" data-value="25-34">25 – 34</button>
-                            <button type="button" class="chip sm" data-value="any">Любой (18+)</button>
+                        <div class="set-age-grid" id="setAgeChips">
+                            <button type="button" class="chip set-age-opt" data-value="peer">
+                                <span class="set-age-top">
+                                    <span class="set-age-val">±5 лет</span>
+                                    <span class="set-age-radio" aria-hidden="true">
+                                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2L5 8.7L9.5 3.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </span>
+                                </span>
+                                <span class="set-age-lbl" id="setAgePeerSub">Ровесники</span>
+                            </button>
+                            <button type="button" class="chip set-age-opt" data-value="18-24">
+                                <span class="set-age-top">
+                                    <span class="set-age-val">18 – 24</span>
+                                    <span class="set-age-radio" aria-hidden="true">
+                                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2L5 8.7L9.5 3.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </span>
+                                </span>
+                                <span class="set-age-lbl">года</span>
+                            </button>
+                            <button type="button" class="chip set-age-opt" data-value="25-34">
+                                <span class="set-age-top">
+                                    <span class="set-age-val">25 – 34</span>
+                                    <span class="set-age-radio" aria-hidden="true">
+                                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2L5 8.7L9.5 3.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </span>
+                                </span>
+                                <span class="set-age-lbl">года</span>
+                            </button>
+                            <button type="button" class="chip set-age-opt" data-value="any">
+                                <span class="set-age-top">
+                                    <span class="set-age-val">18+</span>
+                                    <span class="set-age-radio" aria-hidden="true">
+                                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2L5 8.7L9.5 3.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </span>
+                                </span>
+                                <span class="set-age-lbl">Любой возраст</span>
+                            </button>
                         </div>
                     </div>
 
@@ -994,7 +1093,7 @@
 
     <script src="js/feed.js?v=70"></script>
 
-    <script src="js/nav.js?v=71"></script>
+    <script src="js/nav.js?v=72"></script>
 
 
     <script>
