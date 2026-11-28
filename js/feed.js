@@ -1721,10 +1721,188 @@ const Feed = (() => {
         }
         next(); st.busy = false;
     }
+    /* ---------- праздничный экран взаимной волны (Match) ---------- */
+    let matchActive = false;
+    let matchUsername = '';
+    let matchUsernamePromise = null;
+    let matchCloseTimer = null;
+    let lastMatchShown = { id: null, at: 0 };
+
+    function fillMatchAvatar(box, name, directUrl, storagePath) {
+        if (!box) return;
+        box.textContent = (name || '?')[0].toUpperCase();
+        const mount = (u) => {
+            if (!u) return;
+            const im = document.createElement('img');
+            im.alt = name || '';
+            im.src = u;
+            box.textContent = '';
+            box.appendChild(im);
+        };
+        if (directUrl) {
+            mount(directUrl);
+            return;
+        }
+        if (storagePath) {
+            const cached = urlCache.get(storagePath);
+            if (cached) mount(cached);
+            else photoUrl(storagePath).then(mount).catch(() => {});
+        }
+    }
+    function spawnMatchConfetti(container) {
+        if (!container) return;
+        container.innerHTML = '';
+        const palette = ['#B5C680', '#D9F99D', '#A78BFA', '#C4B5FD', '#F3E8FF', '#FFFFFF'];
+        const count = 18;
+        for (let i = 0; i < count; i++) {
+            const dot = el('span', 'match-dot');
+            const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.35;
+            const r1 = 56 + Math.random() * 44;
+            const r2 = 128 + Math.random() * 88;
+            const size = 4 + Math.random() * 5;
+            dot.style.setProperty('--mx1', `${Math.round(Math.cos(angle) * r1)}px`);
+            dot.style.setProperty('--my1', `${Math.round(Math.sin(angle) * r1 - 12)}px`);
+            dot.style.setProperty('--mx2', `${Math.round(Math.cos(angle) * r2)}px`);
+            dot.style.setProperty('--my2', `${Math.round(Math.sin(angle) * r2 + 26)}px`);
+            dot.style.setProperty('--mr', `${Math.round((Math.random() - 0.5) * 260)}deg`);
+            dot.style.setProperty('--ms', `${size.toFixed(1)}px`);
+            dot.style.setProperty('--mrad', i % 3 === 0 ? '2px' : '50%');
+            dot.style.setProperty('--mc', palette[i % palette.length]);
+            dot.style.setProperty('--md', `${(0.14 + Math.random() * 0.2).toFixed(2)}s`);
+            dot.style.setProperty('--mdur', `${(1.1 + Math.random() * 0.45).toFixed(2)}s`);
+            container.appendChild(dot);
+        }
+    }
+    function updateMatchCta(hasUsername) {
+        const txt = $('matchWriteText');
+        const note = $('matchNote');
+        if (hasUsername) {
+            if (txt) txt.textContent = 'Написать в Telegram';
+            if (note) note.textContent = 'Волна занимает 1 слот · общение сразу в Telegram';
+        } else {
+            if (txt) txt.textContent = 'Открыть в «Волнах»';
+            if (note) note.textContent = 'У пользователя не указан @username в Telegram';
+        }
+    }
+    function closeMatchOverlay(instant = false) {
+        const overlay = $('matchOverlay');
+        clearTimeout(matchCloseTimer);
+        if (!overlay || overlay.hidden) {
+            matchActive = false;
+            return;
+        }
+        matchActive = false;
+        matchUsername = '';
+        matchUsernamePromise = null;
+        if (instant) {
+            overlay.hidden = true;
+            overlay.classList.remove('is-open', 'is-closing');
+            const conf = $('matchConfetti');
+            if (conf) conf.innerHTML = '';
+            if (typeof applyBack === 'function') applyBack();
+            return;
+        }
+        overlay.classList.remove('is-open');
+        overlay.classList.add('is-closing');
+        matchCloseTimer = setTimeout(() => {
+            overlay.hidden = true;
+            overlay.classList.remove('is-closing');
+            const conf = $('matchConfetti');
+            if (conf) conf.innerHTML = '';
+            if (typeof applyBack === 'function') applyBack();
+        }, 280);
+    }
+    function openMatchOverlay(partner, opts = {}) {
+        const overlay = $('matchOverlay');
+        if (!overlay || !partner) return false;
+        const pid = partner.id ? String(partner.id) : null;
+        if (pid && lastMatchShown.id === pid && Date.now() - lastMatchShown.at < 8000) return false;
+        lastMatchShown = { id: pid, at: Date.now() };
+
+        clearTimeout(matchCloseTimer);
+        hideToast();
+        matchActive = true;
+        matchUsername = (partner.tg_username || (opts.res && opts.res.tg_username) || '').replace(/^@/, '').trim();
+        matchUsernamePromise = null;
+
+        fillMatchAvatar($('matchAvaMe'), profile.name || 'Я', profile.photo_url || '', profile.photo_path || '');
+        fillMatchAvatar($('matchAvaThem'), partner.name || 'Волна', partner.photo_url || '', partner.photo_path || '');
+
+        const sub = $('matchSub');
+        if (sub) {
+            sub.innerHTML = '';
+            if (partner.name) {
+                sub.append(
+                    document.createTextNode('Вы и '),
+                    el('b', '', partner.name),
+                    document.createTextNode(' понравились друг другу')
+                );
+            } else {
+                sub.textContent = 'Вы понравились друг другу';
+            }
+        }
+        const closeBtn = $('matchCloseBtn');
+        if (closeBtn) closeBtn.textContent = step === FEED ? 'Продолжить поиск' : 'Готово';
+
+        const writeBtn = $('matchWriteBtn');
+        if (writeBtn) writeBtn.disabled = false;
+        updateMatchCta(true);
+
+        if (!matchUsername && dbOn()) {
+            matchUsernamePromise = Supa.rpc('my_matches').then((list) => {
+                if (!Array.isArray(list)) return '';
+                const found = (pid && list.find((m) => String(m.id) === pid))
+                    || (partner.name && list.find((m) => m.name === partner.name))
+                    || null;
+                const uname = found && found.tg_username ? String(found.tg_username).replace(/^@/, '').trim() : '';
+                if (matchActive) {
+                    matchUsername = uname;
+                    updateMatchCta(!!uname);
+                }
+                return uname;
+            }).catch(() => '');
+        } else if (!matchUsername) {
+            updateMatchCta(false);
+        }
+
+        spawnMatchConfetti($('matchConfetti'));
+        overlay.hidden = false;
+        overlay.classList.remove('is-open', 'is-closing');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                if (matchActive) overlay.classList.add('is-open');
+            });
+        });
+
+        TG.ok();
+        setTimeout(() => { if (matchActive) TG.pick(); }, 240);
+        TG.back(() => closeMatchOverlay());
+        return true;
+    }
+    async function onMatchWriteClick() {
+        if (!matchActive) return;
+        TG.tap();
+        const btn = $('matchWriteBtn');
+        let uname = matchUsername;
+        if (!uname && matchUsernamePromise) {
+            if (btn) btn.disabled = true;
+            try { uname = await matchUsernamePromise; } catch (e) { uname = ''; }
+            if (btn) btn.disabled = false;
+        }
+        if (uname) {
+            closeMatchOverlay();
+            openChat(uname);
+        } else {
+            closeMatchOverlay(true);
+            openWaves();
+        }
+    }
+
     async function wave(msg, onFail) {
         if (!st.cur || st.busy) return;
         st.busy = true;
-        const targetId = st.cur.id;
+        const partner = st.cur;
+        const targetId = partner.id;
         const leaveP = leave('right');
         try {
             const [res] = await Promise.all([
@@ -1743,8 +1921,13 @@ const Feed = (() => {
                 if (onFail) onFail(); else restoreDeckCard();
             } else {
                 actedIds.add(String(targetId));
-                if (text) { TG.ok(); toast(text, res.result === 'sent' ? 3000 : 5500); }
                 next();
+                if (res.result === 'matched') {
+                    openMatchOverlay(partner, { res });
+                } else if (text) {
+                    TG.ok();
+                    toast(text, res.result === 'sent' ? 3000 : 5500);
+                }
                 refreshStatus(res.result === 'matched');
             }
         } catch (e) {
@@ -2096,8 +2279,8 @@ const Feed = (() => {
         const btns = el('div', 'w-btns');
         const ok = el('button', 'w-btn ok', 'Ответить взаимностью');
         const no = el('button', 'w-btn', 'Отказать');
-        ok.addEventListener('click', () => respond(r.wave_id, true, onDone));
-        no.addEventListener('click', () => respond(r.wave_id, false, onDone));
+        ok.addEventListener('click', () => respond(r.wave_id, true, onDone, r));
+        no.addEventListener('click', () => respond(r.wave_id, false, onDone, r));
         btns.append(ok, no); body.appendChild(btns);
         return card;
     }
@@ -2182,17 +2365,22 @@ const Feed = (() => {
         $('wavesBody').innerHTML = ''; $('wavesBody').appendChild(waveLoader('Загружаем волны…'));
         loadWaves(true);
     }
-    async function respond(id, accept, onDone) {
+    async function respond(id, accept, onDone, partner) {
         try {
             const res = await Supa.rpc('respond_wave', { p_wave_id: id, p_accept: accept });
-            if (res.result === 'matched') TG.ok();
-            toast({
-                matched: 'Взаимно! Началась волна 🌊',
-                declined: 'Отклонено',
-                no_slots: 'Все ваши слоты заняты. Завершите одну из волн, чтобы ответить взаимностью',
-                target_full: 'У человека пока нет свободного слота. Попробуйте позже',
-                gone: 'Этот лайк уже неактуален'
-            }[res.result] || 'Готово', 4500);
+            if (res.result === 'matched') {
+                if (!openMatchOverlay(partner, { res })) {
+                    TG.ok();
+                    toast('Взаимно! Началась волна 🌊', 4500);
+                }
+            } else {
+                toast({
+                    declined: 'Отклонено',
+                    no_slots: 'Все ваши слоты заняты. Завершите одну из волн, чтобы ответить взаимностью',
+                    target_full: 'У человека пока нет свободного слота. Попробуйте позже',
+                    gone: 'Этот лайк уже неактуален'
+                }[res.result] || 'Готово', 4500);
+            }
         } catch (e) { console.error('Respond error:', e); toast('Не получилось ответить' + dbg(e)); }
         if (typeof onDone === 'function') onDone();
         if (step === WAVES) loadWaves();
@@ -2228,7 +2416,25 @@ const Feed = (() => {
             match: '🌊 Взаимно!' + (name ? ' Волна с ' + name : ' Началась волна'),
             ended: 'Волна' + (name ? ' с ' + name : '') + ' завершена'
         }[n.kind];
-        if (msg && step !== NOTIFS) { TG.tap(); toast(msg, 4000); }   // на экране уведомлений список обновится сам
+        if (n && n.kind === 'match' && dbOn() && !matchActive && !onboardActive && (Date.now() - lastMatchShown.at > 8000)) {
+            const hintId = n.data && (n.data.from_user || n.data.user_id || n.data.other_id || n.data.id);
+            Supa.rpc('my_matches').then((list) => {
+                const found = Array.isArray(list) && (
+                    (hintId && list.find((m) => String(m.id) === String(hintId)))
+                    || (name && list.find((m) => m.name === name))
+                    || list[0]
+                );
+                if (found && !matchActive && !onboardActive) {
+                    openMatchOverlay(found);
+                } else if (msg && step !== NOTIFS) {
+                    TG.tap(); toast(msg, 4000);
+                }
+            }).catch(() => {
+                if (msg && step !== NOTIFS) { TG.tap(); toast(msg, 4000); }
+            });
+        } else if (msg && step !== NOTIFS) {
+            TG.tap(); toast(msg, 4000);   // на экране уведомлений список обновится сам
+        }
         if (step === WAVES) loadWaves();
         document.dispatchEvent(new CustomEvent('wave:notification', { detail: n }));
     }
@@ -2317,12 +2523,19 @@ const Feed = (() => {
             $('reportSheet').addEventListener('click', (e) => { if (e.target === $('reportSheet') && !$('reportSheet').classList.contains('is-closing')) closeReportSheet(); });
             initSheetSwipe($('reportSheet'), closeReportSheet);
         }
+        if ($('matchWriteBtn')) $('matchWriteBtn').addEventListener('click', onMatchWriteClick);
+        if ($('matchCloseBtn')) $('matchCloseBtn').addEventListener('click', () => { TG.tap(); closeMatchOverlay(); });
+        if ($('matchBackdrop')) $('matchBackdrop').addEventListener('click', () => closeMatchOverlay());
         if ($('photoViewerClose')) $('photoViewerClose').addEventListener('click', closePhotoViewer);
         if ($('photoViewer')) {
             $('photoViewer').addEventListener('click', (e) => {
                 if (e.target === $('photoViewer') || e.target === $('photoViewerStage')) closePhotoViewer();
             });
             document.addEventListener('keydown', (e) => {
+                if (matchActive) {
+                    if (e.key === 'Escape') closeMatchOverlay();
+                    return;
+                }
                 if (onboardActive) {
                     if (e.key === 'Escape') closeFeedOnboard();
                     else if (e.key === 'ArrowRight' || e.key === 'Enter') goOnboardStep(onboardStep + 1);

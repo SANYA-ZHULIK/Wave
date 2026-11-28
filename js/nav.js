@@ -188,7 +188,7 @@ const Nav = (() => {
         let tracking = false, dragging = false, pointerId = null;
 
         function hasBlockingModal() {
-            return !!document.querySelector('.sheet:not([hidden]), .photo-viewer:not([hidden])');
+            return !!document.querySelector('.sheet:not([hidden]), .photo-viewer:not([hidden]), .match-overlay:not([hidden])');
         }
         function canEdgeOpen() {
             return (step === WAVES || step === NOTIFS || step === DONE || step === ABOUT || step === RULES || step === SETTINGS) && !hasBlockingModal();
