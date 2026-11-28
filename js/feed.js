@@ -347,13 +347,20 @@ const Feed = (() => {
         try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
     }
 
+    function ageBounds() {
+        const myAge = Number(profile.age) || 22;
+        if (prefs.ageMode === '18-24') return { min: 18, max: 24 };
+        if (prefs.ageMode === '25-34') return { min: 25, max: 34 };
+        if (prefs.ageMode === 'any')   return { min: 18, max: null };
+        return { min: Math.max(18, myAge - 5), max: myAge + 5 }; // 'peer' (±5 лет)
+    }
+
     function matchAgePref(age) {
         const a = Number(age) || 22;
-        const myAge = Number(profile.age) || 22;
-        if (prefs.ageMode === '18-24') return a >= 18 && a <= 24;
-        if (prefs.ageMode === '25-34') return a >= 25 && a <= 34;
-        if (prefs.ageMode === 'any')   return a >= 18;
-        return a >= myAge - 5 && a <= myAge + 5; // 'peer' (±5 лет)
+        const { min, max } = ageBounds();
+        if (min !== null && a < min) return false;
+        if (max !== null && a > max) return false;
+        return true;
     }
 
     function matchCardPrefs(r) {
@@ -912,6 +919,27 @@ const Feed = (() => {
     }
 
     /* ---------- очередь анкет ---------- */
+    let discoverSupportsFilters = true;
+    async function fetchDiscoverPage(offset = 0) {
+        const baseArgs = { p_intent: st.intent, p_same_city: st.sameCity, p_limit: 20, p_offset: offset };
+        if (!discoverSupportsFilters) return Supa.rpc('discover', baseArgs);
+        const bounds = ageBounds();
+        try {
+            return await Supa.rpc('discover', {
+                ...baseArgs,
+                p_age_min: bounds.min,
+                p_age_max: bounds.max,
+                p_only_with_bio: !!prefs.onlyWithBio
+            });
+        } catch (e) {
+            if (String((e && e.message) || '').includes('db 404')) {
+                discoverSupportsFilters = false;
+                return Supa.rpc('discover', baseArgs);
+            }
+            throw e;
+        }
+    }
+
     async function loadQueue() {
         if (st.loading || st.exhausted) return;
         st.loading = true; st.err = '';
@@ -923,19 +951,31 @@ const Feed = (() => {
                 await waitMin;
                 if (gen === st.gen) st.err = 'Лента доступна только внутри Telegram';
             } else {
-                const rows = await Supa.rpc('discover', { p_intent: st.intent, p_same_city: st.sameCity, p_limit: 20, p_offset: 0 });
-                if (gen !== st.gen) return;
                 const have = new Set(st.queue.map((r) => String(r.id)));
                 if (st.cur) have.add(String(st.cur.id));
                 const added = [];
-                rows.forEach((r) => {
-                    const idKey = String(r.id);
-                    if (!have.has(idKey) && !actedIds.has(idKey) && matchCardPrefs(r)) {
-                        st.queue.push(r);
-                        added.push(r);
+                let pageOffset = 0;
+                let attempts = 0;
+                while (attempts < 4) {
+                    attempts++;
+                    const rows = await fetchDiscoverPage(pageOffset);
+                    if (gen !== st.gen) return;
+                    const batch = Array.isArray(rows) ? rows : [];
+                    batch.forEach((r) => {
+                        const idKey = String(r.id);
+                        if (!have.has(idKey) && !actedIds.has(idKey) && matchCardPrefs(r)) {
+                            have.add(idKey);
+                            st.queue.push(r);
+                            added.push(r);
+                        }
+                    });
+                    if (batch.length < 20) {
+                        st.exhausted = true;
+                        break;
                     }
-                });
-                if (rows.length < 20) st.exhausted = true;
+                    if (added.length > 0) break;
+                    pageOffset += batch.length;
+                }
 
                 // Пакетно подписываем URL всех анкет пачки и заранее декодируем ближайшие фото
                 if (added.length) {
@@ -1914,7 +1954,8 @@ const Feed = (() => {
                 matched: 'Взаимно! Началась волна 🌊 Она занимает слот',
                 liked_no_slot: 'Взаимно, но все ваши слоты заняты. Завершите волну в разделе «Волны» — и ответите взаимностью',
                 liked_target_full: 'Взаимно! Но у человека пока нет свободного слота — волна начнётся, когда он его освободит',
-                exists: ''
+                exists: '',
+                blocked: ''
             }[res.result];
             if (text === undefined) {
                 toast('Не получилось отправить лайк');
@@ -2378,7 +2419,8 @@ const Feed = (() => {
                     declined: 'Отклонено',
                     no_slots: 'Все ваши слоты заняты. Завершите одну из волн, чтобы ответить взаимностью',
                     target_full: 'У человека пока нет свободного слота. Попробуйте позже',
-                    gone: 'Этот лайк уже неактуален'
+                    gone: 'Этот лайк уже неактуален',
+                    blocked: 'Пользователь недоступен'
                 }[res.result] || 'Готово', 4500);
             }
         } catch (e) { console.error('Respond error:', e); toast('Не получилось ответить' + dbg(e)); }
